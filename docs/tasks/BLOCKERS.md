@@ -11,7 +11,7 @@ Ký hiệu nguồn:
 **[H11/10]** = buổi họp với công ty ngày 11/10/2026 (ghi chú họp lưu ngoài repo; nội dung
 **lẫn lộn** giữa thực tế Hoàng Phát và thông lệ chung của ngành — chưa điểm nào trong đó được
 coi là yêu cầu đã xác nhận).
-**[PB]** = `5. Project_Playbook_VI.md`. **[CL]** = `frontend/CLAUDE.md`.
+**[PB]** = `docs/playbook/Project_Playbook_VI.md`. **[CL]** = `frontend/CLAUDE.md`.
 
 ## 1. Giá bán & mức giá
 
@@ -39,7 +39,7 @@ coi là yêu cầu đã xác nhận).
 |---|---|---|---|---|
 | Q1 | **Phân quyền theo phòng ban** (Kế toán / Kinh doanh / Kho & Vận tải) | Chú Quyết: Hoàng Phát (3–5 người kiêm nhiệm) có cần không? | Giữ 3 quyền `staff` / `manager` / `admin` | [H11/10] |
 | Q2 | **Ai được dùng chatbot AI**, rủi ro lộ tin nhắn của chủ | Chú Quyết + đội Brain | Chưa giới hạn | [PB] §6 |
-| Q3 | Nhiều API route **chưa kiểm tra đăng nhập**, `/dashboard` chưa chặn khách | Trưởng nhóm: lên lịch làm | Hạn chế đã biết; route mới phải tự kiểm tra | `ARCHITECTURE.md` §7 |
+| Q3 | Nhiều API route **chưa kiểm tra đăng nhập**, `/dashboard` chưa chặn khách | Trưởng nhóm: lên lịch làm | Hạn chế đã biết; route mới phải tự kiểm tra | `docs/architecture/ARCHITECTURE.md` §7 |
 
 ## 4. Dữ liệu thật
 
@@ -58,7 +58,7 @@ coi là yêu cầu đã xác nhận).
 | # | Việc | Cần ai xác nhận | Trong lúc chờ, code làm gì | Nguồn |
 |---|---|---|---|---|
 | K1 | **`frontend/src/server/brain.ts` được commit với line ending CRLF.** Từ khi có `.gitattributes` (`eol=lf`), `git status` luôn báo file này "bị sửa" dù không ai đụng. Sửa bằng một commit `git add --renormalize` — nhưng PR #3 của đội Brain (`feat/brain-integration`) đang sửa file này, renormalize bây giờ sẽ làm PR đó xung đột trên mọi dòng | Đội Brain: báo khi PR #3 merge | **Không commit file này** trừ khi có thay đổi thật. Renormalize ngay sau khi PR #3 merge | Kiểm tra 22/10 |
-| K2 | `README.md` bảo copy `frontend/.env.local.example` — **file này không tồn tại**; còn ghi "user lưu trong bộ nhớ" (đã lỗi thời, giờ ở Postgres) | Không cần — chỉ cần làm | Mẫu `.env.local` đầy đủ nằm trong `6. Onboarding_Playbook.md` §2.3 | Kiểm tra 22/10 |
+| K2 | `README.md` bảo copy `frontend/.env.local.example` — **file này không tồn tại**; còn ghi "user lưu trong bộ nhớ" (đã lỗi thời, giờ ở Postgres) | Không cần — chỉ cần làm | Mẫu `.env.local` đầy đủ nằm trong `docs/onboarding/Onboarding_Playbook.md` §2.3 | Kiểm tra 22/10 |
 | K3 | CI chưa chạy `pnpm build` — cần một database cho CI (Neon branch hoặc Postgres service) | Trưởng nhóm | CI chỉ kiểm lockfile + ESLint | `.github/workflows/ci.yml` |
 | K4 | Workflow lịch sử thực thi (M2) và mô-đun vận tải | Chú Quyết | Ngoài phạm vi | [CL] |
 

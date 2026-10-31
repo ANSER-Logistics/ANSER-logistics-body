@@ -163,7 +163,8 @@ via local pandas parsing checks on the actual files.
 
 New ask this pass: build a **project playbook** for a coworker taking over parts of this
 work (not a dev-team request — the Database Engineer's own initiative). Produced
-`5. Project_Playbook.md` (repo root) and `5. Project_Playbook_VI.md` (Vietnamese
+`5. Project_Playbook.md` and `5. Project_Playbook_VI.md` (moved 01/11/2026 to
+`docs/playbook/`, numbers dropped; Vietnamese
 duplicate, same §0–§9 numbering, kept in sync by hand — no tooling enforces it). The
 playbook's §2 is a doc map that now indexes this file; read the playbook first for
 orientation, come back here for depth. Everything below supersedes/extends specific

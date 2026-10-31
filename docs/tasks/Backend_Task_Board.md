@@ -5,8 +5,8 @@
 > mức ("Giá áp dụng", nhánh `feat/multi_tier-pricing`) đang được làm. Frontend không nằm trong
 > phạm vi tài liệu này.
 >
-> Mới vào dự án? Đọc `6. Onboarding_Playbook.md` trước. Việc nào đang chờ khách/đội khác xác
-> nhận thì nằm ở `BLOCKERS.md`, không nằm ở đây.
+> Mới vào dự án? Đọc `docs/onboarding/Onboarding_Playbook.md` trước. Việc nào đang chờ khách/đội khác xác
+> nhận thì nằm ở `docs/tasks/BLOCKERS.md`, không nằm ở đây.
 
 ## Mục lục
 
@@ -72,7 +72,7 @@ Nếu việc của bạn buộc phải sửa một trong các file này → báo
 
 ### 2.4 Quy tắc chung
 
-Tuân theo `6. Onboarding_Playbook.md` §5.4 (Git) và §8 (những điều không bao giờ làm). Đặc
+Tuân theo `docs/onboarding/Onboarding_Playbook.md` §5.4 (Git) và §8 (những điều không bao giờ làm). Đặc
 biệt: transaction cho mọi thao tác ghi nhiều bảng, `quantity` có dấu, `NULL` ≠ `0`, không thử
 nghiệm trên Neon `production`.
 
@@ -100,7 +100,7 @@ Cỡ: **S** ≈ dưới 1 ngày · **M** ≈ 1–3 ngày · **L** ≈ hơn 3 ng�
 **Bối cảnh.** Trang **Quản lý kho** tạo phiếu nhập/xuất thủ công qua
 `POST /api/inventory/transactions` → `createTransaction()` trong
 `frontend/src/server/store/inventory.ts`. Hàm này mắc đúng loại lỗi đã từng sửa trong
-`store/sales.ts` (xem `4. Database_Implementation_Documentation.md`, Task 3). Các lỗi dưới đây
+`store/sales.ts` (xem `docs/decisions/4. Database_Implementation_Documentation.md`, Task 3). Các lỗi dưới đây
 tìm được bằng **đọc code** (chưa chạy thử), có trên cả `master` lẫn nhánh của PR #6:
 
 | Lỗi | Hậu quả |
@@ -141,7 +141,7 @@ tìm được bằng **đọc code** (chưa chạy thử), có trên cả `maste
 
 ### Việc 2 — Siết xác thực & phân quyền
 
-**Bối cảnh.** `ARCHITECTURE.md` §7 và `BLOCKERS.md` Q3: phần lớn `/api/*` **không** kiểm tra
+**Bối cảnh.** `docs/architecture/ARCHITECTURE.md` §7 và `docs/tasks/BLOCKERS.md` Q3: phần lớn `/api/*` **không** kiểm tra
 đăng nhập, `/dashboard` mở cho bất kỳ ai, quyền (`staff`/`manager`/`admin`) chỉ được kiểm tra
 ở trang Nhân sự (`requireAdmin()`). Thêm hai điểm tìm thấy khi rà code:
 
@@ -163,19 +163,19 @@ phải `middleware.ts`. Đọc `frontend/node_modules/next/dist/docs/` trước 
 - [ ] **Bước 0 — bảng quyền, duyệt trước khi code**: liệt kê từng route + phương thức, quyền tối
       thiểu (`public` / đã đăng nhập / `manager` / `admin`), đưa Database Engineer + trưởng nhóm
       duyệt trong PR (hoặc issue) **trước** khi viết code. Giữ 3 quyền hiện có — phân quyền theo
-      phòng ban đang chờ xác nhận (`BLOCKERS.md` Q1).
+      phòng ban đang chờ xác nhận (`docs/tasks/BLOCKERS.md` Q1).
 - [ ] `src/proxy.ts`: chưa đăng nhập vào `/dashboard/**` → chuyển về `/login`.
 - [ ] Mọi route trong phạm vi trả `401` khi chưa đăng nhập, `403` khi sai quyền — dùng hàm kiểm
       tra dùng chung (mở rộng `session.ts`), không chép lại logic ở từng route.
 - [ ] `/api/n8n/internal/*`: xác thực bằng header bí mật dùng chung (ví dụ biến môi trường
       `N8N_INTERNAL_TOKEN`), **không** dùng cookie đăng nhập — n8n gọi server-to-server. Cập nhật
       workflow trong `frontend/n8n-workflows/` để gửi header này, và ghi biến mới vào
-      `6. Onboarding_Playbook.md` §2.3.
+      `docs/onboarding/Onboarding_Playbook.md` §2.3.
 - [ ] App **không khởi động** ở production nếu thiếu `JWT_SECRET` (bỏ giá trị dự phòng ngầm khi
       `NODE_ENV === "production"`).
 - [ ] Giới hạn số lần thử `/api/auth/login` (chống dò mật khẩu). Ghi rõ trong PR giới hạn chọn là
       bao nhiêu và lưu ở đâu (bộ nhớ tiến trình chỉ đúng khi chạy một instance — nói rõ điều đó).
-- [ ] Cập nhật bảng hạn chế trong `ARCHITECTURE.md` §7 và mục Q3 trong `BLOCKERS.md`.
+- [ ] Cập nhật bảng hạn chế trong `docs/architecture/ARCHITECTURE.md` §7 và mục Q3 trong `docs/tasks/BLOCKERS.md`.
 
 ---
 
@@ -205,7 +205,7 @@ cung cấp qua API, và phiếu nhập kho không chọn được nhà cung cấ
 
 ### Việc 4 — Kiểm tra dữ liệu vào (zod) + hàm lỗi dùng chung
 
-**Bối cảnh.** `ARCHITECTURE.md` §7: route tự kiểm tra bằng `if (!x)`, mỗi route trả lỗi một
+**Bối cảnh.** `docs/architecture/ARCHITECTURE.md` §7: route tự kiểm tra bằng `if (!x)`, mỗi route trả lỗi một
 kiểu, lỗi không lường trước rơi về `500` mặc định của Next.
 
 **Phụ thuộc**: đụng gần như mọi route → **xung đột với việc 2** nếu làm song song. Giao cùng
@@ -218,7 +218,7 @@ người với việc 2, hoặc bắt đầu sau khi việc 2 merge. Cũng **kh�
 - [ ] Một định dạng lỗi thống nhất `{ message: string }` (khớp cái giao diện đang đọc), và một
       wrapper bắt lỗi không lường trước → `500` + ghi log, không lộ chi tiết lỗi ra ngoài.
 - [ ] Áp dụng cho các route trong phạm vi; mỗi route giữ đúng mã HTTP hiện có.
-- [ ] Ghi quy ước mới vào `6. Onboarding_Playbook.md` §5.2 (mẫu thêm API route).
+- [ ] Ghi quy ước mới vào `docs/onboarding/Onboarding_Playbook.md` §5.2 (mẫu thêm API route).
 
 ---
 
@@ -226,7 +226,7 @@ người với việc 2, hoặc bắt đầu sau khi việc 2 merge. Cũng **kh�
 
 **Bối cảnh.** `.github/workflows/ci.yml` (có từ PR #6) chỉ kiểm lockfile + ESLint. Chưa có
 `pnpm build` vì `src/server/db/client.ts` ném lỗi ngay khi thiếu `DATABASE_URL`
-(`BLOCKERS.md` K3). Đây cũng là nền để chạy **integration test** của tính năng giá nhiều mức
+(`docs/tasks/BLOCKERS.md` K3). Đây cũng là nền để chạy **integration test** của tính năng giá nhiều mức
 sau này.
 
 **Phạm vi file**: `.github/workflows/ci.yml`.
@@ -241,7 +241,7 @@ sau này.
       không. Nếu không, đề xuất cách xử lý (ví dụ chọn driver theo biến môi trường) và **hỏi
       trước khi sửa `client.ts`** — file này cả app dùng.
 - [ ] Ghi chú trong workflow (theo phong cách các bước có sẵn) và cập nhật mục K3 trong
-      `BLOCKERS.md`.
+      `docs/tasks/BLOCKERS.md`.
 
 ---
 
@@ -249,13 +249,13 @@ sau này.
 
 Hợp làm **việc đầu tiên** cho người mới — nhỏ, ít rủi ro, giúp làm quen quy trình PR.
 
-**6a. README + file mẫu biến môi trường** (`BLOCKERS.md` K2)
+**6a. README + file mẫu biến môi trường** (`docs/tasks/BLOCKERS.md` K2)
 
 - [ ] `README.md` bảo copy `frontend/.env.local.example` — file này **không tồn tại**. Tạo
       `frontend/.env.example` (đúng tên này: `.gitignore` chặn mọi `.env.*` **trừ**
-      `.env.example`) với nội dung theo `6. Onboarding_Playbook.md` §2.3, không chứa bí mật thật.
+      `.env.example`) với nội dung theo `docs/onboarding/Onboarding_Playbook.md` §2.3, không chứa bí mật thật.
 - [ ] Sửa `README.md`: trỏ tới `.env.example`, bỏ dòng "user lưu trong bộ nhớ" (đã lỗi thời —
-      giờ ở Postgres), trỏ người mới tới `6. Onboarding_Playbook.md`.
+      giờ ở Postgres), trỏ người mới tới `docs/onboarding/Onboarding_Playbook.md`.
 
 **6b. Cảnh báo ESLint**
 
@@ -267,7 +267,7 @@ Hợp làm **việc đầu tiên** cho người mới — nhỏ, ít rủi ro, g
 - Cảnh báo còn lại (`employees` import thừa trong `store/sales.ts`) **để nguyên** — file thuộc
   tính năng giá nhiều mức (mục 2.3).
 
-**6c. Chuẩn hoá line ending `brain.ts`** (`BLOCKERS.md` K1) — **chờ PR #3 của đội Brain merge**
+**6c. Chuẩn hoá line ending `brain.ts`** (`docs/tasks/BLOCKERS.md` K1) — **chờ PR #3 của đội Brain merge**
 
 - [ ] Sau khi PR #3 merge: một commit riêng chỉ chứa
       `git add --renormalize frontend/src/server/brain.ts`. Báo đội Brain trước khi push.
@@ -282,5 +282,5 @@ Không giao lúc này — đụng file ở mục 2.3 hoặc cần migration (m�
 |---|---|
 | **Huỷ hoá đơn** (đảo các dòng sổ kho qua `sourceType = 'sale'` / `sourceId`) | Sửa `store/sales.ts` |
 | **Thay `generateProductCode()`** (`count(*) + 1`, có race condition) bằng Postgres sequence | Cần migration + sửa `store/products.ts` |
-| **API công nợ phải thu** trên bảng `invoice_payments` (ghi nhận thanh toán; còn nợ = `total − SUM(payments)` + `opening_debt`) | Không xung đột file, nhưng **cần chú Quyết xác nhận** trước: theo dõi công nợ ở ANSER, hay vẫn giữ trong MISA? (liên quan `BLOCKERS.md` C1–C3) |
+| **API công nợ phải thu** trên bảng `invoice_payments` (ghi nhận thanh toán; còn nợ = `total − SUM(payments)` + `opening_debt`) | Không xung đột file, nhưng **cần chú Quyết xác nhận** trước: theo dõi công nợ ở ANSER, hay vẫn giữ trong MISA? (liên quan `docs/tasks/BLOCKERS.md` C1–C3) |
 | **Kiểm kê** (phiếu điều chỉnh `sourceType = 'stocktake'`) | Cần quy trình kiểm kê thực tế từ chủ doanh nghiệp; ưu tiên thấp |

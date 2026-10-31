@@ -1,18 +1,13 @@
 # ANSER-v2 — Sổ tay cho thành viên mới
 
 > Cập nhật 22/10/2026
-> Dành cho người **mới vào dự án** hoặc **mới làm quen với lập trình web**. Không cần đọc
-> các tài liệu khác trước — tài liệu này dẫn bạn đi từng bước, và chỉ sang tài liệu khác
-> khi bạn cần đào sâu.
+> Dành cho người **mới vào dự án** hoặc **mới làm quen với lập trình web**. Không cần đọc các tài liệu khác trước — tài liệu này dẫn bạn đi từng bước, và chỉ sang tài liệu khác khi bạn cần đào sâu.
 >
-> **Mốc code được mô tả**: `master` **sau khi** đã merge nhánh `feat/database-application`
-> (có tính năng "Nhập Excel", migration `0013`/`0014`, CI). Nếu bạn đọc lúc PR merge đó
-> chưa vào `master`, vài file nhắc tới bên dưới (`src/server/import/`, `.github/workflows/ci.yml`)
-> chỉ có trên nhánh `feat/database-application`.
+> **Mốc code được mô tả**: `master` **sau khi** đã merge nhánh `feat/database-application` (có tính năng "Nhập Excel", migration `0013`/`0014`, CI). Nếu bạn đọc lúc PR merge đó chưa vào `master`, vài file nhắc tới bên dưới (`src/server/import/`, `.github/workflows/ci.yml`) chỉ có trên nhánh `feat/database-application`.
 
 ## Mục lục
 
-1. [Dự án này là gì — trong 2 phút](#1-dự-án-này-là-gì--trong-2-phút)
+1. [Dự án này là gì - trong 2 phút](#1-dự-án-này-là-gì--trong-2-phút)
 2. [Cài đặt và chạy trên máy bạn](#2-cài-đặt-và-chạy-trên-máy-bạn)
 3. [Code được tổ chức thế nào](#3-code-được-tổ-chức-thế-nào)
 4. [Đi theo một yêu cầu thật: tạo hoá đơn bán hàng](#4-đi-theo-một-yêu-cầu-thật-tạo-hoá-đơn-bán-hàng)
@@ -26,19 +21,16 @@
 
 ## 1. Dự án này là gì — trong 2 phút
 
-**ANSER Web v2** là phần mềm quản lý **kho hàng + bán hàng** cho **Hoàng Phát** — một công
-ty nhỏ (3–5 người) phân phối dầu nhớt ở Hà Nội. Chủ công ty là chú Quyết.
+**ANSER Web v2** là phần mềm quản lý **kho hàng + bán hàng** cho **Hoàng Phát** - một công ty nhỏ (3–5 người) phân phối dầu nhớt ở Hà Nội. Chủ công ty là chú Quyết.
 
 Hằng ngày, công ty cần:
 
-- biết **còn bao nhiêu hàng** trong kho (tính cả số lẻ — dầu bán theo lít),
+- biết **còn bao nhiêu hàng** trong kho (tính cả số lẻ - dầu bán theo lít),
 - **bán hàng**: lập hoá đơn, trừ kho, ghi doanh thu,
 - **nhập hàng**: cộng kho, ghi giá vốn,
 - xem **báo cáo**, nhận **cảnh báo** (ví dụ sắp hết hàng).
 
-Kế toán của công ty đang dùng phần mềm **MISA**. Dữ liệu thật của khách (danh sách hàng hoá,
-khách hàng, nhà cung cấp, báo cáo tồn kho) đi vào hệ thống của mình qua các file Excel xuất
-từ MISA.
+Kế toán của công ty đang dùng phần mềm **MISA**. Dữ liệu thật của khách (danh sách hàng hoá, khách hàng, nhà cung cấp, báo cáo tồn kho) đi vào hệ thống của mình qua các file Excel xuất từ MISA. 
 
 Toàn bộ hệ thống gồm 3 phần chạy riêng:
 
@@ -57,7 +49,7 @@ flowchart LR
 - **n8n** chạy các quy trình tự động (gửi email báo cáo, cảnh báo tồn kho). Cũng là tuỳ chọn
   khi chạy ở máy.
 
-Vì sao chọn kiến trúc này: xem `STACK_DECISIONS.md` (không bắt buộc đọc ngay).
+Vì sao chọn kiến trúc này: xem `docs/architecture/STACK_DECISIONS.md` (không bắt buộc đọc ngay).
 
 ---
 
@@ -175,7 +167,7 @@ n8n ở <http://localhost:5679>, hộp thư giả MailHog (xem email n8n "gửi"
 | Không có nút/tài khoản demo đăng nhập được | `ENABLE_STARTUP_SEED` chưa bật | Thêm `ENABLE_STARTUP_SEED=true`, khởi động lại `pnpm dev` |
 | `Cannot read properties of null (reading 'matches')` khi `npm install` | `node_modules` cũ do pnpm tạo | `rm -rf node_modules` rồi cài lại |
 | CI đỏ ở bước `--frozen-lockfile` | Đổi `package.json` mà chưa cập nhật `pnpm-lock.yaml` | Chạy `pnpm install`, commit lockfile |
-| `git status` báo `brain.ts` bị sửa dù bạn không đụng | File này được commit với line ending CRLF từ trước | Kệ nó, **đừng commit**. Xem `BLOCKERS.md` |
+| `git status` báo `brain.ts` bị sửa dù bạn không đụng | File này được commit với line ending CRLF từ trước | Kệ nó, **đừng commit**. Xem `docs/tasks/BLOCKERS.md` |
 | Code mẫu Next.js trên mạng không chạy | Dự án dùng **Next.js 16** — nhiều API đã đổi | Đọc tài liệu đi kèm trong `frontend/node_modules/next/dist/docs/` (xem `frontend/AGENTS.md`) |
 
 ---
@@ -186,10 +178,12 @@ n8n ở <http://localhost:5679>, hộp thư giả MailHog (xem email n8n "gửi"
 
 ```
 ANSER-v2/
-├── 0. … 6. *.md            Tài liệu dự án (đánh số theo thứ tự ra đời)
-├── BLOCKERS.md             Những việc đang chờ khách/đội khác xác nhận
-├── 7. Backend_Task_Board.md  Việc backend đang chờ người nhận
-├── ARCHITECTURE.md         Bản đồ chi tiết từng file (đọc khi cần tra)
+├── docs/                   ← TOÀN BỘ TÀI LIỆU ở đây
+│   ├── onboarding/             Sổ tay này
+│   ├── playbook/               Project Playbook (EN + VI) — bức tranh toàn cảnh cho dev
+│   ├── tasks/                  BLOCKERS.md (chờ xác nhận) + Backend_Task_Board.md (việc chờ người nhận)
+│   ├── architecture/           ARCHITECTURE.md (bản đồ từng file), STACK_DECISIONS.md
+│   └── decisions/              Chuỗi tài liệu thiết kế DB 0.–4. (đánh số theo thứ tự trả lời qua lại)
 └── frontend/               ← TOÀN BỘ CODE ở đây
     ├── .env.local          Bí mật của bạn (tự tạo, không commit)
     ├── drizzle.config.ts   Cấu hình công cụ migration
@@ -253,7 +247,7 @@ Một vài khái niệm bạn sẽ gặp:
 - **Đăng nhập**: JWT lưu trong cookie `httpOnly`. Ở server, lấy người dùng hiện tại bằng
   `getSessionUser()` (`src/server/session.ts`). Có 3 quyền: `staff`, `manager`, `admin`.
   **Lưu ý**: hiện nhiều API route **chưa** kiểm tra đăng nhập — đây là hạn chế đã biết
-  (`ARCHITECTURE.md` §7), không phải mẫu để bắt chước. Route mới **phải** kiểm tra.
+  (`docs/architecture/ARCHITECTURE.md` §7), không phải mẫu để bắt chước. Route mới **phải** kiểm tra.
 
 ---
 
@@ -357,7 +351,7 @@ nguyên). Đây là chỗ học nghiệp vụ tốt nhất trong code.
    pnpm db:migrate
    ```
 5. Kiểm tra ràng buộc đã thật sự có trên Neon (mẫu truy vấn `pg_constraint` trong
-   `4. Database_Implementation_Documentation.md`).
+   `docs/decisions/4. Database_Implementation_Documentation.md`).
 6. Commit **cả** `schema.ts`, file `.sql` mới, và các file trong `migrations/meta/`.
 
 **Không bao giờ** sửa một file migration đã được chạy ở nơi khác — tạo migration mới.
@@ -420,7 +414,7 @@ gh pr create                            # 6. mở PR vào master (hoặc qua gia
 ## 6. Nghiệp vụ của khách hàng
 
 Phần này tóm tắt những gì đã biết về cách Hoàng Phát làm việc — đủ để bạn hiểu vì sao code
-có hình dạng như vậy. Chi tiết đầy đủ ở `5. Project_Playbook_VI.md` §6 và `BLOCKERS.md`.
+có hình dạng như vậy. Chi tiết đầy đủ ở `docs/playbook/Project_Playbook_VI.md` §6 và `docs/tasks/BLOCKERS.md`.
 
 ### 6.1 Đã xác nhận
 
@@ -437,7 +431,7 @@ có hình dạng như vậy. Chi tiết đầy đủ ở `5. Project_Playbook_VI
 
 Buổi họp ngày 11/10/2026 nêu thêm nhiều điểm, nhưng một phần mô tả thực tế chung của ngành
 hoặc của doanh nghiệp lớn, chưa chắc là cách Hoàng Phát đang làm. **Chưa đưa vào code** —
-mỗi điểm được ghi trong `BLOCKERS.md`:
+mỗi điểm được ghi trong `docs/tasks/BLOCKERS.md`:
 
 - Thêm mức giá: Đại lý cấp 3, Thương mại điện tử, bán theo lô (thanh lý).
 - Biên lợi nhuận tham khảo: Đại lý cấp 1 ≈ giá vốn +10–15%; Bán lẻ ≈ Đại lý cấp 1 +20–25%
@@ -549,15 +543,15 @@ Mỗi quy tắc dưới đây đều có lý do thật — phần lớn là lỗ
 
 | Khi bạn cần… | Đọc |
 |---|---|
-| Hiểu toàn cảnh dự án, việc đang làm, việc tồn đọng | `5. Project_Playbook_VI.md` (bản tiếng Anh: `5. Project_Playbook.md`) |
-| Biết việc gì đang chờ xác nhận, đừng tự quyết | `BLOCKERS.md` |
-| Tìm một việc backend để nhận | `7. Backend_Task_Board.md` |
-| Tra một file cụ thể làm gì, các luồng đăng nhập/đăng ký | `ARCHITECTURE.md` |
-| Hiểu vì sao một bảng/cột có hình dạng như vậy | Chú thích trong `frontend/src/server/db/schema.ts`, rồi `3. ERD_CHUAN.md` §4 |
-| Xem từng bước đã triển khai database thế nào | `4. Database_Implementation_Documentation.md` |
+| Hiểu toàn cảnh dự án, việc đang làm, việc tồn đọng | `docs/playbook/Project_Playbook_VI.md` (bản tiếng Anh: `docs/playbook/Project_Playbook.md`) |
+| Biết việc gì đang chờ xác nhận, đừng tự quyết | `docs/tasks/BLOCKERS.md` |
+| Tìm một việc backend để nhận | `docs/tasks/Backend_Task_Board.md` |
+| Tra một file cụ thể làm gì, các luồng đăng nhập/đăng ký | `docs/architecture/ARCHITECTURE.md` |
+| Hiểu vì sao một bảng/cột có hình dạng như vậy | Chú thích trong `frontend/src/server/db/schema.ts`, rồi `docs/decisions/3. ERD_CHUAN.md` §4 |
+| Xem từng bước đã triển khai database thế nào | `docs/decisions/4. Database_Implementation_Documentation.md` |
 | Nhật ký chi tiết các lỗi đã tìm/sửa | `frontend/CLAUDE.md` |
-| Vì sao chọn Next.js, Brain/n8n tách riêng | `STACK_DECISIONS.md` |
-| Lịch sử thiết kế ERD (chỉ khi thật sự cần) | `0.` → `3.` (mỗi bản thay thế bản trước) |
+| Vì sao chọn Next.js, Brain/n8n tách riêng | `docs/architecture/STACK_DECISIONS.md` |
+| Lịch sử thiết kế ERD (chỉ khi thật sự cần) | `docs/decisions/`, đọc `0.` → `3.` (mỗi bản thay thế bản trước) |
 
 **Bài tập làm quen gợi ý** (làm theo thứ tự, mỗi bài ~30–60 phút):
 
