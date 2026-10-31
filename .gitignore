@@ -6,3 +6,7 @@
 
 node_modules/
 .DS_Store
+
+# Cấu hình Claude Code cá nhân + thư mục worktree tạm.
+.claude/settings.local.json
+.claude/worktrees/
