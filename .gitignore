@@ -10,3 +10,9 @@ node_modules/
 # Cấu hình Claude Code cá nhân + thư mục worktree tạm.
 .claude/settings.local.json
 .claude/worktrees/
+
+# lockfiles
+package-lock.json
+yarn.lock
+bun.lockb
+bun.lock

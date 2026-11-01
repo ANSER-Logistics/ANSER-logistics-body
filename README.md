@@ -20,6 +20,29 @@ npm run dev         # http://localhost:3000 (UI + API on the same origin)
 
 Copy `frontend/.env.local.example` to `frontend/.env.local` and set `JWT_SECRET`.
 
+## Package managers and the lockfile
+
+**Use whatever you like** — npm, pnpm, yarn, bun. Nothing in the repo forces a
+choice: there is no `packageManager` field and no `preinstall` guard.
+
+**But the repo keeps exactly one lockfile: `frontend/pnpm-lock.yaml`.** Other
+lockfiles are gitignored and CI rejects them if they slip in. Two lockfiles for
+two managers resolve to two different dependency trees with nothing to warn you,
+and Next.js reads lockfiles to infer the workspace root — extra ones make it
+guess the wrong scope for build-time file tracing.
+
+One rule this puts on everyone: **if you change a dependency, run `pnpm install`
+once and commit the refreshed `frontend/pnpm-lock.yaml` alongside your
+`package.json` change.** Adding a package with `npm i` updates `package.json` but
+not the pnpm lockfile, and CI's `pnpm install --frozen-lockfile` will go red.
+That red is correct, not a CI bug.
+
+**Switching manager in an existing checkout: delete `node_modules` first.** pnpm
+builds a symlinked, non-flat `node_modules`; npm walks into it and crashes with
+`Cannot read properties of null (reading 'matches')`. `rm -rf node_modules` then
+install again. Anything else that follows from your choice of manager is yours to
+sort out.
+
 ## Notes
 
 - The Flask apps (`ban-le`, `gateway`, `san-xuat` in `ANSER_ban-le_gateway/`) are a separate,

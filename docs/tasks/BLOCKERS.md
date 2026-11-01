@@ -1,6 +1,6 @@
 # BLOCKERS — việc đang chờ xác nhận
 
-> Cập nhật 22/10/2026
+> Cập nhật 26/10/2026
 > Danh sách những việc **không được tự quyết** khi code: đang chờ khách hàng (Hoàng Phát),
 > đội Brain, hoặc trưởng nhóm xác nhận. Mỗi mục ghi rõ **hiện tại code làm gì** trong lúc chờ.
 >
@@ -45,10 +45,8 @@ coi là yêu cầu đã xác nhận).
 
 | # | Việc | Cần ai xác nhận | Trong lúc chờ, code làm gì | Nguồn |
 |---|---|---|---|---|
-| D1 | **3 mặt hàng lệch** giữa danh mục và báo cáo N-X-T: `KM00008`, `KM00017`, `KM00034` (nhiều khả năng do hai file xuất khác ngày) | Chú Quyết | `import-real-data.ts` tin số trong danh mục, thêm 1 dòng `adjustment` bắc cầu, ghi log rõ | [PB] §5.2, [CL] |
+| D1 | **3 mặt hàng lệch** giữa danh mục và báo cáo N-X-T: `KM00008`, `KM00017`, `KM00034` (nhiều khả năng do hai file xuất khác ngày) | Chú Quyết | Không ảnh hưởng ứng dụng: chỉ nhập danh mục (Nhập Excel), không nhập N-X-T. Hỏi khi nào cần đối soát lịch sử | [PB] §5.2, [CL] |
 | D2 | **Tồn kho âm**: `VT00039` (−108), `VT00042` (−16), có thể cả `KM00034` (−115,2) — thiếu chứng từ nhập hay do kỳ khoá sổ? | Chú Quyết. **Chưa báo khách** — phải loại trừ khả năng do kỳ khoá sổ trước | Giữ nguyên số liệu | [PB] §5.3, [CL] |
-| D3 | **`frontend/import-real-data.ts`** — còn muốn dựng lại sổ kho từ N-X-T, nối `linked_product_id`, gắn cờ `allows_zero_value` không? Brain có ghi phần đó vào DB của app không? | Trưởng nhóm + đội Brain | **Không xoá file.** Không chạy. Phần nạp danh mục đã được "Nhập Excel" thay thế | [PB] §5.1 |
-| D4 | Thiếu file `Tong_hop_ton_kho-Hoàng-Phát-Kho-KM-24-07.xlsx` (N-X-T kho KHUYẾN MẠI) trong thư mục tài liệu dùng chung | Người giữ file gốc | Script import cần file này nếu chạy lại | Kiểm tra 22/10 |
 | D5 | **Phân loại danh mục thật** cho dầu nhớt (thay 3 nhóm tạm HH/DV/CP) | Chú Quyết | Nhóm tạm theo tiền tố mã | [CL] |
 | D6 | **Quy đổi đơn vị** ghi trong tên hàng (vd `(0.8L×24)` = 19,2 lít/thùng) chưa được tách tự động | Rà tay | `unit_factor` mặc định 1 | [CL] |
 | D7 | **Hạn sử dụng / hàng thanh lý** — chưa có chỗ trong schema | Chú Quyết | Không có | [PB] §6 |
@@ -73,3 +71,5 @@ coi là yêu cầu đã xác nhận).
 | — | `products.price` khi có nhiều mức giá | **Bỏ cột**, giá lấy từ `product_prices`; giá cũ không chuyển sang | 22/10/2026 |
 | — | Sửa giá trên dòng hoá đơn khác giá của mức giá | Chỉ `admin`/`manager`. Mức giá chưa có giá → `staff` không bán được dòng đó, `admin`/`manager` nhập tay được. Không bao giờ bán 0₫ ngầm | 22/10/2026 |
 | — | Ai sửa bảng giá | Chỉ `admin`, trong form sửa sản phẩm; mọi thay đổi ghi lịch sử | 22/10/2026 |
+| D3 | `frontend/import-real-data.ts` (dựng lại sổ kho từ N-X-T) còn cần không? | **Xoá.** Nhập Excel đã thay việc đưa hàng hoá + tồn kho vào hệ thống; không cần dựng lại lịch sử nhập/xuất trước ngày dùng phần mềm. Nhập Excel nay ghi một dòng `adjustment` vào sổ kho cho mỗi thay đổi tồn, giữ đúng `stock = SUM(quantity)`. `allows_zero_value` và các cặp `linked_product_id` (mới biết 2 cặp) đặt tay khi cần. Lấy lại script được từ lịch sử git (`5e9b251`) | 26/10/2026 |
+| D4 | Thiếu file N-X-T kho KHUYẾN MẠI | Không còn cần — chỉ script N-X-T (đã xoá) dùng file này | 26/10/2026 |

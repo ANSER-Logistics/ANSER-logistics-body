@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lockfile:
+    name: Một lockfile, và chỉ một
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Repo KHÔNG giới hạn trình quản lý gói: không `packageManager`, không
+      # `preinstall: only-allow`. Cài bằng npm/yarn/bun/pnpm là quyền của bạn.
+      #
+      # Ranh giới nằm ở chỗ khác — cái gì được VÀO REPO. Lockfile là thứ chung,
+      # nên chỉ có một. `.gitignore` đã chặn ở máy dev; bước này chặn cả người
+      # `git add -f` và người sửa .gitignore.
+      - name: Không có lockfile của trình quản lý khác
+        run: |
+          la=$(git ls-files | grep -E '(^|/)(package-lock\.json|yarn\.lock|bun\.lockb?)$' || true)
+          if [ -n "$la" ]; then
+            echo "::error::Lockfile của trình quản lý khác đã bị commit:"
+            echo "$la"
+            echo ""
+            echo "Dùng npm/yarn/bun ở máy thì cứ dùng — nhưng đừng commit lockfile"
+            echo "của chúng. Repo chỉ giữ frontend/pnpm-lock.yaml."
+            echo "Gỡ ra:  git rm --cached <file>"
+            exit 1
+          fi
+          echo "✓ không có package-lock.json / yarn.lock / bun.lock"
+
+      # pnpm-lock.yaml KHÔNG bị .gitignore chặn (xem lý do trong .gitignore),
+      # nên kiểm ở đây. Nhiều hơn một là hai pnpm root — đúng tình trạng cũ của
+      # repo này, và là thứ khiến Next.js đoán nhầm workspace root rồi tính sai
+      # phạm vi file tracing lúc build.
+      - name: Đúng một pnpm-lock.yaml, và nó ở frontend/
+        run: |
+          ds=$(git ls-files | grep -E '(^|/)pnpm-lock\.yaml$' || true)
+          n=$(printf '%s' "$ds" | grep -c . || true)
+          if [ "$n" != "1" ] || [ "$ds" != "frontend/pnpm-lock.yaml" ]; then
+            echo "::error::Mong đợi đúng một lockfile tại frontend/pnpm-lock.yaml, nhận được:"
+            echo "${ds:-(không có cái nào)}"
+            echo "Chuyển sang monorepo thật thì sửa bước kiểm này CÙNG LÚC — đừng"
+            echo "tắt nó đi rồi tính sau."
+            exit 1
+          fi
+          echo "✓ đúng một lockfile: frontend/pnpm-lock.yaml"
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      # Ghim thẳng version, KHÔNG dùng `node-version-file` trỏ vào package.json:
+      # nó sẽ đọc `engines.node: ">=20.9.0"` rồi giải ra bản Node MỚI NHẤT, tức
+      # CI âm thầm nhảy sang Node 25/26 ngay khi chúng ra mắt. `engines` là sàn
+      # tương thích, không phải bản dùng để chạy.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      # PHẢI sau setup-node. Chạy trước thì corepack cài shim cho bản Node có
+      # sẵn của runner, rồi setup-node thay Node đi và shim biến mất.
+      #
+      # `prepare ... --activate` ghim version tường minh. Không dựa vào
+      # `packageManager` trong package.json — repo đã cố ý bỏ trường đó để không
+      # ép ai dùng pnpm. Không ghim thì corepack lấy bản pnpm mặc định của nó,
+      # và bản đó trôi theo version Node của runner.
+      - name: Bật pnpm cho CI
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.2.2 --activate
+          pnpm --version
+
+      # `--frozen-lockfile` là chốt chặn: `package.json` lệch `pnpm-lock.yaml`
+      # thì đỏ ở đây, thay vì được sửa âm thầm rồi commit vào lần sau.
+      #
+      # Đây là chỗ người dùng npm/yarn/bun hay vấp: thêm gói bằng `npm i` làm đổi
+      # `package.json` mà không đổi `pnpm-lock.yaml`. Cách xử: chạy một lần
+      # `pnpm install` rồi commit kèm lockfile đã cập nhật.
+      - name: Cài phụ thuộc
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        run: pnpm run lint
+
+# CHƯA CÓ bước `pnpm run build`: `next build` prerender các trang dashboard, mà
+# `src/server/db/client.ts` ném lỗi ngay lúc import nếu thiếu `DATABASE_URL`.
+# Thêm bước đó cần một database cho CI (Neon branch hoặc Postgres service) —
+# việc riêng, không gộp vào PR về lockfile.

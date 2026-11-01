@@ -114,6 +114,28 @@ const TIMEOUT_MS = {
 
 type Op = keyof typeof TIMEOUT_MS;
 
+// `chat` là con số DUY NHẤT chỉnh được bằng env, và đây là lý do.
+//
+// `POST /chat` của Brain KHÔNG trả ngay như tên "task bất đồng bộ" gợi ý:
+// `src/api/routes/chat.py` await `ensure_text_runtime()` TRƯỚC khi tạo
+// `task_id`, nên request đầu tiên sau mỗi lần Brain khởi động lại phải chờ
+// TRỌN 1–3 phút nạp model. 60s < 1–3 phút, nên câu đầu người dùng gõ luôn
+// timeout — và hiện ra y hệt "model chết". Gặp thật 23/08/2026.
+//
+// Cách chữa đúng là hâm nóng Brain lúc dựng (offline_training/bat_lai_brain.py
+// bên repo ANSER_AI làm việc đó). Biến này là lối thoát cho hai trường hợp
+// còn lại: Brain nguội mà không hâm được, và một lượt soát hoá đơn đi qua
+// vòng agentic nhiều lượt sinh chữ trên model 8B chạy tuần tự.
+//
+// Mặc định GIỮ NGUYÊN 60s: không đặt biến thì không ai thấy khác gì.
+function timeoutMs(op: Op): number {
+  if (op === "chat") {
+    const raw = Number(process.env.BRAIN_CHAT_TIMEOUT_MS);
+    if (Number.isFinite(raw) && raw > 0) return raw;
+  }
+  return TIMEOUT_MS[op];
+}
+
 export function isBrainConfigured(): boolean {
   return Boolean(process.env.BRAIN_URL);
 }
@@ -152,7 +174,7 @@ function transportError(error: unknown, url: string, path: string, op: Op): Brai
   if (error instanceof DOMException && error.name === "TimeoutError") {
     return new BrainError(
       "timeout",
-      `Brain không trả lời trong ${TIMEOUT_MS[op] / 1000}s (${path}).`,
+      `Brain không trả lời trong ${timeoutMs(op) / 1000}s (${path}).`,
     );
   }
   return new BrainError(
@@ -174,7 +196,7 @@ async function callBrain<T>(
       method: init.method,
       headers: authHeaders(init.identity),
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
-      signal: AbortSignal.timeout(TIMEOUT_MS[op]),
+      signal: AbortSignal.timeout(timeoutMs(op)),
       cache: "no-store",
     });
   } catch (error) {
@@ -322,7 +344,7 @@ export async function askBrain(
     throw new BrainError("bad_response", "Brain không trả về task_id cho /chat.");
   }
 
-  const deadline = Date.now() + TIMEOUT_MS.chat;
+  const deadline = Date.now() + timeoutMs("chat");
   for (let attempt = 0; ; attempt++) {
     await sleep(POLL_DELAYS_MS[Math.min(attempt, POLL_DELAYS_MS.length - 1)]);
 
@@ -348,7 +370,7 @@ export async function askBrain(
     if (Date.now() > deadline) {
       throw new BrainError(
         "timeout",
-        `Brain chưa trả lời sau ${TIMEOUT_MS.chat / 1000}s (task ${accepted.task_id}).`,
+        `Brain chưa trả lời sau ${timeoutMs("chat") / 1000}s (task ${accepted.task_id}).`,
       );
     }
   }
