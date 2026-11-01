@@ -11,7 +11,7 @@ export async function getSessionUser() {
 }
 
 // Chỉ trang Nhân sự dùng hàm này — các route khác trong app chưa kiểm tra quyền (xem mục 7
-// ARCHITECTURE.md, hạn chế đã biết).
+// docs/architecture/ARCHITECTURE.md, hạn chế đã biết).
 export async function requireAdmin() {
   const user = await getSessionUser();
   if (!user || user.role !== "admin") return undefined;
