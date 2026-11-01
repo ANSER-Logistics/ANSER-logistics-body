@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { EditIcon, PlusIcon, TrashIcon, XIcon } from "@/components/dashboard/icons";
+import NhapExcelModal from "@/components/dashboard/NhapExcelModal";
 import type { Product } from "@/server/store/products";
 import type { Warehouse } from "@/server/store/warehouses";
 
@@ -42,6 +43,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [nhapOpen, setNhapOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({
     name: "",
@@ -163,13 +165,24 @@ export default function ProductsPage() {
           <h1 className="text-2xl font-bold">Sản phẩm</h1>
           <p className="mt-1 text-sm text-zinc-400">Quản lý danh mục sản phẩm và tồn kho hiện tại.</p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition-transform hover:-translate-y-0.5"
-        >
-          <PlusIcon className="h-4 w-4" />
-          Thêm sản phẩm
-        </button>
+        <div className="flex gap-3">
+          {/* Nhập hàng loạt đứng CẠNH nút thêm tay, không nằm trong menu ba chấm:
+              161 mặt hàng gõ tay là chuyện không ai làm, nên đây mới là đường
+              chính khi dựng dữ liệu lần đầu. */}
+          <button
+            onClick={() => setNhapOpen(true)}
+            className="flex items-center gap-2 rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm font-semibold text-zinc-200 transition-colors hover:bg-white/[0.05]"
+          >
+            Nhập Excel
+          </button>
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition-transform hover:-translate-y-0.5"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Thêm sản phẩm
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -258,6 +271,14 @@ export default function ProductsPage() {
           </table>
         </div>
       </div>
+
+      {nhapOpen && (
+        <NhapExcelModal
+          dong={() => setNhapOpen(false)}
+          khoList={warehouses.map((w) => ({ id: w.id, name: w.name }))}
+          onXong={() => { void load(); }}
+        />
+      )}
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

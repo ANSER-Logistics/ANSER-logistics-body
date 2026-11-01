@@ -6,3 +6,34 @@
 
 node_modules/
 .DS_Store
+
+# ---------------------------------------------------------------------------
+# DÙNG TRÌNH QUẢN LÝ NÀO CŨNG ĐƯỢC — NHƯNG REPO CHỈ GIỮ MỘT LOCKFILE
+# ---------------------------------------------------------------------------
+# Không cấm ai dùng npm, yarn hay bun. Repo KHÔNG có `packageManager`, không có
+# `preinstall: only-allow` — cài bằng gì là việc của bạn, và hệ quả của việc đó
+# cũng vậy.
+#
+# Ranh giới nằm ở chỗ khác: cái gì được VÀO REPO. Lockfile là thứ chung, nên chỉ
+# có đúng một, và nó là `frontend/pnpm-lock.yaml`. Mấy dòng dưới giữ cho lockfile
+# bạn sinh ra ở máy mình ở lại máy mình.
+#
+# Vì sao đáng chặn: `frontend/package-lock.json` từng nằm trong repo cạnh
+# `frontend/pnpm-lock.yaml`. Hai file, hai trình quản lý, giải phụ thuộc khác
+# nhau — `npm ci` và `pnpm install --frozen-lockfile` dựng ra hai cây khác nhau
+# mà không ai báo. Next.js cũng đọc lockfile để đoán workspace root, nên nhiều
+# lockfile là đoán sai phạm vi file tracing lúc build.
+#
+# ĐIỀU DUY NHẤT CẢ ĐỘI PHẢI THEO: ai đổi dependency thì chạy một lần
+# `pnpm install` để làm mới `frontend/pnpm-lock.yaml` rồi commit kèm. Thêm gói
+# bằng `npm i` mà quên bước này thì `package.json` đổi còn lockfile không đổi, và
+# CI sẽ đỏ ở `--frozen-lockfile`. Đỏ ở đó là đúng, không phải lỗi CI.
+package-lock.json
+yarn.lock
+bun.lockb
+bun.lock
+
+# CỐ Ý KHÔNG chặn `pnpm-lock.yaml`. Lockfile pnpm đặt sai chỗ (gốc repo) cũng là
+# lỗi, nhưng chặn bằng .gitignore là GIẤU nó — và sẽ giấu luôn cả trường hợp hợp
+# lệ nếu sau này chuyển sang monorepo thật. Việc đó để .github/workflows/ci.yml
+# báo to, rồi người đọc quyết định.

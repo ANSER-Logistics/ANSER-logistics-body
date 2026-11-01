@@ -1,4 +1,4 @@
-import { boolean, check, integer, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, integer, numeric, pgTable, text, timestamp, uuid, uniqueIndex } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
@@ -15,16 +15,34 @@ export const warehouses = pgTable("warehouses", {
 });
 
 // M1
+// Removed `.unique()` from name, since this enforce exact uniqueness
+// The uniqueIndex is here to enforce case-insensitive uniqueness
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+  uniqueIndex("categories_name_case_insensitive_unique").on(sql`lower(${t.name})`),
+]);
 
 // M6
 export const suppliers = pgTable("suppliers", {
   id: uuid("id").primaryKey().defaultRandom(),
+  // Mã đối tác từ bản xuất MISA (`Mã nhà cung cấp`, dạng NCC00001).
+  //
+  // NULLABLE có chủ đích: bản ghi tạo tay trong ứng dụng không có mã, và ép mã
+  // cho chúng nghĩa là bịa ra một định danh không tồn tại bên sổ kế toán.
+  // Postgres cho phép nhiều NULL trong unique index, nên chúng cùng tồn tại.
+  //
+  // Đây là KHOÁ ĐỐI CHIẾU của bộ nhập Excel. Không có nó thì phải so bằng MST,
+  // mà bản xuất thật chỉ 42/43 nhà cung cấp có MST — và với khách hàng còn tệ
+  // hơn: 28/105 bỏ trống. Rơi xuống so theo tên là rơi vào chỗ "CÔNG TY ABC"
+  // và "Công ty ABC" thành hai bản ghi, âm thầm.
+  code: text("code"),
   name: text("name").notNull(),
+  // Công nợ đầu kỳ tại thời điểm bản xuất (VND). `numeric` chứ không `integer`:
+  // trần int32 là ~2,1 tỷ, mà công nợ một nhà cung cấp lớn vượt qua dễ dàng.
+  openingDebt: numeric("opening_debt", { precision: 18, scale: 2, mode: "number" }),
   // MST đáng tin hơn tên khi đối chiếu hoá đơn đầu vào: "Cty ABC" / "ABC" /
   // "abc trading" là ba chuỗi khác nhau nhưng cùng một MST.
   taxCode: text("tax_code"),
@@ -33,7 +51,11 @@ export const suppliers = pgTable("suppliers", {
   address: text("address"),
   note: text("note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+  // Không khoá phân biệt hoa thường: bản xuất MISA ghi "NCC00001", người gõ tay
+  // dễ ra "ncc00001". Cùng khuôn với `categories_name_case_insensitive_unique`.
+  uniqueIndex("suppliers_code_unique").on(sql`lower(${t.code})`),
+]);
 
 export const employees = pgTable("employees", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -90,6 +112,13 @@ export const products = pgTable("products", {
   // lãi lỗ sẽ coi mọi mặt hàng chưa nhập giá vốn là lãi 100% — con số sai mà
   // nghe rất xuôi tai, đúng loại lỗi không ai phát hiện tới lúc quyết toán.
   cost: integer("cost"),
+  // Cột `Giảm 2% thuế suất thuế GTGT` của bản xuất MISA.
+  //
+  // NULLABLE = CHƯA BIẾT, khác hẳn `false` = "đã tra, mặt hàng này KHÔNG được
+  // giảm". Cùng lý do với `cost` ở trên: mặc định `false` biến 161 mặt hàng
+  // chưa nhập thành 161 khẳng định sai — mà tool `vat-catalog-audit` (Nghị định
+  // 174/2025) đọc thẳng cờ này, nên khẳng định sai ở đây thành kết luận thuế sai.
+  isReducedVat: boolean("is_reduced_vat"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -144,14 +173,19 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
 
 export const customers = pgTable("customers", {
   id: uuid("id").primaryKey().defaultRandom(),
+  // Xem ghi chú ở `suppliers.code` — cùng lý do, cùng cách dùng.
+  code: text("code"),
   name: text("name").notNull(),
   phone: text("phone"),
   email: text("email"),
   address: text("address"),
   taxCode: text("tax_code"),
+  openingDebt: numeric("opening_debt", { precision: 18, scale: 2, mode: "number" }),
   note: text("note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+  uniqueIndex("customers_code_unique").on(sql`lower(${t.code})`),
+]);
 
 export const salesInvoices = pgTable("sales_invoices", {
   id: uuid("id").primaryKey().defaultRandom(),
