@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
+import { requireAdminUser, requireSessionUser } from "@/server/session";
 import { deleteProduct, getProductById, updateProduct } from "@/server/store/products";
 import { listWarehouses } from "@/server/store/warehouses";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireSessionUser();
+  if (response) return response;
+
   const { id } = await params;
   const product = await getProductById(id);
   if (!product) {
@@ -12,6 +16,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
 
@@ -72,6 +79,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { id } = await params;
   const existing = await getProductById(id);
   if (!existing) {

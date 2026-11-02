@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
+import { requireAdminUser } from "@/server/session";
 import { getRule } from "@/server/store/automation";
 import { isN8nApiConfigured, listN8nExecutions } from "@/server/n8nApi";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { id } = await params;
   const rule = await getRule(id);
   if (!rule) {

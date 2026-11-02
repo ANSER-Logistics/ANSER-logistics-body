@@ -49,9 +49,6 @@ export default function LoginPage() {
       brandSubtitle="Hệ thống quản lý thông minh giúp tổ chức công việc hiệu quả với cấu trúc phân lớp và các kênh kết nối mạnh mẽ."
       formTitle="Chào mừng trở lại"
       formSubtitle="Đăng nhập để tiếp tục vào không gian làm việc"
-      switchText="Chưa có tài khoản?"
-      switchLinkLabel="Đăng ký ngay"
-      switchHref="/register"
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {error && (

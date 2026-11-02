@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
+import { requireAdminUser, requireSessionUser } from "@/server/session";
 import { getCompanySettings, updateCompanySettings } from "@/server/store/settings";
 
 export async function GET() {
+  const { response } = await requireSessionUser();
+  if (response) return response;
+
   const settings = await getCompanySettings();
   return NextResponse.json({ settings });
 }
 
 export async function PATCH(request: Request) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const body = await request.json().catch(() => ({}));
 
   if (body.name !== undefined && !String(body.name).trim()) {

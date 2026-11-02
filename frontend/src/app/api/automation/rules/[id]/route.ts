@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
+import { requireAdminUser } from "@/server/session";
 import { activateN8nWorkflow, deactivateN8nWorkflow } from "@/server/n8nApi";
 import { deleteRule, getRule, updateRule } from "@/server/store/automation";
 import { listWarehouses } from "@/server/store/warehouses";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
 
@@ -58,6 +62,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { id } = await params;
   await deleteRule(id);
   return new NextResponse(null, { status: 204 });

@@ -29,8 +29,9 @@ nắm nhanh hiện trạng code mà không cần đọc lại toàn bộ lịch 
   sử ở trang Tự động hoá gọi thẳng n8n Public API (activate/deactivate/executions) — không chỉ
   đổi cờ trong DB của app. Xem mục 4.2.
 - **Nhân sự & phân quyền**: hồ sơ nhân viên (`employees`) tách riêng khỏi tài khoản đăng nhập
-  (`users`, có `role`: staff/manager/admin). Trang `/dashboard/staff` (chỉ admin) quản lý cả
-  hai. Xem mục 4.3.
+  (`users`, có `role`: staff/admin). Trang `/dashboard/staff` (chỉ admin) quản lý cả
+  hai. `src/proxy.ts` chặn `/dashboard/**` chưa đăng nhập; mọi route `/api/**` (trừ vài route
+  công khai) đòi `requireSessionUser()`/`requireAdminUser()`. Xem mục 4.3.
 
 > **Lịch sử**: project này *từng* tách thành 2 (`frontend` Next.js + `backend` Express),
 > giao tiếp qua REST API chéo-origin. Đã gộp lại thành 1 Next.js fullstack để đơn giản hóa
@@ -100,9 +101,9 @@ ANSER-web-v2/
 | `tsconfig.json` | Alias `@/*` → `./src/*`. |
 
 > **Breaking change cần biết**: bản Next.js này (16.2.12) đã **đổi tên `middleware.ts`
-> thành `proxy.ts`** (hàm export cũng đổi từ `middleware` thành `proxy`). Nếu sau này thêm
-> route-protection, phải dùng convention mới — xem
+> thành `proxy.ts`** (hàm export cũng đổi từ `middleware` thành `proxy`) — xem
 > `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`.
+> `src/proxy.ts` đã dùng convention này để chặn `/dashboard/**` chưa đăng nhập (mục 6.3).
 
 ## 4. Backend — Route Handlers & server
 
@@ -199,30 +200,35 @@ theo đúng triết lý đó thay vì thiết kế ban đầu từng yêu cầu 
 
 ### 4.3 Nhân sự & phân quyền
 
-3 cấp `role` trên `users` (`"staff" | "manager" | "admin"`, mặc định `"staff"`) — mô phỏng đơn giản
-theo `ROLE_RANK` của ANSER Flask (`core/security.py`), nhưng **chỉ trang Nhân sự
-(`/dashboard/staff`) thực sự kiểm tra role này** qua `requireAdmin()` (`src/server/session.ts`) —
-các trang/route khác (Sản phẩm, Kho, Bán hàng, Báo cáo, Tự động hoá, Cài đặt...) chưa chặn theo
-quyền, xem mục 7.
+**2 cấp** `role` trên `users` (`"staff" | "admin"`, mặc định `"staff"`) — đơn giản hơn
+`ROLE_RANK` 3 cấp ban đầu mô phỏng ANSER Flask: cấp `manager` bị bỏ (kế hoạch mới, chốt
+02/11/2026, xem `BLOCKERS.md` Q1) vì không có route nào từng kiểm tra riêng cấp đó.
+`requireSessionUser()`/`requireAdminUser()` (`src/server/session.ts`) được dùng ở đầu mọi
+Route Handler trong phạm vi (trừ vài route công khai hoặc dùng token riêng — xem mục 6.3 và
+7), không chỉ trang Nhân sự như trước.
 
 - `employees` (hồ sơ nhân sự: tên, chức vụ, liên hệ, kho phụ trách, ngày vào làm) tách riêng
   khỏi `users` (tài khoản đăng nhập) — đúng theo phát hiện khi khảo sát Flask: Flask không có
   hồ sơ nhân viên thật, chỉ có tài khoản + role. 1 nhân viên có thể không có tài khoản; 1 tài
   khoản có thể gắn `employeeId` tới 1 hồ sơ (tuỳ chọn, không bắt buộc).
 - `src/server/session.ts`: `getSessionUser()` (đọc cookie `anser_token`, `verifyToken()`, tra
-  `findUserById()`) — dùng chung bởi `/api/auth/me` và mọi route Nhân sự. `requireAdmin()` trả
-  `undefined` nếu chưa đăng nhập hoặc `role !== "admin"`.
+  `findUserById()`) — nền cho 3 hàm còn lại. `requireAdmin()` (dùng ở trang Nhân sự, trả
+  user/`undefined`) giữ nguyên để không phải sửa 4 route đã dùng sẵn. `requireSessionUser()`/
+  `requireAdminUser()` là bản mới trả thẳng `{ user }` hoặc `{ response }` (401/403 dựng sẵn) —
+  route chỉ cần `if (response) return response;`.
 - Trang Nhân sự tự hiện màn hình "Không có quyền truy cập" nếu `GET /api/employees` hoặc
   `GET /api/users` trả `403` (không dựa vào ẩn/hiện menu — kiểm tra thật ở API).
 - An toàn khi quản lý tài khoản (`/api/users/[id]`): không cho tự xoá chính mình; không cho hạ
   quyền hoặc xoá **admin cuối cùng** (đếm qua `countAdmins()`) — tránh khoá hết quyền quản trị.
-- **`role: "admin"` dành riêng cho đội dev ANSER** — `ASSIGNABLE_ROLES = ["staff", "manager"]`
+- **`role: "admin"` dành riêng cho đội dev ANSER** — `ASSIGNABLE_ROLES = ["staff"]`
   (`server/store/users.ts`) là tập role duy nhất `POST /api/users` và `PATCH /api/users/[id]` chấp
   nhận; đặt `role: "admin"` qua 2 route này đều bị từ chối (`400`). Khách hàng (dù đang đăng
-  nhập bằng tài khoản admin) chỉ tự quản lý nhân sự của họ ở 2 cấp Quản lý/Nhân viên — không tự
+  nhập bằng tài khoản admin) chỉ tự quản lý nhân sự của họ ở cấp Nhân viên — không tự
   tạo/thăng cấp thêm admin được từ UI. Tài khoản admin thứ 2 (nếu cần) phải tạo trực tiếp trong
-  DB, ngoài phạm vi UI này. UI (`/dashboard/staff/page.tsx`) hiện badge tĩnh "Admin" (không cho
-  sửa) cho tài khoản đã là admin, thay vì dropdown.
+  DB, ngoài phạm vi UI này. UI (`/dashboard/staff/page.tsx`) hiện badge tĩnh (không cho sửa)
+  cho cả 2 cấp — không còn dropdown đổi role vì chỉ còn 1 cấp gán được.
+- **Không còn tự đăng ký công khai** — `/register` và `POST /api/auth/register` đã bị xoá
+  (02/11/2026). Tài khoản nhân viên chỉ tạo được qua trang Nhân sự (admin).
 - `seedDemoUser()` luôn đảm bảo tài khoản demo có `role: "admin"` (kể cả khi đã seed từ trước
   version chưa có phân quyền — tự backfill lúc server khởi động) — đây là tài khoản chủ duy nhất
   để vào được trang Nhân sự lần đầu.
@@ -230,7 +236,10 @@ quyền, xem mục 7.
 | File | Vai trò |
 |---|---|
 | `src/server/auth.ts` | `JWT_SECRET` (đọc từ env, có fallback dev), `COOKIE_NAME = "anser_token"`, `signToken()`, `verifyToken()`, `authCookieOptions` (httpOnly, sameSite lax, maxAge 7 ngày **tính bằng giây** — khác Express `res.cookie` dùng ms). |
-| `src/server/session.ts` | `getSessionUser()`, `requireAdmin()` — xem mục 4.3. |
+| `src/server/session.ts` | `getSessionUser()`, `requireAdmin()`, `requireSessionUser()`, `requireAdminUser()` — xem mục 4.3. |
+| `src/server/internalAuth.ts` | `requireInternalToken()` — xác thực header `x-internal-token` cho `/api/n8n/internal/*`. |
+| `src/server/rateLimit.ts` | `checkLoginRateLimit()` — giới hạn thử đăng nhập trong bộ nhớ (1 instance). |
+| `src/proxy.ts` | Chặn `/dashboard/**` khi chưa có cookie `anser_token` hợp lệ — xem mục 6.3. |
 | `src/server/db/schema.ts` | Định nghĩa 11 bảng Drizzle: `warehouses`, `users` (có `role`, `employeeId`), `employees`, `products`, `inventoryTransactions`, `automationRules`, `customers`, `salesInvoices`, `salesInvoiceItems`, `companySettings` (singleton). |
 | `src/server/db/client.ts` | Singleton `db` (`drizzle(new Pool(...))`, driver `neon-serverless`). |
 | `drizzle.config.ts` | Config cho `drizzle-kit` (đọc `DATABASE_URL` từ `.env.local` qua `dotenv`). Script: `npm run db:generate` (sinh migration SQL từ schema), `npm run db:migrate` (áp dụng lên Neon). |
@@ -370,22 +379,25 @@ Next.js khởi động lần đầu — idempotent, chỉ chạy nếu bảng t�
 
 ### 6.3 Luồng truy cập `/dashboard`
 
-Hiện **chưa có kiểm tra đăng nhập** ở route này — bất kỳ ai gõ URL `/dashboard` đều
-vào được, kể cả chưa từng đăng nhập. Vẫn cần triển khai `proxy.ts` (xem mục 3) để
-chặn dựa trên sự tồn tại/hợp lệ của cookie `anser_token` trước khi vào route — nhưng
-gọn hơn nhiều so với lúc còn 2 project, vì `proxy.ts` chạy cùng process, đọc cookie
-trực tiếp, không cần gọi API riêng để xác minh.
+`src/proxy.ts` (matcher `/dashboard/:path*`) đọc cookie `anser_token` và `verifyToken()` —
+redirect `/login` nếu thiếu/không hợp lệ. Chỉ kiểm tra token hợp lệ (không tra DB) để nhẹ;
+kiểm tra quyền chi tiết theo role vẫn nằm ở từng Route Handler (`requireSessionUser()`/
+`requireAdminUser()`), không chỉ dựa vào proxy — xem mục 4.3.
 
 ## 7. Hạn chế hiện tại / việc cần làm tiếp
 
 | Vấn đề | Rủi ro | Hướng giải quyết |
 |---|---|---|
-| `JWT_SECRET` có fallback ngầm `"dev-secret-change-me"` | Nếu quên set env ở production, token dễ bị giả mạo | Bắt app crash ngay lúc build/start nếu thiếu `JWT_SECRET` ở production |
 | `generateProductCode()` đếm `count(*)+1` để sinh mã `SP-XXX` | Race condition nhỏ nếu 2 request tạo sản phẩm cùng lúc (chặn bởi unique constraint trên `code`, nhưng request thua sẽ lỗi thay vì tự retry) | Chuyển sang Postgres sequence riêng nếu tần suất tạo sản phẩm đồng thời tăng |
-Quy tắc tự động hoá giờ chỉ tạo được qua Templates (đã bỏ form "+ Thêm quy tắc" khỏi giao diện theo yêu cầu — khách hàng không tự tạo quy tắc tự do) | Không còn cách tạo rule tuỳ chỉnh (danh mục/kho riêng) từ UI | `POST /api/automation/rules` vẫn nhận đủ tham số — để dành cho tính năng AI tạo quy tắc sau này |
-| `/dashboard` không chặn truy cập | Ai cũng xem được dashboard mà không cần đăng nhập | Thêm `src/proxy.ts` (không phải `middleware.ts`!) kiểm tra cookie |
-| Không rate-limit `/api/auth/login` | Dễ bị brute-force mật khẩu | Thêm rate-limit trong Route Handler hoặc ở `proxy.ts` |
+| Quy tắc tự động hoá giờ chỉ tạo được qua Templates (đã bỏ form "+ Thêm quy tắc" khỏi giao diện theo yêu cầu — khách hàng không tự tạo quy tắc tự do) | Không còn cách tạo rule tuỳ chỉnh (danh mục/kho riêng) từ UI | `POST /api/automation/rules` vẫn nhận đủ tham số — để dành cho tính năng AI tạo quy tắc sau này |
 | Validate input thủ công (`if (!x)`) | Lọt dữ liệu sai định dạng (email, phone...) | Dùng `zod` để validate schema request body |
 | Không có error handler tập trung | Lỗi runtime không kiểm soát trong Route Handler trả về 500 mặc định của Next, không có format nhất quán | Viết helper `apiError()`/wrapper dùng chung cho mọi route |
 | Dashboard toàn dữ liệu mock hardcode | Không phản ánh dữ liệu thật | Xây API sản phẩm/kho/sản xuất thật (thêm route trong `api/`), thay dữ liệu mock bằng `fetch` |
-| `role` (admin/manager/staff) chỉ được trang Nhân sự kiểm tra (`requireAdmin()`) | Tài khoản "staff"/"manager" vẫn gọi được mọi route khác (Sản phẩm, Kho, Bán hàng, Báo cáo, Tự động hoá, Cài đặt) không bị chặn theo quyền | Thêm kiểm tra role phù hợp (hoặc tối thiểu "đã đăng nhập") vào từng route/`proxy.ts`, không chỉ Nhân sự |
+| Rate-limit đăng nhập chỉ trong bộ nhớ 1 process (`src/server/rateLimit.ts`) | Không đồng bộ nếu scale ngang nhiều instance — giới hạn thật cao hơn số đặt ra | Chuyển sang Redis (hoặc tương tự) nếu scale ngang |
+| Phân quyền theo phòng ban (Kế toán/Kinh doanh/Kho) chưa làm — chỉ 2 cấp staff/admin | Không phân biệt được ai được xem/sửa gì trong cùng cấp `staff` | Chờ xác nhận nhu cầu thật từ khách hàng (`BLOCKERS.md` Q1, đã đóng theo hướng "không cần") |
+
+**Đã xử lý (Việc 2 — Siết xác thực & phân quyền, 02/11/2026):** `JWT_SECRET` fallback dev giờ
+chặn boot production nếu thiếu (`src/instrumentation.ts`); `/dashboard` đã chặn qua
+`src/proxy.ts`; rate-limit `/api/auth/login` đã có; mọi route `/api/**` trong phạm vi đã kiểm
+tra `requireSessionUser()`/`requireAdminUser()` thay vì chỉ trang Nhân sự; `/api/n8n/internal/*`
+đổi sang token riêng (`requireInternalToken()`); bỏ tự đăng ký công khai. Xem `BLOCKERS.md` Q3.

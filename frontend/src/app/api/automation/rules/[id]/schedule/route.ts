@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminUser } from "@/server/session";
 import { getRule } from "@/server/store/automation";
 import { getN8nWorkflow, isN8nApiConfigured, updateN8nWorkflow, type N8nWorkflowNode } from "@/server/n8nApi";
 
@@ -16,6 +17,9 @@ function buildInterval(type: string, hour: number, day?: number) {
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
   const hour = Number(body.hour);

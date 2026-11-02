@@ -20,16 +20,15 @@ type AccountUser = {
   lastName: string;
   email: string;
   phone: string | null;
-  role: "staff" | "manager" | "admin";
+  role: "staff" | "admin";
   employeeId: string | null;
 };
 
 type Warehouse = { id: string; name: string };
 
-const ROLE_LABELS: Record<string, string> = { admin: "Admin", manager: "Quản lý", staff: "Nhân viên" };
+const ROLE_LABELS: Record<string, string> = { admin: "Admin", staff: "Nhân viên" };
 const ROLE_STYLES: Record<string, string> = {
   admin: "bg-red-500/15 text-red-400",
-  manager: "bg-violet-500/15 text-violet-400",
   staff: "bg-white/10 text-zinc-300",
 };
 
@@ -231,19 +230,6 @@ export default function StaffPage() {
     await load();
   }
 
-  async function handleRoleChange(id: string, role: string) {
-    const res = await fetch(`/api/users/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      alert(data.message ?? "Không đổi được vai trò.");
-    }
-    await load();
-  }
-
   async function handleDeleteAccount(id: string) {
     if (!confirm("Xoá tài khoản này?")) return;
     const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
@@ -393,14 +379,9 @@ export default function StaffPage() {
                           {ROLE_LABELS.admin}
                         </span>
                       ) : (
-                        <select
-                          value={acc.role}
-                          onChange={(e) => handleRoleChange(acc.id, e.target.value)}
-                          className={`rounded-lg border-0 px-2.5 py-1 text-xs font-semibold outline-none ${ROLE_STYLES[acc.role]}`}
-                        >
-                          <option value="staff">{ROLE_LABELS.staff}</option>
-                          <option value="manager">{ROLE_LABELS.manager}</option>
-                        </select>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${ROLE_STYLES.staff}`}>
+                          {ROLE_LABELS.staff}
+                        </span>
                       )}
                     </td>
                     <td className="px-5 py-3">
@@ -598,18 +579,7 @@ export default function StaffPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Vai trò</label>
-                  <select
-                    value={accountForm.role}
-                    onChange={(e) => setAccountForm((f) => ({ ...f, role: e.target.value }))}
-                    className="w-full rounded-xl border border-white/[0.08] bg-black/30 px-3 py-2.5 text-sm outline-none focus:border-sky-500"
-                  >
-                    <option value="staff">{ROLE_LABELS.staff}</option>
-                    <option value="manager">{ROLE_LABELS.manager}</option>
-                  </select>
-                </div>
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Gắn với nhân viên (tuỳ chọn)</label>
                   <select

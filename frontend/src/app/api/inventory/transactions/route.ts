@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { requireSessionUser } from "@/server/session";
 import { createTransaction, InsufficientStockError, listTransactions, TransactionType } from "@/server/store/inventory";
 
 export async function GET(request: Request) {
+  const { response } = await requireSessionUser();
+  if (response) return response;
+
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") as TransactionType | null;
   const limitParam = searchParams.get("limit");
@@ -17,6 +21,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const { response } = await requireSessionUser();
+  if (response) return response;
+
   const { productId, type, quantity, unitCost, counterparty, note } = await request
     .json()
     .catch(() => ({}));

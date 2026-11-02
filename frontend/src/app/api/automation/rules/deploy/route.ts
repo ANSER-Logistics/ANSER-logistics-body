@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { requireAdminUser } from "@/server/session";
 import { createRule, listRules, updateRule } from "@/server/store/automation";
 import {
   activateN8nWorkflow,
@@ -38,6 +39,9 @@ const TEMPLATE_META: Record<string, { name: string; file: string; thresholdQty?:
 // tay Workflow ID — tự tìm workflow đã tồn tại trong n8n theo tên, không có thì tự tạo qua
 // n8n API từ file template, rồi lưu ID vào rule của app luôn.
 export async function POST(request: Request) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { type } = await request.json().catch(() => ({}));
   const meta = TEMPLATE_META[type];
   if (!meta) {

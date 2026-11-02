@@ -37,9 +37,7 @@ coi là yêu cầu đã xác nhận).
 
 | # | Việc | Cần ai xác nhận | Trong lúc chờ, code làm gì | Nguồn |
 |---|---|---|---|---|
-| Q1 | **Phân quyền theo phòng ban** (Kế toán / Kinh doanh / Kho & Vận tải) | Chú Quyết: Hoàng Phát (3–5 người kiêm nhiệm) có cần không? | Giữ 3 quyền `staff` / `manager` / `admin` | [H11/10] |
 | Q2 | **Ai được dùng chatbot AI**, rủi ro lộ tin nhắn của chủ | Chú Quyết + đội Brain | Chưa giới hạn | [PB] §6 |
-| Q3 | Nhiều API route **chưa kiểm tra đăng nhập**, `/dashboard` chưa chặn khách | Trưởng nhóm: lên lịch làm | Hạn chế đã biết; route mới phải tự kiểm tra | `ARCHITECTURE.md` §7 |
 
 ## 4. Dữ liệu thật
 
@@ -69,7 +67,9 @@ coi là yêu cầu đã xác nhận).
 | — | `getSalesReportForPeriod` cắt số lẻ (`::integer`) | Bỏ cast | 21/09/2026 (`16ae83b`) |
 | — | Nhiễu line ending CRLF/LF | Thêm `.gitattributes` (còn sót `brain.ts`, xem K1) | 21/09/2026 (`16ae83b`) |
 | — | `products.price` khi có nhiều mức giá | **Bỏ cột**, giá lấy từ `product_prices`; giá cũ không chuyển sang | 22/10/2026 |
-| — | Sửa giá trên dòng hoá đơn khác giá của mức giá | Chỉ `admin`/`manager`. Mức giá chưa có giá → `staff` không bán được dòng đó, `admin`/`manager` nhập tay được. Không bao giờ bán 0₫ ngầm | 22/10/2026 |
+| — | Sửa giá trên dòng hoá đơn khác giá của mức giá | Chỉ `admin`. Mức giá chưa có giá → `staff` không bán được dòng đó, `admin` nhập tay được. Không bao giờ bán 0₫ ngầm | 22/10/2026 |
 | — | Ai sửa bảng giá | Chỉ `admin`, trong form sửa sản phẩm; mọi thay đổi ghi lịch sử | 22/10/2026 |
 | D3 | `frontend/import-real-data.ts` (dựng lại sổ kho từ N-X-T) còn cần không? | **Xoá.** Nhập Excel đã thay việc đưa hàng hoá + tồn kho vào hệ thống; không cần dựng lại lịch sử nhập/xuất trước ngày dùng phần mềm. Nhập Excel nay ghi một dòng `adjustment` vào sổ kho cho mỗi thay đổi tồn, giữ đúng `stock = SUM(quantity)`. `allows_zero_value` và các cặp `linked_product_id` (mới biết 2 cặp) đặt tay khi cần. Lấy lại script được từ lịch sử git (`5e9b251`) | 26/10/2026 |
 | D4 | Thiếu file N-X-T kho KHUYẾN MẠI | Không còn cần — chỉ script N-X-T (đã xoá) dùng file này | 26/10/2026 |
+| Q1 | Phân quyền theo phòng ban | **Bỏ cấp `manager`** — chỉ còn 2 cấp `staff`/`admin` (kế hoạch mới, chốt với trưởng nhóm). Phân quyền theo phòng ban (Kế toán/Kinh doanh/Kho) vẫn ngoài phạm vi | 02/11/2026 |
+| Q3 | Route API chưa kiểm tra đăng nhập, `/dashboard` chưa chặn khách | **Siết toàn bộ** (Việc 2 — Backend_Task_Board.md): `src/proxy.ts` chặn `/dashboard/**` chưa đăng nhập; mọi route `/api/**` (trừ `health`/`auth/login`/`auth/logout`) đòi `requireSessionUser`/`requireAdminUser`; `/api/n8n/internal/*` đổi sang token riêng `N8N_INTERNAL_TOKEN`; bỏ tự đăng ký công khai (`/register`); chặn boot production thiếu `JWT_SECRET`; thêm rate-limit `/api/auth/login` | 02/11/2026 |
