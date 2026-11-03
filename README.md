@@ -18,7 +18,10 @@ npm install
 npm run dev         # http://localhost:3000 (UI + API on the same origin)
 ```
 
-Copy `frontend/.env.local.example` to `frontend/.env.local` and set `JWT_SECRET`.
+Copy `frontend/.env.example` to `frontend/.env.local` and fill in `DATABASE_URL` and
+`JWT_SECRET`.
+
+New to the project? Start with [`docs/onboarding/Onboarding_Playbook.md`](docs/onboarding/Onboarding_Playbook.md).
 
 ## Package managers and the lockfile
 
@@ -48,6 +51,3 @@ sort out.
 - The Flask apps (`ban-le`, `gateway`, `san-xuat` in `ANSER_ban-le_gateway/`) are a separate,
   unrelated codebase — this project only borrows product ideas/data model concepts from ANSER,
   it does not call into or depend on their code.
-- User data is currently stored in-memory (`frontend/src/lib/store/users.ts`) — resets on
-  every server restart. Will move to Neon Postgres later; the store's exported functions are
-  written so only that one file needs to change.
