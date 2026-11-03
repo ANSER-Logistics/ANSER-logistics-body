@@ -31,77 +31,69 @@ nắm nhanh hiện trạng code mà không cần đọc lại toàn bộ lịch 
 - **Nhân sự & phân quyền**: hồ sơ nhân viên (`employees`) tách riêng khỏi tài khoản đăng nhập
   (`users`, có `role`: staff/manager/admin). Trang `/dashboard/staff` (chỉ admin) quản lý cả
   hai. Xem mục 4.3.
+- **AI (Brain)**: dịch vụ Python riêng (repo `PCBoiz/ANSER_AI`), gọi qua HTTP từ
+  `src/server/brain.ts`. Các route `/api/ai/*` gồm chat, kho tri thức, đọc hoá đơn cước, kiểm sổ
+  kho, soi công nợ, so hai kỳ xuất tồn, đối chiếu thuế GTGT và báo cáo lãi lỗ. Brain không nối
+  thẳng vào Postgres: Body lấy dữ liệu, đưa sang đúng phần cần (`brainReport.ts`), và mọi con
+  số tiền do code tính, không do model. Xem `STACK_DECISIONS.md`.
+- **Nhập từ MISA**: `POST /api/import` đọc ba bản xuất danh mục (hàng hoá, khách hàng, nhà
+  cung cấp) bằng `src/server/import/`, chạy được cả khi Brain tắt. Hai bước: xem trước kế
+  hoạch, rồi xác nhận mới ghi.
 
 > **Lịch sử**: project này *từng* tách thành 2 (`frontend` Next.js + `backend` Express),
 > giao tiếp qua REST API chéo-origin. Đã gộp lại thành 1 Next.js fullstack để đơn giản hóa
 > deploy và bỏ hoàn toàn phần phức tạp CORS/cookie chéo-origin. `backend/` đã bị xoá khỏi
 > repo (còn trong lịch sử git nếu cần tham khảo).
 
-> **Lưu ý quan trọng khi deploy lên Vercel**: Route Handlers chạy dưới dạng serverless
-> function — mỗi request có thể rơi vào instance khác nhau, nên **user lưu trong RAM sẽ
-> không đồng bộ/mất ngay cả khi server "chưa restart"** theo nghĩa thông thường. Nếu tự
-> host Next.js dạng 1 process bền (VPS/Docker, `next start`) thì RAM store vẫn hoạt động
-> ổn định như hiện tại. → Việc nối Neon Postgres nên làm trước khi deploy thật.
+> **Deploy**: mọi dữ liệu nằm trong Neon Postgres, không giữ gì trong RAM của process, nên
+> chạy serverless (Vercel) hay 1 process bền (`next start`) đều được. Cần `DATABASE_URL`
+> và `JWT_SECRET`; `ENABLE_STARTUP_SEED` chỉ bật ở máy dev (xem mục 4.3).
 
 ## 2. Cấu trúc thư mục đầy đủ
 
 ```
-ANSER-web-v2/
+ANSER-logistics/
+├── AGENTS.md, CLAUDE.md           # hướng dẫn cho AI agent
+├── docs/                          # toàn bộ tài liệu
 └── frontend/
-    ├── .env.local                 # biến môi trường thật (không commit)
-    ├── .env.local.example
-    ├── .gitignore
-    ├── next.config.ts
-    ├── postcss.config.mjs
-    ├── eslint.config.mjs
-    ├── package.json
-    ├── tsconfig.json
+    ├── .env.example               # mẫu biến môi trường (bản thật là .env.local, không commit)
+    ├── drizzle.config.ts, vitest.config.mts, next.config.ts, ...
+    ├── docker-compose.yml         # n8n + MailHog chạy local
+    ├── n8n-workflows/             # 5 workflow JSON import được + README
+    ├── scripts/
+    ├── test/                      # test, phản chiếu src/ (xem AGENTS.md); test/db.ts = PGlite
     └── src/
+        ├── instrumentation.ts     # chạy lúc server khởi động, chỉ seed khi ENABLE_STARTUP_SEED=true
         ├── app/
-        │   ├── layout.tsx         # root layout (font, <html>/<body>, metadata)
-        │   ├── globals.css        # import Tailwind + theme vars + keyframes
-        │   ├── page.tsx           # route "/"          — landing page
-        │   ├── login/page.tsx     # route "/login"     — form đăng nhập
-        │   ├── register/page.tsx  # route "/register"  — form đăng ký
-        │   ├── dashboard/
-        │   │   ├── layout.tsx     # route "/dashboard/*" — khung sidebar+topbar
-        │   │   └── page.tsx       # route "/dashboard"   — nội dung dashboard (mock data)
-        │   └── api/
-        │       ├── health/route.ts          # GET  /api/health
-        │       └── auth/
-        │           ├── register/route.ts    # POST /api/auth/register
-        │           ├── login/route.ts       # POST /api/auth/login
-        │           └── logout/route.ts      # POST /api/auth/logout
+        │   ├── layout.tsx, globals.css
+        │   ├── page.tsx, login/, register/     # landing, đăng nhập, đăng ký
+        │   ├── dashboard/                      # layout + 12 trang (xem mục 5)
+        │   └── api/**/route.ts                 # Route Handlers, chỉ lo HTTP (xem mục 4)
         ├── server/
-        │   ├── auth.ts            # JWT_SECRET, ký token, cấu hình cookie
-        │   └── store/
-        │       └── users.ts       # "database" tạm trong RAM
-        └── components/
-            ├── AmbientOrbs.tsx        # nền quả cầu neon trôi nổi
-            ├── AuthShell.tsx          # khung 2 cột dùng chung login/register
-            ├── FloatingInput.tsx      # input với floating label
-            └── dashboard/
-                ├── Sidebar.tsx
-                ├── Topbar.tsx
-                ├── StatCard.tsx
-                ├── BarChartCard.tsx
-                └── icons.tsx          # icon SVG viết tay
+        │   ├── auth.ts, session.ts             # JWT, cookie, getSessionUser, requireAdmin
+        │   ├── db/                             # schema.ts, client.ts, migrations/ (sinh tự động)
+        │   ├── store/*.ts                      # luật nghiệp vụ + SQL, không import kiểu HTTP
+        │   ├── import/                         # nhập Excel MISA (doc-excel.ts đọc, ap-dung.ts lập kế hoạch/ghi)
+        │   ├── brain.ts, brainReport.ts, uploadGuard.ts   # gọi Brain AI
+        │   ├── n8n.ts, n8nApi.ts               # webhook và REST của n8n
+        │   └── reports.ts
+        └── components/                         # AmbientOrbs, AuthShell, FloatingInput, dashboard/*
 ```
 
 ## 3. File cấu hình gốc
 
 | File | Vai trò |
 |---|---|
-| `package.json` | Script `dev`/`build`/`start`/`lint`. Deps: `next`, `react`, `react-dom`, `bcryptjs`, `jsonwebtoken`. |
+| `package.json` | Script `dev`/`build`/`start`/`lint`/`format`/`test`/`test:coverage`/`db:generate`/`db:migrate`. Deps chính: `next`, `react`, `drizzle-orm`, `@neondatabase/serverless`, `bcryptjs`, `jsonwebtoken`, `exceljs`. |
 | `next.config.ts` | Cấu hình Next.js — hiện **để trống**, chưa custom gì. |
 | `postcss.config.mjs` | Khai báo plugin `@tailwindcss/postcss` (cách Tailwind v4 hook vào build CSS). |
 | `eslint.config.mjs` | Flat config ESLint, kế thừa preset `eslint-config-next` (core-web-vitals + typescript). |
-| `.env.local` / `.env.local.example` | Biến `JWT_SECRET` — khoá ký JWT. Không còn `NEXT_PUBLIC_API_URL` (không cần nữa vì cùng origin). |
+| `.env.local` / `.env.example` | Copy `.env.example` thành `.env.local`. Bắt buộc: `DATABASE_URL`, `JWT_SECRET`. Tuỳ chọn: `ENABLE_STARTUP_SEED`, `BRAIN_*`, `N8N_*`. Không còn `NEXT_PUBLIC_API_URL` (cùng origin). |
 | `tsconfig.json` | Alias `@/*` → `./src/*`. |
 
 > **Breaking change cần biết**: bản Next.js này (16.2.12) đã **đổi tên `middleware.ts`
-> thành `proxy.ts`** (hàm export cũng đổi từ `middleware` thành `proxy`). Nếu sau này thêm
-> route-protection, phải dùng convention mới — xem
+> thành `proxy.ts`** (hàm export cũng đổi từ `middleware` thành `proxy`). Hiện chưa có
+> `src/proxy.ts`. Khi thêm route-protection, phải dùng convention mới — xem
 > `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/proxy.md`.
 
 ## 4. Backend — Route Handlers & server
@@ -223,18 +215,24 @@ quyền, xem mục 7.
   tạo/thăng cấp thêm admin được từ UI. Tài khoản admin thứ 2 (nếu cần) phải tạo trực tiếp trong
   DB, ngoài phạm vi UI này. UI (`/dashboard/staff/page.tsx`) hiện badge tĩnh "Admin" (không cho
   sửa) cho tài khoản đã là admin, thay vì dropdown.
-- `seedDemoUser()` luôn đảm bảo tài khoản demo có `role: "admin"` (kể cả khi đã seed từ trước
-  version chưa có phân quyền — tự backfill lúc server khởi động) — đây là tài khoản chủ duy nhất
-  để vào được trang Nhân sự lần đầu.
+- `seedDemoUser()` đảm bảo tài khoản demo có `role: "admin"` — đây là tài khoản chủ duy nhất
+  để vào được trang Nhân sự lần đầu. Nó chạy trong `runStartupSeed()`, và `instrumentation.ts`
+  chỉ gọi hàm đó khi `ENABLE_STARTUP_SEED=true`. Production để tắt: seed tạo dữ liệu mẫu và một
+  tài khoản admin có mật khẩu công khai, nên không được chạy trên database của khách.
 
 | File | Vai trò |
 |---|---|
 | `src/server/auth.ts` | `JWT_SECRET` (đọc từ env, có fallback dev), `COOKIE_NAME = "anser_token"`, `signToken()`, `verifyToken()`, `authCookieOptions` (httpOnly, sameSite lax, maxAge 7 ngày **tính bằng giây** — khác Express `res.cookie` dùng ms). |
 | `src/server/session.ts` | `getSessionUser()`, `requireAdmin()` — xem mục 4.3. |
-| `src/server/db/schema.ts` | Định nghĩa 11 bảng Drizzle: `warehouses`, `users` (có `role`, `employeeId`), `employees`, `products`, `inventoryTransactions`, `automationRules`, `customers`, `salesInvoices`, `salesInvoiceItems`, `companySettings` (singleton). |
+| `src/server/db/schema.ts` | Định nghĩa 13 bảng Drizzle: `warehouses`, `categories`, `suppliers`, `employees`, `users` (có `role`, `employeeId`), `products`, `inventoryTransactions`, `customers`, `salesInvoices`, `salesInvoiceItems`, `invoicePayments`, `companySettings` (singleton), `automationRules`. Comment trong file là nguồn đúng về lý do từng bảng/cột. |
 | `src/server/db/client.ts` | Singleton `db` (`drizzle(new Pool(...))`, driver `neon-serverless`). |
-| `drizzle.config.ts` | Config cho `drizzle-kit` (đọc `DATABASE_URL` từ `.env.local` qua `dotenv`). Script: `npm run db:generate` (sinh migration SQL từ schema), `npm run db:migrate` (áp dụng lên Neon). |
-| `src/instrumentation.ts` | Hook chuẩn của Next.js, chạy 1 lần lúc server khởi động — gọi `seedDemoUser()`, `ensureDefaultWarehouseAndBackfill()`, `seedInitialData()`, rồi `ensureCompanySettingsRow()` (đều idempotent). |
+| `drizzle.config.ts` | Config cho `drizzle-kit` (đọc `DATABASE_URL` từ `.env.local` qua `dotenv`). Script: `pnpm db:generate` (sinh migration SQL từ schema), `pnpm db:migrate` (áp dụng lên database; không chạy trên nhánh Neon `production`). |
+| `src/instrumentation.ts` | Hook chuẩn của Next.js, chạy 1 lần lúc server khởi động. Chỉ khi `ENABLE_STARTUP_SEED=true` mới gọi `runStartupSeed()` (`store/seed.ts`): `seedDemoUser()`, `ensureDefaultWarehouseAndBackfill()`, `seedCategories()`, `seedInitialData()`, `ensureCompanySettingsRow()`, mỗi bước tự kiểm bảng của mình nên chạy lại không hại. |
+| `src/server/brain.ts`, `brainReport.ts`, `uploadGuard.ts` | Client gọi Brain AI (`BRAIN_URL`, `BRAIN_API_TOKEN`); `brainReport.ts` đổi dữ liệu bán hàng trong DB thành đúng dạng Brain cần; `uploadGuard.ts` chặn file `.xlsx` quá cỡ trước khi gửi sang Brain. |
+| `src/server/import/` | Nhập danh mục MISA: `doc-excel.ts` đọc 3 bản xuất (hàng hoá, khách hàng, nhà cung cấp) mà không ghi gì; `ap-dung.ts` lập kế hoạch (`lapKeHoach`) rồi ghi (`apDung`) sau khi người dùng xác nhận. |
+| `src/server/store/categories.ts` | `listCategories()`, `getCategoryById()`, `getOrCreateCategoryByName()` (chuẩn hoá tên: Unicode NFC, bỏ khoảng trắng thừa, để "Dầu nhớt" và "dầu nhớt" không thành hai danh mục), `seedCategories()`. |
+| `src/server/store/inventoryCost.ts`, `inventoryCostMatch.ts`, `inventoryCostImport.ts` | Giá vốn bình quân gia quyền (`weightedAverageCost`, trả `null` khi chưa đủ cơ sở, không quy về 0), khớp dòng giá vốn từ file với danh mục hàng, và nạp vào `products.cost` (luôn xem trước, mặc định chỉ điền chỗ đang trống). Hai file đầu thuần, không đụng DB. |
+| `src/server/store/seed.ts` | Dữ liệu mẫu cho máy dev, xem `instrumentation.ts`. |
 | `src/server/store/warehouses.ts` | `listWarehouses()`, `createWarehouse(name)` (check trùng tên), `updateWarehouse(id, {notificationEmail})`. |
 | `src/server/store/settings.ts` | `ensureCompanySettingsRow()` (tạo dòng đầu tiên nếu DB trống, lấy dòng đầu nếu đã có — singleton), `getCompanySettings()`, `updateCompanySettings(patch)`. Dùng cho trang **Cài đặt** (`/dashboard/settings`) — tên/địa chỉ/SĐT/email/mã số thuế/đơn vị tiền tệ doanh nghiệp. |
 | `src/server/store/employees.ts` | CRUD `employees` — xem mục 4.3. |
@@ -262,6 +260,11 @@ quyền, xem mục 7.
 | `src/app/api/sales/invoices/route.ts` | `GET` danh sách hoá đơn, `POST` tạo hoá đơn bán hàng (`customerId` tuỳ chọn; `409` nếu tồn kho không đủ hoặc sản phẩm khác kho). |
 | `src/app/api/reports/summary/route.ts` | `GET` bản JSON của `getReportSummary()` (trang Báo cáo/Dashboard tự import thẳng hàm này vì là Server Component, route này dành cho việc gọi lại từ client nếu cần). |
 | `src/app/api/settings/company/route.ts` | `GET`/`PATCH` thông tin doanh nghiệp (singleton, xem `server/store/settings.ts`). |
+| `src/app/api/ai/*/route.ts` | 9 route cầu nối sang Brain, đều kiểm đăng nhập: `chat`, `documents` (kho tri thức), `freight-invoice`, `inventory-audit`, `partner-audit`, `period-diff`, `inventory-cost` (nạp giá vốn; `dryRun` mặc định `true`), `vat-catalog`, `report` (GET, lãi lỗ theo kỳ), cộng `health` (luôn trả 200 kèm trạng thái Brain). |
+| `src/app/api/import/route.ts` | `POST` nhập danh mục MISA, một endpoint hai chế độ: `xacNhan != "1"` chỉ trả kế hoạch, `xacNhan == "1"` đọc lại file rồi ghi. Giới hạn 5MB. |
+| `src/app/api/inventory/reconcile/route.ts` | `GET` đối chiếu `products.stock` với `SUM(inventory_transactions.quantity)` từng sản phẩm. |
+| `src/app/api/categories/route.ts`, `src/app/api/n8n/status/route.ts` | `GET` danh mục; `GET` trạng thái kết nối n8n (`/healthz`) cho pill trên trang Tự động hoá. |
+| `src/app/api/automation/rules/[id]/run/route.ts`, `.../schedule/route.ts` | `POST` chạy rule (đảm bảo Active; loại webhook thì gọi webhook ngay 1 lần); `PATCH` đổi giờ/ngày chạy báo cáo bằng cách sửa node Schedule Trigger trong n8n. |
 | `src/app/api/auth/me/route.ts` | `GET` thông tin tài khoản đang đăng nhập (đọc cookie qua `getSessionUser()`), `PATCH` sửa tên/SĐT và/hoặc đổi mật khẩu (yêu cầu đúng `currentPassword`). |
 | `src/app/api/employees/route.ts`, `.../[id]/route.ts` | CRUD hồ sơ nhân viên (tên, chức vụ, liên hệ, kho phụ trách, ngày vào làm) — chỉ admin (`requireAdmin()`). |
 | `src/app/api/users/route.ts`, `.../[id]/route.ts` | `GET`/`POST` tài khoản đăng nhập (có thể gắn `employeeId`, gán `role`), `PATCH` đổi role, `DELETE` xoá tài khoản — chỉ admin. Chặn hạ quyền/xoá admin cuối cùng (`countAdmins()`) và tự xoá chính mình. |
@@ -297,7 +300,12 @@ trong Next.js hỗ trợ đọc/ghi cookie trực tiếp qua `await cookies()` �
 | `dashboard/sales/page.tsx` | `/dashboard/sales` | Client Component — tạo hoá đơn bán hàng (chọn khách hàng đã lưu hoặc khách vãng lai, nhiều dòng sản phẩm, tự tính tổng), danh sách hoá đơn gần đây. Gọi `/api/sales/invoices`, `/api/customers`. |
 | `dashboard/customers/page.tsx` | `/dashboard/customers` | Client Component — danh sách khách hàng (số đơn hàng, tổng chi tiêu, badge Mới/Cũ tự động), tìm kiếm, modal thêm/sửa, xoá. Gọi `/api/customers*`. Thay cho mục "Sản xuất" cũ trên Sidebar (nằm ngoài phạm vi — xem `d:\ASDEMO\KIEN_TRUC_3_APP.md`). |
 | `dashboard/reports/page.tsx` | `/dashboard/reports` | Server Component — **báo cáo doanh thu**: gọi thẳng `getReportSummary()`, hiển thị tổng doanh thu, doanh thu 7 ngày qua theo biểu đồ, doanh thu theo danh mục, hoá đơn gần đây. |
-| `dashboard/automation/page.tsx` | `/dashboard/automation` | Client Component — CRUD quy tắc cảnh báo tồn kho thấp + danh sách cảnh báo đang kích hoạt. |
+| `dashboard/automation/page.tsx` | `/dashboard/automation` | Client Component — quy tắc tự động hoá tạo từ Templates, nút Chạy/Dừng/Lịch sử/đổi giờ gọi n8n thật, danh sách cảnh báo đang kích hoạt, trạng thái kết nối n8n. |
+| `dashboard/cashflow/page.tsx` | `/dashboard/cashflow` | Server Component bọc `CashHealthPanel` — quy tiền nằm trong công nợ phải thu, hàng tồn và công nợ phải trả về cùng đơn vị số ngày. |
+| `dashboard/audit/page.tsx` | `/dashboard/audit` | Server Component bọc `BookAuditPanel` — so hai bản xuất cùng kỳ để tìm chứng từ bị sửa hồi tố, và đối chiếu thuế suất GTGT từng mã hàng. |
+| `dashboard/documents/page.tsx` | `/dashboard/documents` | Client Component — nạp tài liệu nội bộ vào kho tri thức của Brain và đọc ảnh hoá đơn cước; hiện cảnh báo lúc nạp và cờ "không kiểm được" của hoá đơn. |
+| `dashboard/staff/page.tsx` | `/dashboard/staff` | Client Component — quản lý nhân sự và tài khoản, chỉ admin (mục 4.3). |
+| `dashboard/settings/page.tsx` | `/dashboard/settings` | Client Component — thông tin doanh nghiệp (`/api/settings/company`). |
 
 ### `src/components/`
 
@@ -306,8 +314,12 @@ trong Next.js hỗ trợ đọc/ghi cookie trực tiếp qua `await cookies()` �
 | `AmbientOrbs.tsx` | 3 quả cầu mờ blur, animate trôi nổi. |
 | `AuthShell.tsx` | Khung 2 cột dùng chung login+register. |
 | `FloatingInput.tsx` | `<input>` + `<label>` dùng Tailwind `peer`. |
-| `dashboard/Sidebar.tsx` | Menu trái: logo + 6 mục (chỉ "Trang chủ" có link thật). |
-| `dashboard/Topbar.tsx` | Tìm kiếm, chuông thông báo, avatar (hardcode "Sơn Dương"). |
+| `dashboard/Sidebar.tsx` | Menu trái: logo + 12 mục, đều có link thật. |
+| `dashboard/Topbar.tsx` | Tìm kiếm, chuông thông báo, avatar và đăng xuất; lấy tài khoản từ `/api/auth/me`, sửa hồ sơ qua `ProfileModal`. |
+| `dashboard/BrainChat.tsx` | Nút nổi hỏi đáp với Brain, có trong mọi trang `/dashboard` (gắn ở `dashboard/layout.tsx`). |
+| `dashboard/CashHealthPanel.tsx`, `BookAuditPanel.tsx`, `InventoryAuditPanel.tsx`, `BrainProfitPanel.tsx`, `FindingList.tsx` | Panel hiển thị kết quả từ các route `/api/ai/*`. |
+| `dashboard/NhapExcelModal.tsx` | Modal nhập danh mục MISA: xem trước kế hoạch rồi xác nhận. |
+| `dashboard/WarehouseSwitcher.tsx` | Bộ chọn kho multi-select của trang Quản lý kho (mục 4.1). |
 | `dashboard/StatCard.tsx` | Thẻ KPI. |
 | `dashboard/BarChartCard.tsx` | Biểu đồ cột vẽ bằng CSS. |
 | `dashboard/icons.tsx` | Icon SVG viết tay. |
@@ -321,7 +333,7 @@ sequenceDiagram
     participant U as Người dùng
     participant F as /register (client component)
     participant R as Route Handler /api/auth/register
-    participant S as server/store/users.ts (RAM)
+    participant S as server/store/users.ts (Postgres)
 
     U->>F: Điền form, bấm "Tạo tài khoản"
     F->>R: fetch POST /api/auth/register {firstName, lastName, email, phone, password}
@@ -346,7 +358,7 @@ sequenceDiagram
     participant U as Người dùng
     participant F as /login (client component)
     participant R as Route Handler /api/auth/login
-    participant S as server/store/users.ts (RAM)
+    participant S as server/store/users.ts (Postgres)
 
     opt Bấm nút "Tài khoản demo"
         F->>F: setEmail/demo@anser.dev, setPassword/demo1234 (chỉ điền, không tự submit)
@@ -382,10 +394,11 @@ trực tiếp, không cần gọi API riêng để xác minh.
 |---|---|---|
 | `JWT_SECRET` có fallback ngầm `"dev-secret-change-me"` | Nếu quên set env ở production, token dễ bị giả mạo | Bắt app crash ngay lúc build/start nếu thiếu `JWT_SECRET` ở production |
 | `generateProductCode()` đếm `count(*)+1` để sinh mã `SP-XXX` | Race condition nhỏ nếu 2 request tạo sản phẩm cùng lúc (chặn bởi unique constraint trên `code`, nhưng request thua sẽ lỗi thay vì tự retry) | Chuyển sang Postgres sequence riêng nếu tần suất tạo sản phẩm đồng thời tăng |
-Quy tắc tự động hoá giờ chỉ tạo được qua Templates (đã bỏ form "+ Thêm quy tắc" khỏi giao diện theo yêu cầu — khách hàng không tự tạo quy tắc tự do) | Không còn cách tạo rule tuỳ chỉnh (danh mục/kho riêng) từ UI | `POST /api/automation/rules` vẫn nhận đủ tham số — để dành cho tính năng AI tạo quy tắc sau này |
+| Quy tắc tự động hoá giờ chỉ tạo được qua Templates (đã bỏ form "+ Thêm quy tắc" khỏi giao diện theo yêu cầu — khách hàng không tự tạo quy tắc tự do) | Không còn cách tạo rule tuỳ chỉnh (danh mục/kho riêng) từ UI | `POST /api/automation/rules` vẫn nhận đủ tham số — để dành cho tính năng AI tạo quy tắc sau này |
 | `/dashboard` không chặn truy cập | Ai cũng xem được dashboard mà không cần đăng nhập | Thêm `src/proxy.ts` (không phải `middleware.ts`!) kiểm tra cookie |
 | Không rate-limit `/api/auth/login` | Dễ bị brute-force mật khẩu | Thêm rate-limit trong Route Handler hoặc ở `proxy.ts` |
 | Validate input thủ công (`if (!x)`) | Lọt dữ liệu sai định dạng (email, phone...) | Dùng `zod` để validate schema request body |
 | Không có error handler tập trung | Lỗi runtime không kiểm soát trong Route Handler trả về 500 mặc định của Next, không có format nhất quán | Viết helper `apiError()`/wrapper dùng chung cho mọi route |
-| Dashboard toàn dữ liệu mock hardcode | Không phản ánh dữ liệu thật | Xây API sản phẩm/kho/sản xuất thật (thêm route trong `api/`), thay dữ liệu mock bằng `fetch` |
-| `role` (admin/manager/staff) chỉ được trang Nhân sự kiểm tra (`requireAdmin()`) | Tài khoản "staff"/"manager" vẫn gọi được mọi route khác (Sản phẩm, Kho, Bán hàng, Báo cáo, Tự động hoá, Cài đặt) không bị chặn theo quyền | Thêm kiểm tra role phù hợp (hoặc tối thiểu "đã đăng nhập") vào từng route/`proxy.ts`, không chỉ Nhân sự |
+| 22 route nghiệp vụ không kiểm đăng nhập: `products`, `customers`, `warehouses`, `categories`, `inventory/transactions`, `sales/invoices`, `reports/summary`, `settings/company`, `automation/*` (7 route), `n8n/*` (4 route) | Ai gọi được server đều đọc và ghi được sản phẩm, tồn kho, hoá đơn, cài đặt công ty. Chỉ 17 route đang kiểm `getSessionUser()`: `ai/*`, `import`, `inventory/reconcile`, `auth/me`, `employees`, `users` | Route mới phải kiểm đăng nhập (`AGENTS.md`). Với route cũ, thêm kiểm tra từng cái hoặc chặn chung ở `proxy.ts` |
+| `/api/n8n/internal/*` không cần cookie (n8n gọi server-to-server) | `daily-sales`, `low-stock`, `warehouses` trả doanh số, tồn kho và email nhận cảnh báo cho bất kỳ ai gọi tới | Thêm token chia sẻ giữa n8n và Next.js, hoặc chỉ cho mạng nội bộ gọi |
+| `role` (admin/manager/staff) chỉ được trang Nhân sự kiểm tra (`requireAdmin()`) | Tài khoản "staff"/"manager" gọi được mọi route khác không bị chặn theo quyền | Thêm kiểm tra role phù hợp vào từng route, không chỉ Nhân sự |

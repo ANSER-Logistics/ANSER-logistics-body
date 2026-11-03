@@ -1,9 +1,9 @@
 # ANSER-v2 — Sổ tay cho thành viên mới
 
-> Cập nhật 22/10/2026
+> Cập nhật 03/11/2026
 > Dành cho người **mới vào dự án** hoặc **mới làm quen với lập trình web**. Không cần đọc các tài liệu khác trước — tài liệu này dẫn bạn đi từng bước, và chỉ sang tài liệu khác khi bạn cần đào sâu.
 >
-> **Mốc code được mô tả**: `master` **sau khi** đã merge nhánh `feat/database-application` (có tính năng "Nhập Excel", migration `0013`/`0014`, CI). Nếu bạn đọc lúc PR merge đó chưa vào `master`, vài file nhắc tới bên dưới (`src/server/import/`, `.github/workflows/ci.yml`) chỉ có trên nhánh `feat/database-application`.
+> **Mốc code được mô tả**: `master` sau khi merge `feat/database-application` (tính năng "Nhập Excel", migration `0013`/`0014`), cộng nhánh `ci/minhpt43/dev-tooling` (PR #8: Prettier, test trong `frontend/test/`, CI chạy build và test). Nếu PR #8 chưa vào `master`, mục 2.6 và 5.5 chỉ đúng trên nhánh đó.
 
 ## Mục lục
 
@@ -60,7 +60,7 @@ Vì sao chọn kiến trúc này: xem `docs/architecture/STACK_DECISIONS.md` (kh
 | Công cụ | Phiên bản | Ghi chú |
 |---|---|---|
 | **Node.js** | ≥ 20.9 (CI dùng 24) | Kiểm tra: `node -v` |
-| **pnpm** | bản mới | `corepack enable` rồi `corepack prepare pnpm@latest --activate`, hoặc cài theo hướng dẫn trên pnpm.io |
+| **pnpm** | 11.2.2 (bản CI dùng) | `corepack enable` rồi `corepack prepare pnpm@11.2.2 --activate`. Nếu `corepack enable` báo thiếu quyền (Windows), gõ `corepack pnpm@11.2.2 <lệnh>` thay cho `pnpm <lệnh>` |
 | **Git** | bất kỳ | — |
 | Docker | tuỳ chọn | Chỉ cần nếu muốn chạy n8n ở máy |
 
@@ -72,8 +72,8 @@ commit file `pnpm-lock.yaml` mới — không thì CI báo đỏ. Đừng commit
 ### 2.2 Lấy code
 
 ```bash
-git clone https://github.com/Dgsonn/ANSER-v2.git
-cd ANSER-v2/frontend
+git clone https://github.com/Dgsonn/ANSER-logistics.git
+cd ANSER-logistics/frontend
 pnpm install
 ```
 
@@ -142,12 +142,15 @@ Mở <http://localhost:3000>. Ở trang đăng nhập, bấm **"Tài khoản dem
 ### 2.6 Kiểm tra trước khi đẩy code
 
 ```bash
-pnpm lint          # ESLint — CI chạy đúng lệnh này
-npx tsc --noEmit   # kiểm tra kiểu TypeScript
+pnpm lint            # ESLint
+pnpm format:check    # Prettier (nếu đỏ: pnpm format rồi commit)
+npx tsc --noEmit     # kiểm tra kiểu TypeScript
+pnpm test            # Vitest, chạy bằng Postgres giả lập trong bộ nhớ, không cần Neon
 ```
 
-CI (`.github/workflows/ci.yml`) hiện kiểm: chỉ có một lockfile, cài đặt đúng lockfile, và
-ESLint. CI **chưa** chạy `pnpm build` (vì build cần database).
+CI (`.github/workflows/ci.yml`) chạy bốn việc: chỉ một lockfile; ESLint + Prettier; chạy toàn
+bộ migration từ đầu trên Postgres 17 rồi `pnpm build`; và `pnpm test:coverage` (có ngưỡng độ
+phủ trong `vitest.config.mts`). Cả bốn phải xanh.
 
 ### 2.7 (Tuỳ chọn) Chạy n8n ở máy
 
@@ -168,7 +171,7 @@ n8n ở <http://localhost:5679>, hộp thư giả MailHog (xem email n8n "gửi"
 | `Cannot read properties of null (reading 'matches')` khi `npm install` | `node_modules` cũ do pnpm tạo | `rm -rf node_modules` rồi cài lại |
 | CI đỏ ở bước `--frozen-lockfile` | Đổi `package.json` mà chưa cập nhật `pnpm-lock.yaml` | Chạy `pnpm install`, commit lockfile |
 | `git status` báo `brain.ts` bị sửa dù bạn không đụng | File này được commit với line ending CRLF từ trước | Kệ nó, **đừng commit**. Xem `docs/tasks/BLOCKERS.md` |
-| Code mẫu Next.js trên mạng không chạy | Dự án dùng **Next.js 16** — nhiều API đã đổi | Đọc tài liệu đi kèm trong `frontend/node_modules/next/dist/docs/` (xem `frontend/AGENTS.md`) |
+| Code mẫu Next.js trên mạng không chạy | Dự án dùng **Next.js 16** — nhiều API đã đổi (vd `middleware.ts` thành `proxy.ts`, `params` là `Promise`) | Đọc tài liệu đi kèm trong `frontend/node_modules/next/dist/docs/` (xem `AGENTS.md` ở thư mục gốc) |
 
 ---
 
@@ -177,7 +180,8 @@ n8n ở <http://localhost:5679>, hộp thư giả MailHog (xem email n8n "gửi"
 ### 3.1 Bản đồ thư mục (chỉ những chỗ bạn sẽ đụng)
 
 ```
-ANSER-v2/
+ANSER-logistics/
+├── AGENTS.md               Hướng dẫn cho AI agent (CLAUDE.md và .github/copilot-instructions.md bám theo)
 ├── docs/                   ← TOÀN BỘ TÀI LIỆU ở đây
 │   ├── onboarding/             Sổ tay này
 │   ├── playbook/               Project Playbook (EN + VI) — bức tranh toàn cảnh cho dev
@@ -188,6 +192,7 @@ ANSER-v2/
     ├── .env.local          Bí mật của bạn (tự tạo, không commit)
     ├── drizzle.config.ts   Cấu hình công cụ migration
     ├── n8n-workflows/      Workflow n8n mẫu (JSON)
+    ├── test/               Test, phản chiếu src/ (src/server/auth.ts → test/server/auth.test.ts)
     └── src/
         ├── app/            ← GIAO DIỆN + API (1 thư mục = 1 đường dẫn URL)
         │   ├── dashboard/      Các trang sau đăng nhập: /dashboard/sales, /dashboard/products, …
@@ -395,7 +400,7 @@ Ví dụ: `GET /api/vi-du`.
 git switch master && git pull           # 1. lấy code mới nhất
 git switch -c feat/ten-tinh-nang        # 2. tạo nhánh riêng (fix/…, docs/… tuỳ loại việc)
 # … sửa code …
-pnpm lint && npx tsc --noEmit           # 3. kiểm tra
+pnpm lint && pnpm format:check && npx tsc --noEmit && pnpm test   # 3. kiểm tra
 git add <các-file-cụ-thể>               # 4. KHÔNG dùng "git add ." mù — xem lại từng file
 git commit -m "feat(sales): them chon muc gia tren dong hoa don"
 git push -u origin feat/ten-tinh-nang   # 5. đẩy lên
@@ -408,6 +413,18 @@ gh pr create                            # 6. mở PR vào master (hoặc qua gia
   `fix(task 3): …`, `feat(nhap-excel): …`.
 - Mỗi commit làm **một** việc. Dễ review, dễ hoàn tác.
 - Trước `git add`, chạy `git diff` để chắc chỉ có thay đổi bạn định làm.
+
+### 5.5 Viết test
+
+- Test nằm trong `frontend/test/`, phản chiếu `src/`, **không** đặt trong `src/`. Import code cần
+  test qua `@/…`.
+- Test store dùng Postgres thật chạy trong bộ nhớ (PGlite):
+  `vi.mock("@/server/db/client", () => import("@test/db"))` và `beforeEach(resetDb)`. Mẫu:
+  `test/server/store/customers.test.ts`.
+- Gọi Brain/n8n thì mock `fetch`, không gọi mạng thật. Test phải qua ở mọi múi giờ (CI dùng
+  UTC, máy bạn là UTC+7).
+- Thấy lỗi mà chưa sửa trong cùng thay đổi: ghi `it.todo("BUG: …")`, đừng viết test khẳng
+  định hành vi sai.
 
 ---
 
