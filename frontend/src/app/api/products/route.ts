@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
-import { requireAdminUser, requireSessionUser } from "@/server/session";
 import { createProduct, listProducts } from "@/server/store/products";
 import { listWarehouses } from "@/server/store/warehouses";
 
 export async function GET(request: Request) {
-  const { response } = await requireSessionUser();
-  if (response) return response;
-
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") ?? undefined;
   const categoryId = searchParams.get("categoryId") ?? undefined;
@@ -35,9 +31,6 @@ function parseCost(raw: unknown): number | null | "invalid" {
 }
 
 export async function POST(request: Request) {
-  const { response } = await requireAdminUser();
-  if (response) return response;
-
   const { name, category, categoryId, unit, stock, price, cost, warehouseId } = await request
     .json()
     .catch(() => ({}));

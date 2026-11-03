@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireSessionUser } from "@/server/session";
 import { getCustomerById } from "@/server/store/customers";
 import { InsufficientStockError } from "@/server/store/inventory";
 import { createInvoice, CrossWarehouseError, listInvoices, NoItemError, ProductNotFoundError } from "@/server/store/sales";
 
 export async function GET(request: Request) {
-  const { response } = await requireSessionUser();
-  if (response) return response;
-
   const { searchParams } = new URL(request.url);
   const limitParam = searchParams.get("limit");
   const invoices = await listInvoices({ limit: limitParam ? Number(limitParam) : undefined });
@@ -15,9 +11,6 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { response } = await requireSessionUser();
-  if (response) return response;
-
   const { customerId, customerName, employeeId, note, items } = await request.json().catch(() => ({}));
 
   if ((!customerId && !customerName) || !Array.isArray(items) || items.length === 0) {

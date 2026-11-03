@@ -30,8 +30,9 @@ nắm nhanh hiện trạng code mà không cần đọc lại toàn bộ lịch 
   đổi cờ trong DB của app. Xem mục 4.2.
 - **Nhân sự & phân quyền**: hồ sơ nhân viên (`employees`) tách riêng khỏi tài khoản đăng nhập
   (`users`, có `role`: staff/admin). Trang `/dashboard/staff` (chỉ admin) quản lý cả
-  hai. `src/proxy.ts` chặn `/dashboard/**` chưa đăng nhập; mọi route `/api/**` (trừ vài route
-  công khai) đòi `requireSessionUser()`/`requireAdminUser()`. Xem mục 4.3.
+  hai. `src/proxy.ts` chặn `/dashboard/**` chưa đăng nhập; mọi route `/api/**` trừ vài route
+  công khai và `api/sales/invoices`/`api/products/**` (đang chờ Việc 1 — giá nhiều mức) đòi
+  `requireSessionUser()`/`requireAdminUser()`. Xem mục 4.3.
 
 > **Lịch sử**: project này *từng* tách thành 2 (`frontend` Next.js + `backend` Express),
 > giao tiếp qua REST API chéo-origin. Đã gộp lại thành 1 Next.js fullstack để đơn giản hóa
@@ -396,8 +397,12 @@ kiểm tra quyền chi tiết theo role vẫn nằm ở từng Route Handler (`r
 | Rate-limit đăng nhập chỉ trong bộ nhớ 1 process (`src/server/rateLimit.ts`) | Không đồng bộ nếu scale ngang nhiều instance — giới hạn thật cao hơn số đặt ra | Chuyển sang Redis (hoặc tương tự) nếu scale ngang |
 | Phân quyền theo phòng ban (Kế toán/Kinh doanh/Kho) chưa làm — chỉ 2 cấp staff/admin | Không phân biệt được ai được xem/sửa gì trong cùng cấp `staff` | Chờ xác nhận nhu cầu thật từ khách hàng (`BLOCKERS.md` Q1, đã đóng theo hướng "không cần") |
 
-**Đã xử lý (Việc 2 — Siết xác thực & phân quyền, 02/11/2026):** `JWT_SECRET` fallback dev giờ
+**Đã xử lý (Việc 3 — Siết xác thực & phân quyền, 02–04/11/2026):** `JWT_SECRET` fallback dev giờ
 chặn boot production nếu thiếu (`src/instrumentation.ts`); `/dashboard` đã chặn qua
-`src/proxy.ts`; rate-limit `/api/auth/login` đã có; mọi route `/api/**` trong phạm vi đã kiểm
-tra `requireSessionUser()`/`requireAdminUser()` thay vì chỉ trang Nhân sự; `/api/n8n/internal/*`
-đổi sang token riêng (`requireInternalToken()`); bỏ tự đăng ký công khai. Xem `BLOCKERS.md` Q3.
+`src/proxy.ts`; rate-limit `/api/auth/login` đã có; mọi route `/api/**` **trừ
+`api/sales/invoices` và `api/products/**`** đã kiểm tra `requireSessionUser()`/
+`requireAdminUser()` thay vì chỉ trang Nhân sự; `/api/n8n/internal/*` đổi sang token riêng
+(`requireInternalToken()`); bỏ tự đăng ký công khai. 2 route loại trừ trên **cố ý chưa đụng** —
+tính năng giá nhiều mức (Việc 1) đang sửa đúng 2 chỗ đó cùng lúc; bảng quyền cho chúng chờ
+Việc 1 xong rồi làm tiếp (xem `Backend_Task_Board_1Nov26.md` Việc 3, hạn 11/11 và 15/11). Xem
+`BLOCKERS.md` Q3.
