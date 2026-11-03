@@ -1,8 +1,8 @@
 # ANSER-v2 — Sổ Tay Dự Án
 
-> Bản dịch tiếng Việt của `5. Project_Playbook.md`.
+> Bản dịch tiếng Việt của `docs/playbook/Project_Playbook.md`.
 > Cập nhật lần cuối 18/09/2026.
-> Tài liệu này không thay thế các tài liệu đánh số `0.`–`4.` bên dưới — nó chỉ trỏ tới từng tài liệu, cho biết phần nào đã cũ, và bổ sung những gì xảy ra sau khi `4.` được viết lần cuối. 
+> Tài liệu này không thay thế các tài liệu đánh số `0.`–`4.` bên dưới (trong `docs/decisions/`) — nó chỉ trỏ tới từng tài liệu, cho biết phần nào đã cũ, và bổ sung những gì xảy ra sau khi `4.` được viết lần cuối. 
 > Nếu bản này và bản tiếng Anh lệch nhau sau khi chỉnh sửa, coi bản tiếng Anh là gốc.
 
 ## 0. Cách dùng tài liệu này
@@ -19,7 +19,7 @@ phối dầu nhớt tại Việt Nam. Viết lại từ một codebase Flask cũ
 vào code cũ). Một app Next.js duy nhất: UI + API route trong cùng 1 project, không tách
 backend riêng.
 
-| Tầng | Lựa chọn | Vì sao (xem `STACK_DECISIONS.md`) |
+| Tầng | Lựa chọn | Vì sao (xem `docs/architecture/STACK_DECISIONS.md`) |
 |---|---|---|
 | Web app | Next.js (App Router, Route Handlers) | Một lần deploy, một hệ kiểu dữ liệu dùng chung FE↔BE, không cần CORS |
 | DB | Neon Postgres qua Drizzle ORM, driver pool `neon-serverless` | Dùng driver pool (không phải `neon-http`) vì `db.transaction()` là bắt buộc cho các thao tác ghi kho |
@@ -31,14 +31,14 @@ backend riêng.
 
 | Tài liệu | Nhánh | Nội dung | Trạng thái |
 |---|---|---|---|
-| `0. HA_TANG_VA_ERD.md` | cả hai | Hạ tầng gốc + ERD v3, đề xuất D1–D7 | Lịch sử |
-| `1. ERD_Merge_Finalization_Strategy.md` | cả hai | Đề xuất gộp của tôi, M1–M6 | Lịch sử |
-| `2. ERD_PHAN_HOI_VA_LUOC_DO.md` | cả hai | Phản hồi của đội dev, thêm B1–B7 | Lịch sử |
-| `3. ERD_CHUAN.md` | cả hai | **ERD chuẩn** sau khi chạy dữ liệu MISA thật qua bộ nạp. Thêm C1/C2. Có kèm `schema.ts` mục tiêu đầy đủ, index, SQL đối chiếu. | **Đã cũ một phần** — xem §3.1 |
-| `4. Database_Implementation_Documentation.md` | **chỉ có ở master** | Nhật ký triển khai từng bước cho Task 1–4 của ERD_CHUAN (migrate schema, kiểm tra constraint, sửa quy ước dấu trong `sales.ts`, `/api/inventory/reconcile`), kèm một đoạn nhìn lại ngắn cho Task 5, thêm ngày 18/09. | Chưa merge vào `feat/database-application` — đọc trên `master` |
-| `all_constrain.json`, `single_table_data_types_and_columns.json` | **chỉ có ở master** | Dữ liệu thô từ Neon (`pg_constraint`/`information_schema`) dùng để kiểm tra Task 2 ở trên | Tài liệu tham chiếu, không phải tài liệu sống |
+| `docs/decisions/0. HA_TANG_VA_ERD.md` | cả hai | Hạ tầng gốc + ERD v3, đề xuất D1–D7 | Lịch sử |
+| `docs/decisions/1. ERD_Merge_Finalization_Strategy.md` | cả hai | Đề xuất gộp của tôi, M1–M6 | Lịch sử |
+| `docs/decisions/2. ERD_PHAN_HOI_VA_LUOC_DO.md` | cả hai | Phản hồi của đội dev, thêm B1–B7 | Lịch sử |
+| `docs/decisions/3. ERD_CHUAN.md` | cả hai | **ERD chuẩn** sau khi chạy dữ liệu MISA thật qua bộ nạp. Thêm C1/C2. Có kèm `schema.ts` mục tiêu đầy đủ, index, SQL đối chiếu. | **Đã cũ một phần** — xem §3.1 |
+| `docs/decisions/4. Database_Implementation_Documentation.md` | **chỉ có ở master** | Nhật ký triển khai từng bước cho Task 1–4 của ERD_CHUAN (migrate schema, kiểm tra constraint, sửa quy ước dấu trong `sales.ts`, `/api/inventory/reconcile`), kèm một đoạn nhìn lại ngắn cho Task 5, thêm ngày 18/09. | Chưa merge vào `feat/database-application` — đọc trên `master` |
+| `docs/decisions/evidence/all_constrain.json`, `docs/decisions/evidence/single_table_data_types_and_columns.json` | **chỉ có ở master** | Dữ liệu thô từ Neon (`pg_constraint`/`information_schema`) dùng để kiểm tra Task 2 ở trên | Tài liệu tham chiếu, không phải tài liệu sống |
 | `frontend/CLAUDE.md` | nhánh này, chưa commit | Nhật ký phiên làm việc chi tiết: bug đã tìm/đã sửa, phát hiện khi nhập dữ liệu thật, danh sách việc còn mở theo thứ tự ưu tiên | Mọi thứ ở §5 đều lấy từ đây — đọc trực tiếp để biết chi tiết đầy đủ |
-| `frontend/ARCHITECTURE.md` | nhánh này | Bản đồ đầy đủ từng file của app Next.js, luồng request, bảng hạn chế hiện tại | Còn hiện hành, tiếp tục dùng |
+| `docs/architecture/ARCHITECTURE.md` | nhánh này | Bản đồ đầy đủ từng file của app Next.js, luồng request, bảng hạn chế hiện tại | Còn hiện hành, tiếp tục dùng |
 | `src/server/db/schema.ts` | nhánh này | **Nguồn chuẩn xác nhất.** Đã vượt qua ERD_CHUAN — xem §3.1 | Luôn cập nhật |
 
 ## 3. Mô hình dữ liệu hiện tại
@@ -149,7 +149,7 @@ erDiagram
 ```
 
 Toàn bộ lý do cho từng cột/ràng buộc (vì sao `quantity` có dấu, vì sao `NULL` khác `0` ở
-`cost`, vì sao có `linked_product_id`, v.v.) nằm trong `3. ERD_CHUAN.md` §4 — vẫn đúng cho
+`cost`, vì sao có `linked_product_id`, v.v.) nằm trong `docs/decisions/3. ERD_CHUAN.md` §4 — vẫn đúng cho
 mọi thứ nó đề cập. Đừng suy luận lại các quyết định đó; đọc trực tiếp.
 
 ### 3.1 Những chỗ `schema.ts` thực tế đã vượt qua `ERD_CHUAN`
@@ -169,14 +169,14 @@ không đổi phần lõi của schema ngoài các cột `0014` ở trên.
 
 ## 4. Quá trình đi đến đây (rút gọn)
 
-1. Hai bản ERD vẽ tay + `HA_TANG_VA_ERD.md` (v3, D1–D7) cần được đối chiếu với `schema.ts`
-   thực tế → tôi viết `1. ERD_Merge_Finalization_Strategy.md` (M1–M6).
+1. Hai bản ERD vẽ tay + `docs/decisions/0. HA_TANG_VA_ERD.md` (v3, D1–D7) cần được đối chiếu với `schema.ts`
+   thực tế → tôi viết `docs/decisions/1. ERD_Merge_Finalization_Strategy.md` (M1–M6).
 2. Đội dev đồng ý, thêm B1–B7 (quan trọng nhất là **B1**: `quantity` có dấu thay vì logic
-   cộng/trừ theo loại giao dịch không dấu) → `2. ERD_PHAN_HOI_VA_LUOC_DO.md`.
+   cộng/trừ theo loại giao dịch không dấu) → `docs/decisions/2. ERD_PHAN_HOI_VA_LUOC_DO.md`.
 3. Chạy dữ liệu MISA thật qua bộ nạp, phát sinh thêm 2 quyết định (C1 `linked_product_id`,
    C2 `allows_zero_value`) và xác nhận M3 (KHO KHUYẾN MẠI chỉ là nhãn ghi sổ — thực tế pilot
-   chạy một kho) → `3. ERD_CHUAN.md`, **schema chuẩn**, kèm thứ tự triển khai 7 bước ở cuối.
-4. `4. Database_Implementation_Documentation.md` (chỉ có ở master) thực hiện đúng thứ tự
+   chạy một kho) → `docs/decisions/3. ERD_CHUAN.md`, **schema chuẩn**, kèm thứ tự triển khai 7 bước ở cuối.
+4. `docs/decisions/4. Database_Implementation_Documentation.md` (chỉ có ở master) thực hiện đúng thứ tự
    đó, từng bước, kèm diff code thật:
    - **Task 1** — dán `schema.ts`, sinh `0012_misty_cammi.sql`, tự tay diff SQL sinh ra với
      source (drizzle-kit từng bị biết là bỏ sót `check()` constraint), tạo nhánh Neon `dev`
@@ -202,60 +202,26 @@ không đổi phần lõi của schema ngoài các cột `0014` ở trên.
      "bài toán nhập liệu chung đã được giải, chứ không phải bài toán dựng lại lịch sử
      riêng" — xem §5 mục 1 để biết vì sao đây là bằng chứng, chứ chưa phải xác nhận.
 
-## 5. Việc còn tồn đọng (theo thứ tự ưu tiên)
+## 5. Việc còn tồn đọng — đã chuyển đi
 
-Chi tiết đầy đủ và lý do cho tất cả các mục dưới đây nằm trong `frontend/CLAUDE.md` — đây
-chỉ là mục lục, không thay thế được nó.
+Danh sách việc tồn đọng không còn nằm trong sổ tay này. Hai tài liệu sống đang theo dõi chúng:
 
-1. **`frontend/import-real-data.ts` chưa được track và đã lỗi thời.** Đây là script cho
-   Task 5: nạp 4 file Excel thật của Hoàng Phát vào Neon. Comment đầu file của nó nói công
-   nợ khách hàng/nhà cung cấp "chưa có chỗ trong schema" — điều này không còn đúng từ khi
-   `0014` thêm `opening_debt` vào cả 2 bảng (§3.1). Cần rà lại trước khi ai đó chạy nó, và có
-   lẽ nên bắt đầu điền `opening_debt` thay vì bỏ qua các cột đó.
-   **Cập nhật 18/09**: phần nhập danh mục (products/customers/suppliers) của script này
-   giờ đã được thay thế bởi tính năng "Nhập Excel" mới trong `src/server/import/`
-   (`doc-excel.ts` + `ap-dung.ts`) — tính năng đó làm tốt hơn (điền đúng `openingDebt`/
-   `isReducedVat`, có màn hình xem trước rồi mới xác nhận ghi). **Nhưng tính năng đó cố ý
-   bỏ qua hẳn báo cáo `Tổng hợp tồn kho` (N-X-T)** — comment của chính nó nói việc đọc file
-   đó được để dành cho `inventory_import.py` bên Brain, tránh dựng một bản sao thứ hai của
-   logic đó rồi để hai bên trôi xa nhau. Không có chỗ nào khác trong repo này dựng lại
-   `inventory_transactions` từ dữ liệu N-X-T, nối cặp `linked_product_id`, hay gắn cờ
-   `allows_zero_value` — đã hỏi ngày 18/09 xem Brain có ghi luôn dữ liệu đó vào Postgres của
-   app này không (chứ không chỉ đọc file), và **đội chưa chắc, cần hỏi lại**. Đoạn nhìn lại
-   Task 5 mới thêm trong `4.` (§4) cũng nghiêng về hướng này mà chưa chốt hẳn: tài liệu mô
-   tả Task 5 là "đã được giải quyết bằng cách tạo ra vài tính năng Import" (chính là tính
-   năng nhập danh mục ở trên), không nhắc gì tới các mục N-X-T/`linked_product_id`/
-   `allows_zero_value` — đọc được là đội quyết định bài toán nhập liệu *chung* đáng làm,
-   còn bài toán dựng lại lịch sử *riêng* thì không theo tiếp, khác hẳn với "có chỗ khác làm
-   việc đó rồi." Đáng để hỏi thẳng ý định (vẫn muốn làm sau này, hay bỏ hẳn?) hơn là suy
-   diễn theo hướng nào từ một đoạn ghi timeline. **Đừng xoá file này cho tới khi có câu trả
-   lời** — vì file chưa được track, xoá đi sẽ không thể phục hồi
-   qua git; nếu sau này quyết định xoá, hãy commit nó trước để ít nhất còn giữ được trong
-   lịch sử.
-2. **3 sản phẩm lệch giữa tồn kho trong catalog và số dư cuối kỳ trong báo cáo N-X-T**
-   (`KM00008`, `KM00017`, `KM00034`) — nhiều khả năng là hoạt động thật chưa được ghi nhận
-   giữa hai ngày xuất file khác nhau, không phải lỗi nhập liệu. Cần hỏi chủ doanh nghiệp.
-3. **2 dòng tồn kho âm có thật** (`VT00039`, `VT00042` theo số liệu đã sửa lại trong
-   `CLAUDE.md` — bỏ qua phỏng đoán `VT00059` trước đó trong `ERD_CHUAN.md §1.2`, đã bị thay
-   thế sau khi kiểm tra file thật) — nguyên nhân gốc (thiếu phiếu nhập hay do cắt kỳ) chưa
-   xác nhận được, **chưa báo cho khách** theo đúng lưu ý của chính ERD_CHUAN là đừng báo cho
-   tới khi loại trừ được khả năng cắt kỳ.
-4. **Không có giá bán trong bất kỳ file nguồn nào** — giờ đã có lời giải thích từ chủ doanh
-   nghiệp (§6) và một yêu cầu tính năng cụ thể đi kèm. Không còn là một khoảng trống mù mờ.
-5. Phép ép kiểu `sum(quantity)::integer` trong `getSalesReportForPeriod` làm mất phần lẻ —
-   đúng vào báo cáo duy nhất mà một workflow n8n thực sự dùng tới. Đã gắn cờ 2 lần, chưa sửa.
-6. Bug thứ tự seed dữ liệu: điều kiện "bảng rỗng" của `seedInitialData()` chỉ kiểm tra bảng
-   `products`, nên `seedCategories()` âm thầm không bao giờ chạy trên một nhánh đã có sẵn sản
-   phẩm từ trước khi khái niệm category tồn tại. Đã thống nhất cách sửa (tách thành các hàm
-   tự kiểm tra độc lập, gom lại dưới một `runStartupSeed()`), chưa triển khai.
-7. `instrumentation.ts` không có cờ chặn theo môi trường — `seedDemoUser()` chạy ở mọi lần
-   cold start, kể cả production. Đề xuất: chặn bằng một flag bật riêng, không dùng `NODE_ENV`
-   (một số môi trường staging/preview cũng báo là `production`).
-8. **Dọn dẹp**: `git status` trên `feat/database-application` hiện đang báo 5 file bị sửa mà
-   thực chất chỉ là **nhiễu do đổi line-ending CRLF/LF** (`instrumentation.ts`, migration
-   `0013` + snapshot của nó, `reports.ts`, `categories.ts` — diff từng byte, không có thay đổi
-   logic nào). Nên thêm `.gitattributes` trước khi nó gây xung đột merge thật — đội Brain
-   cũng gặp đúng vấn đề này và đã đưa vào danh sách việc của họ (`BAN_GIAO_VAN_TAI.md`, mục 13).
+- **Đang chờ quyết định** (chủ doanh nghiệp, đội Brain, trưởng nhóm) → `docs/tasks/BLOCKERS.md`
+- **Sẵn sàng cho người nhận làm** → `docs/tasks/Backend_Task_Board.md`
+
+Từng mục trước đây nằm ở đây đã đi đâu — để các chỗ trích dẫn cũ như "§5 mục 1" hay
+"[PB] §5.2" vẫn dẫn tới đúng nơi:
+
+| Mục cũ | Hiện ở |
+|---|---|
+| 1. `frontend/import-real-data.ts` đã cũ | `docs/tasks/BLOCKERS.md` D3 |
+| 2. Ba sản phẩm lệch giữa danh mục và N-X-T (`KM00008`, `KM00017`, `KM00034`) | `docs/tasks/BLOCKERS.md` D1 |
+| 3. Dòng tồn kho âm (`VT00039`, `VT00042`, có thể cả `KM00034`) | `docs/tasks/BLOCKERS.md` D2 |
+| 4. Không file nguồn nào có giá bán | §6 bên dưới — tính năng giá nhiều mức |
+| 5. Cast `::integer` trong `getSalesReportForPeriod` | **Đã sửa** ở `16ae83b` (`docs/tasks/BLOCKERS.md` → "Đã giải quyết") |
+| 6. Thứ tự seed (`seedCategories()` không bao giờ chạy) | **Đã sửa** ở `16ae83b` (`runStartupSeed()`) |
+| 7. Seed chạy cả ở production | **Đã sửa** ở `16ae83b` (phải bật rõ `ENABLE_STARTUP_SEED=true`) |
+| 8. Nhiễu line ending CRLF/LF | **Đã sửa** ở `16ae83b` (`.gitattributes`); `brain.ts` vẫn còn nhiễu → `docs/tasks/BLOCKERS.md` K1 |
 
 ## 6. Việc đang làm: giá nhiều mức ("Giá áp dụng")
 
@@ -396,17 +362,18 @@ tính giá thật sự tính vào hoá đơn nên nằm ở backend tất địn
   dùng lại.
 - **Dùng nhánh Neon riêng để thử nghiệm** (`dev`, tách từ `production`), đừng thử trực tiếp
   trên production — dự án này đã làm vậy rồi (§4, Task 1 bước 3).
-- **Line ending**: xem mục 8 ở §5 trước khi đụng vào 1 trong 5 file đang bị nhiễu — kiểm tra
-  cấu hình line-ending của editor trước, kẻo bạn lại thêm file thứ 6.
+- **Line ending**: `.gitattributes` chuẩn hoá mọi file về LF (từ `16ae83b`). Đặt editor dùng
+  LF. `frontend/src/server/brain.ts` vẫn báo "bị sửa" ở mỗi lần checkout — đừng commit nó; xem
+  `docs/tasks/BLOCKERS.md` K1.
 
-## 9. Đề xuất việc cần làm tiếp theo
+## 9. Bắt đầu từ đâu
 
-1. Đọc toàn bộ `frontend/CLAUDE.md` (sổ tay này chỉ lập mục lục cho nó).
-2. Chốt câu hỏi `products.price` so với `product_prices` ở §6 trước khi viết migration nào
-   cho tính năng giá — đây là quyết định duy nhất làm thay đổi hình dạng của migration.
-3. Rà lại hoặc chạy lại `frontend/import-real-data.ts` cho khớp với schema hiện tại (§5.1)
-   trước khi coi bất kỳ dữ liệu nào trên nhánh dev là đáng tin.
-4. Đưa 2 dòng tồn kho âm và 3 sản phẩm lệch số liệu (§5.2/§5.3) ra trước mặt chủ doanh nghiệp
-   — cả hai đều được đánh dấu rõ là "chưa báo vội" cho tới lúc đó.
-5. Thêm `.gitattributes` (chuẩn hoá line-ending) — rẻ, và đội Brain đã chứng minh là đáng
-   làm.
+1. Mới vào codebase, hoặc mới học lập trình? Đọc `docs/onboarding/Onboarding_Playbook.md`
+   trước (cài đặt, cách code chia tầng, những điều không bao giờ làm).
+2. Đọc §1–§4 và §6 ở đây để nắm bức tranh toàn cảnh, rồi `frontend/CLAUDE.md` để xem nhật ký
+   chi tiết (sổ tay này chỉ lập mục lục cho nó).
+3. Chọn việc trong `docs/tasks/Backend_Task_Board.md`, và làm theo quy tắc phối hợp ở đó
+   (tạo nhánh từ đâu, ai được tạo migration).
+4. Trước khi tự quyết điều gì về mức giá, công nợ, phân quyền hay bất thường trong dữ liệu
+   thật, xem `docs/tasks/BLOCKERS.md` — nếu việc đó nằm trong danh sách, không phải việc mình
+   tự quyết.

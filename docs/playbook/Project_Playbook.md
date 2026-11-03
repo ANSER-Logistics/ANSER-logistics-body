@@ -1,7 +1,7 @@
 # ANSER-v2 — Project Playbook
 
 > Last updated 17/09/2026
-> This doc does not replace documents numbered `0.`–`4.` below — it points at them, tells you which parts are stale, and adds what happened after `4.` was last written.
+> This doc does not replace documents numbered `0.`–`4.` below (in `docs/decisions/`) — it points at them, tells you which parts are stale, and adds what happened after `4.` was last written.
 
 ## 0. How to use this document
 
@@ -16,7 +16,7 @@ playbook and `schema.ts` disagree, trust `schema.ts` and fix this doc.
 lubricant/oil distributor. Rewrite of an older Flask codebase (unrelated, not called
 into). Single Next.js app: UI + API routes in one project, no separate backend.
 
-| Layer | Choice | Why (see `STACK_DECISIONS.md`) |
+| Layer | Choice | Why (see `docs/architecture/STACK_DECISIONS.md`) |
 |---|---|---|
 | Web app | Next.js (App Router, Route Handlers) | One deploy, one type system FE↔BE, no CORS |
 | DB | Neon Postgres via Drizzle ORM, `neon-serverless` pool driver | Pool driver (not `neon-http`) specifically because `db.transaction()` is required for inventory writes |
@@ -28,14 +28,14 @@ into). Single Next.js app: UI + API routes in one project, no separate backend.
 
 | Doc | Branch | What's in it | Status |
 |---|---|---|---|
-| `0. HA_TANG_VA_ERD.md` | both | Original infra + ERD v3, proposals D1–D7 | History |
-| `1. ERD_Merge_Finalization_Strategy.md` | both | My merge proposal, M1–M6 | History |
-| `2. ERD_PHAN_HOI_VA_LUOC_DO.md` | both | Dev team's reply, added B1–B7 | History |
-| `3. ERD_CHUAN.md` | both | **Canonical ERD** after real MISA data was run through it. Added C1/C2. Includes full target `schema.ts`, indexes, reconciliation SQL. | **Partially stale** — see §3.1 |
-| `4. Database_Implementation_Documentation.md` | **master only** | Step-by-step implementation log for ERD_CHUAN's Task 1–4 (schema migration, constraint verification, `sales.ts` sign-convention fix, `/api/inventory/reconcile`), plus a short retrospective timeline for Task 5, added 18/09. | Not merged into `feat/database-application` — read it on `master` |
-| `all_constrain.json`, `single_table_data_types_and_columns.json` | **master only** | Raw Neon `pg_constraint`/`information_schema` dumps used to verify Task 2 above | Reference, not living docs |
+| `docs/decisions/0. HA_TANG_VA_ERD.md` | both | Original infra + ERD v3, proposals D1–D7 | History |
+| `docs/decisions/1. ERD_Merge_Finalization_Strategy.md` | both | My merge proposal, M1–M6 | History |
+| `docs/decisions/2. ERD_PHAN_HOI_VA_LUOC_DO.md` | both | Dev team's reply, added B1–B7 | History |
+| `docs/decisions/3. ERD_CHUAN.md` | both | **Canonical ERD** after real MISA data was run through it. Added C1/C2. Includes full target `schema.ts`, indexes, reconciliation SQL. | **Partially stale** — see §3.1 |
+| `docs/decisions/4. Database_Implementation_Documentation.md` | **master only** | Step-by-step implementation log for ERD_CHUAN's Task 1–4 (schema migration, constraint verification, `sales.ts` sign-convention fix, `/api/inventory/reconcile`), plus a short retrospective timeline for Task 5, added 18/09. | Not merged into `feat/database-application` — read it on `master` |
+| `docs/decisions/evidence/all_constrain.json`, `docs/decisions/evidence/single_table_data_types_and_columns.json` | **master only** | Raw Neon `pg_constraint`/`information_schema` dumps used to verify Task 2 above | Reference, not living docs |
 | `frontend/CLAUDE.md` | this branch, uncommitted | Dense session log: bugs found/fixed, real-data import findings, prioritized open items | Mine everything in §5 comes from here — read it directly for full detail |
-| `frontend/ARCHITECTURE.md` | this branch | Full file-by-file map of the Next.js app, request flows, current limitations table | Current, keep using it |
+| `docs/architecture/ARCHITECTURE.md` | this branch | Full file-by-file map of the Next.js app, request flows, current limitations table | Current, keep using it |
 | `src/server/db/schema.ts` | this branch | **Ground truth.** Ahead of ERD_CHUAN — see §3.1 | Always current |
 
 ## 3. Current domain model
@@ -146,7 +146,7 @@ erDiagram
 ```
 
 Full rationale for every column/constraint (why signed `quantity`, why `NULL` ≠ `0` on
-`cost`, why `linked_product_id`, etc.) is in `3. ERD_CHUAN.md` §4 — still accurate for
+`cost`, why `linked_product_id`, etc.) is in `docs/decisions/3. ERD_CHUAN.md` §4 — still accurate for
 everything it covers. Don't re-derive those decisions; read them.
 
 ### 3.1 Where live `schema.ts` has moved past `ERD_CHUAN`
@@ -166,15 +166,15 @@ the core schema beyond the `0014` columns above.
 
 ## 4. How we got here (condensed)
 
-1. Two hand-drawn ERDs + `HA_TANG_VA_ERD.md` (v3, D1–D7) needed reconciling against live
-   `schema.ts` → I wrote `1. ERD_Merge_Finalization_Strategy.md` (M1–M6).
+1. Two hand-drawn ERDs + `docs/decisions/0. HA_TANG_VA_ERD.md` (v3, D1–D7) needed reconciling against live
+   `schema.ts` → I wrote `docs/decisions/1. ERD_Merge_Finalization_Strategy.md` (M1–M6).
 2. Dev team agreed, added B1–B7 (most importantly **B1**: signed `quantity` instead of
-   type+unsigned add/subtract logic) → `2. ERD_PHAN_HOI_VA_LUOC_DO.md`.
+   type+unsigned add/subtract logic) → `docs/decisions/2. ERD_PHAN_HOI_VA_LUOC_DO.md`.
 3. Real MISA exports run through a loader surfaced two more decisions (C1
    `linked_product_id`, C2 `allows_zero_value`) and confirmed M3 (KHO KHUYẾN MẠI is a
-   bookkeeping label — pilot is single-warehouse in practice) → `3. ERD_CHUAN.md`,
+   bookkeeping label — pilot is single-warehouse in practice) → `docs/decisions/3. ERD_CHUAN.md`,
    **the canonical schema**, with a 7-step implementation order at its end.
-4. `4. Database_Implementation_Documentation.md` (master only) executed that order,
+4. `docs/decisions/4. Database_Implementation_Documentation.md` (master only) executed that order,
    step by step, with real code diffs:
    - **Task 1** — pasted `schema.ts`, generated `0012_misty_cammi.sql`, diffed
      generated SQL against the source by hand (drizzle-kit has been known to drop
@@ -205,62 +205,26 @@ the core schema beyond the `0014` columns above.
      got solved, not the specific historical-reconstruction one" — see §5 item 1 for
      why that's evidence, not confirmation.
 
-## 5. Open items (prioritized)
+## 5. Open items — moved
 
-Full detail and reasoning for all of these is in `frontend/CLAUDE.md` — this is the
-index, not a replacement.
+Open items no longer live in this playbook. Two living docs track them now:
 
-1. **`frontend/import-real-data.ts` is untracked and stale.** It's the Task 5 script:
-   loads the 4 real Hoàng Phát Excel files into Neon. Its own header comments say
-   customer/supplier debt "has no schema home" — that's no longer true after `0014`
-   added `opening_debt` to both tables (§3.1). Needs a pass before anyone runs it, and
-   it should probably start populating `opening_debt` instead of skipping those
-   columns.
-   **Update 18/09**: the catalog-loading part of this script (products/customers/
-   suppliers) is now superseded by the new `src/server/import/` "Nhap Excel" feature
-   (`doc-excel.ts` + `ap-dung.ts`) — that feature does it better (correctly populates
-   `openingDebt`/`isReducedVat`, has a preview-then-confirm UX). **But that feature
-   explicitly, deliberately excludes the `Tổng hợp tồn kho` (N-X-T) report** — its own
-   comment says that parsing is left to Brain's `inventory_import.py` on purpose, to
-   avoid a second copy of that logic drifting out of sync. Nothing else in this repo
-   reconstructs `inventory_transactions` from N-X-T data, links `linked_product_id`
-   pairs, or flags `allows_zero_value` — checked 18/09 whether Brain now also *writes*
-   that into this app's Postgres DB (not just parses it), and **the team wasn't sure**.
-   `4.`'s new Task 5 retrospective (§4) leans the same direction without settling it:
-   it frames Task 5 as "addressed by creating a few Import feature" (the catalog
-   import above), with no mention of the N-X-T/`linked_product_id`/`allows_zero_value`
-   sub-goals — read as the team deciding the *general* import problem was worth
-   solving and the *specific* historical-reconstruction one wasn't pursued further,
-   which is a different thing from "something else does it." Worth a direct
-   confirmation of intent (still wanted, later? or abandoned?) rather than inferring
-   either way from a timeline note. **Do not delete this file until that's
-   confirmed** — and since it's untracked, deleting it isn't git-reversible; if it
-   does get deleted, commit it first so it's at least recoverable from history.
-2. **Three products disagree between catalog stock and N-X-T closing balance**
-   (`KM00008`, `KM00017`, `KM00034`) — likely genuine untracked activity between the two
-   source files' different export dates, not a transcription error. Needs the owner.
-3. **Two real negative-stock rows** (`VT00039`, `VT00042` per the corrected count in
-   `CLAUDE.md` — ignore the earlier `VT00059` guess in `ERD_CHUAN.md §1.2`, that was
-   superseded once real files were checked) — root cause (missing purchase doc vs.
-   period cutoff) unconfirmed, **not yet reported to the client** per ERD_CHUAN's own
-   note not to until cutoff is ruled out.
-4. **No selling price in any source file** — now has an owner explanation (§6) and a
-   concrete feature request attached to it. No longer a blind gap.
-5. `getSalesReportForPeriod`'s `sum(quantity)::integer` cast truncates fractional
-   liters — the one report an n8n workflow actually consumes. Flagged twice, unfixed.
-6. Seed-orchestration bug: `seedInitialData()`'s emptiness guard is keyed on
-   `products`, so `seedCategories()` silently never runs on a branch that already has
-   product rows from before categories existed. Fix agreed (split into independently
-   guarded functions under one `runStartupSeed()`), not implemented.
-7. `instrumentation.ts` has no environment gate — `seedDemoUser()` runs on every cold
-   start including production. Recommended: gate behind an explicit opt-in flag, not
-   `NODE_ENV` (some staging/preview environments also report `production`).
-8. **Housekeeping**: `git status` on `feat/database-application` currently shows 5
-   files as modified that are **pure CRLF/LF line-ending noise** (`instrumentation.ts`,
-   migration `0013` + its snapshot, `reports.ts`, `categories.ts` — diffed byte-for-byte,
-   zero logical change). Worth a `.gitattributes` before it causes a real merge
-   conflict — the Brain team hit the identical problem and it's on their punch list too
-   (`BAN_GIAO_VAN_TAI.md`, item 13).
+- **Waiting on a decision** (owner, Brain team, team lead) → `docs/tasks/BLOCKERS.md`
+- **Ready for someone to pick up** → `docs/tasks/Backend_Task_Board.md`
+
+Where each item that used to be listed here went, so older references like "§5 item 1"
+or "[PB] §5.2" still lead somewhere:
+
+| Former item | Now |
+|---|---|
+| 1. `frontend/import-real-data.ts` is stale | `docs/tasks/BLOCKERS.md` D3 |
+| 2. Three products disagree between catalog and N-X-T (`KM00008`, `KM00017`, `KM00034`) | `docs/tasks/BLOCKERS.md` D1 |
+| 3. Negative-stock rows (`VT00039`, `VT00042`, possibly `KM00034`) | `docs/tasks/BLOCKERS.md` D2 |
+| 4. No selling price in any source file | §6 below — the multi-tier pricing initiative |
+| 5. `getSalesReportForPeriod` `::integer` cast | **Fixed** in `16ae83b` (`docs/tasks/BLOCKERS.md` → "Đã giải quyết") |
+| 6. Seed orchestration (`seedCategories()` never ran) | **Fixed** in `16ae83b` (`runStartupSeed()`) |
+| 7. Startup seed runs in production | **Fixed** in `16ae83b` (`ENABLE_STARTUP_SEED=true` opt-in) |
+| 8. CRLF/LF line-ending noise | **Fixed** in `16ae83b` (`.gitattributes`); `brain.ts` still noisy → `docs/tasks/BLOCKERS.md` K1 |
 
 ## 6. Current initiative: multi-tier pricing ("Giá áp dụng")
 
@@ -400,18 +364,18 @@ thing computing the number that ends up on an invoice.
   pattern to reuse.
 - **Use a Neon branch for experiments** (`dev`, parented off `production`), not
   production directly — this project already does this (§4, Task 1 step 3).
-- **Line endings**: see §5 item 8 before you touch any of the 5 currently-noisy files —
-  check your editor's line-ending setting first, or you'll add a 6th.
+- **Line endings**: `.gitattributes` normalizes everything to LF (since `16ae83b`). Set your
+  editor to LF. `frontend/src/server/brain.ts` still shows as modified on every checkout —
+  don't commit it; see `docs/tasks/BLOCKERS.md` K1.
 
-## 9. Suggested next steps for whoever picks this up
+## 9. Where to start
 
-1. Read `frontend/CLAUDE.md` in full (this playbook only indexes it).
-2. Decide the `products.price` vs `product_prices` question in §6 before writing any
-   migration for the pricing feature — it's the one decision that changes the shape of
-   the migration.
-3. Resolve or re-run `frontend/import-real-data.ts` against the current schema (§5.1)
-   before treating any dev-branch data as trustworthy.
-4. Get the two negative-stock rows and the three-product mismatch (§5.2/5.3) in front
-   of the owner — both are explicitly flagged as "don't report yet" pending that.
-5. Add a `.gitattributes` (line-ending normalization) — cheap, and the Brain team
-   already proved it's worth doing.
+1. New to the codebase, or to coding? Read `docs/onboarding/Onboarding_Playbook.md` first
+   (Vietnamese; setup, how the code is layered, never-do rules).
+2. Read §1–§4 and §6 here for the big picture, then `frontend/CLAUDE.md` for the detailed
+   session log (this playbook only indexes it).
+3. Pick work from `docs/tasks/Backend_Task_Board.md`, and follow its coordination rules
+   (where to branch from, who may create migrations).
+4. Before deciding anything about pricing tiers, credit terms, roles, or real-data
+   anomalies, check `docs/tasks/BLOCKERS.md` — if it's listed there, it's not ours to decide
+   alone.

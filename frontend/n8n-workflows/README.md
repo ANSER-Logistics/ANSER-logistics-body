@@ -119,4 +119,4 @@ Workflow gốc gọi API nội bộ đặc thù Flask (`/api/n8n/internal/...` t
 và một số dữ liệu Flask có mà app này không có (mã khách hàng, số nhân viên bán hàng, ngưỡng
 tồn kho lưu trên từng kho). Các workflow ở đây đã đổi URL sang API mới của Next.js app
 (`src/app/api/n8n/internal/*`) và bỏ những trường dữ liệu không tồn tại — xem chi tiết trong
-`ARCHITECTURE.md` mục "Tự động hoá & n8n".
+`docs/architecture/ARCHITECTURE.md` mục "Tự động hoá & n8n".
