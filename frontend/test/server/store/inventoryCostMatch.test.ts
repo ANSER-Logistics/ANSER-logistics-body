@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchCosts, type MatchableProduct, type UnitCostRow } from "./inventoryCostMatch";
+import { matchCosts, type MatchableProduct, type UnitCostRow } from "@/server/store/inventoryCostMatch";
 
 const row = (code: string, name: string, unit_cost: number, source = "xuất"): UnitCostRow => ({
   code,

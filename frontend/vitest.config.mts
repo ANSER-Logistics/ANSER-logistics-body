@@ -3,11 +3,15 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
-    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@test": fileURLToPath(new URL("./test", import.meta.url)),
+    },
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    // test/ phản chiếu cấu trúc src/: src/server/auth.ts → test/server/auth.test.ts.
+    include: ["test/**/*.test.ts"],
     // Mỗi file test dựng một Postgres PGlite riêng và chạy đủ migration — lần đầu
     // nạp WASM có thể quá 5s mặc định trên máy chậm.
     testTimeout: 20_000,
@@ -17,10 +21,9 @@ export default defineConfig({
       include: ["src/server/**/*.ts"],
       exclude: [
         "src/server/db/migrations/**",
-        "src/**/*.test.ts",
         // Khai báo bảng, không có logic để test.
         "src/server/db/schema.ts",
-        // Test thay file này bằng PGlite (src/test/db.ts) — đo nó chỉ ra 0% vô nghĩa.
+        // Test thay file này bằng PGlite (test/db.ts) — đo nó chỉ ra 0% vô nghĩa.
         "src/server/db/client.ts",
       ],
       reporter: ["text-summary", "text", "html"],

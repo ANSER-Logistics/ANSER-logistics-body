@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { describe, expect, it } from "vitest";
-import { MAX_UPLOAD_BYTES, layFileTaiLen, truongText } from "./uploadGuard";
+import { MAX_UPLOAD_BYTES, layFileTaiLen, truongText } from "@/server/uploadGuard";
 
 function multipart(form: FormData) {
   return new Request("http://localhost/api/ai/report", { method: "POST", body: form });

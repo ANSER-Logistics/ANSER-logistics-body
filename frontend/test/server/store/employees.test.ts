@@ -1,11 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db/client", () => import("@/test/db"));
+vi.mock("@/server/db/client", () => import("@test/db"));
 
-import { resetDb } from "@/test/db";
-import { createEmployee, deleteEmployee, getEmployeeById, listEmployees, updateEmployee } from "./employees";
-import { createUser, findUserById } from "./users";
-import { createWarehouse } from "./warehouses";
+import { resetDb } from "@test/db";
+import {
+  createEmployee,
+  deleteEmployee,
+  getEmployeeById,
+  listEmployees,
+  updateEmployee,
+} from "@/server/store/employees";
+import { createUser, findUserById } from "@/server/store/users";
+import { createWarehouse } from "@/server/store/warehouses";
 
 beforeEach(resetDb);
 

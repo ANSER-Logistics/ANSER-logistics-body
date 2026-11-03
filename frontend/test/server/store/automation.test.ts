@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db/client", () => import("@/test/db"));
+vi.mock("@/server/db/client", () => import("@test/db"));
 
-import { db, resetDb } from "@/test/db";
+import { db, resetDb } from "@test/db";
 import { automationRules, categories, products, warehouses } from "@/server/db/schema";
-import { LOW_STOCK_THRESHOLD } from "./products";
-import { createRule, deleteRule, evaluateAlerts, getRule, listRules, updateRule } from "./automation";
+import { LOW_STOCK_THRESHOLD } from "@/server/store/products";
+import { createRule, deleteRule, evaluateAlerts, getRule, listRules, updateRule } from "@/server/store/automation";
 
 beforeEach(resetDb);
 

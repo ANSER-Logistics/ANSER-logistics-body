@@ -11,12 +11,12 @@ vi.mock("next/headers", () => ({
     get: (name: string) => (jar.has(name) ? { name, value: jar.get(name) } : undefined),
   }),
 }));
-vi.mock("@/server/db/client", () => import("@/test/db"));
+vi.mock("@/server/db/client", () => import("@test/db"));
 
-import { resetDb } from "@/test/db";
+import { resetDb } from "@test/db";
 import { COOKIE_NAME, signToken } from "@/server/auth";
 import { createUser, deleteUser, type Role, updateUser } from "@/server/store/users";
-import { getSessionUser, requireAdmin } from "./session";
+import { getSessionUser, requireAdmin } from "@/server/session";
 
 beforeEach(async () => {
   jar.clear();

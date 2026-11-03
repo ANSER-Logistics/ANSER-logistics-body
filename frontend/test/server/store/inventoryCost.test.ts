@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { weightedAverageCost } from "./inventoryCost";
+import { weightedAverageCost } from "@/server/store/inventoryCost";
 
 describe("weightedAverageCost", () => {
   it("bình quân gia quyền theo số lượng tồn cũ và lô nhập", () => {

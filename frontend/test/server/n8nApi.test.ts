@@ -9,7 +9,7 @@ import {
   listN8nExecutions,
   listN8nWorkflows,
   updateN8nWorkflow,
-} from "./n8nApi";
+} from "@/server/n8nApi";
 
 const BASE = "http://localhost:5679";
 const fetchMock = vi.fn<typeof fetch>();

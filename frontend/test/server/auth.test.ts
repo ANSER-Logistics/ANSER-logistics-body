@@ -9,7 +9,7 @@ async function loadAuth(env: Record<string, string> = {}) {
   vi.stubEnv("JWT_SECRET", SECRET);
   for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
   vi.resetModules();
-  return import("./auth");
+  return import("@/server/auth");
 }
 
 function base64url(value: object) {

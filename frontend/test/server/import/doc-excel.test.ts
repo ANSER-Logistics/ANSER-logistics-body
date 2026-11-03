@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 
-import { docCoKhong, docExcel, docSo } from "./doc-excel";
+import { docCoKhong, docExcel, docSo } from "@/server/import/doc-excel";
 
 type O = ExcelJS.CellValue;
 

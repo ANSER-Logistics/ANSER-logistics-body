@@ -18,7 +18,7 @@ import {
   searchKnowledge,
   uploadKnowledgeDocument,
   type BrainErrorKind,
-} from "./brain";
+} from "@/server/brain";
 
 const BASE = "http://brain.test";
 const fetchMock = vi.fn<typeof fetch>();

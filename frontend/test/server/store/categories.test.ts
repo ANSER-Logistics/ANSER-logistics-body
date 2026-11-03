@@ -1,9 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db/client", () => import("@/test/db"));
+vi.mock("@/server/db/client", () => import("@test/db"));
 
-import { db, resetDb } from "@/test/db";
+import { db, resetDb } from "@test/db";
 import { categories } from "@/server/db/schema";
 import {
   DEFAULT_CATEGORIES,
@@ -11,7 +11,7 @@ import {
   getOrCreateCategoryByName,
   listCategories,
   seedCategories,
-} from "./categories";
+} from "@/server/store/categories";
 
 beforeEach(resetDb);
 

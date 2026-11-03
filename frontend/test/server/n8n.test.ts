@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { triggerN8nWebhook } from "./n8n";
+import { triggerN8nWebhook } from "@/server/n8n";
 
 const fetchMock = vi.fn<typeof fetch>();
 

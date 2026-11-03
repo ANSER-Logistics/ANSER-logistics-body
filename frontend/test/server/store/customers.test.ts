@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db/client", () => import("@/test/db"));
+vi.mock("@/server/db/client", () => import("@test/db"));
 
-import { db, resetDb } from "@/test/db";
+import { db, resetDb } from "@test/db";
 import { salesInvoices } from "@/server/db/schema";
 import {
   createCustomer,
@@ -11,7 +11,7 @@ import {
   getCustomerById,
   listCustomers,
   updateCustomer,
-} from "./customers";
+} from "@/server/store/customers";
 
 beforeEach(resetDb);
 

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db/client", () => import("@/test/db"));
+vi.mock("@/server/db/client", () => import("@test/db"));
 
 import { eq } from "drizzle-orm";
-import { db, resetDb } from "@/test/db";
+import { db, resetDb } from "@test/db";
 import { products, warehouses } from "@/server/db/schema";
-import { applyCostImport, costCoverage, previewCostImport, type UnitCostRow } from "./inventoryCostImport";
+import { applyCostImport, costCoverage, previewCostImport, type UnitCostRow } from "@/server/store/inventoryCostImport";
 
 beforeEach(resetDb);
 

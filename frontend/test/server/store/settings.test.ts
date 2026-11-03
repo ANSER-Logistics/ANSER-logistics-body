@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db/client", () => import("@/test/db"));
+vi.mock("@/server/db/client", () => import("@test/db"));
 
-import { db, resetDb } from "@/test/db";
+import { db, resetDb } from "@test/db";
 import { companySettings } from "@/server/db/schema";
-import { ensureCompanySettingsRow, getCompanySettings, updateCompanySettings } from "./settings";
+import { ensureCompanySettingsRow, getCompanySettings, updateCompanySettings } from "@/server/store/settings";
 
 beforeEach(resetDb);
 afterEach(() => {

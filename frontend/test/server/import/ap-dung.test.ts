@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db/client", () => import("@/test/db"));
+vi.mock("@/server/db/client", () => import("@test/db"));
 
 // `getOrCreateCategoryByName` chạy SAU lapKeHoach và TRƯỚC db.transaction
 // (ap-dung.ts:173-179) — khe duy nhất để chen một thay đổi vào giữa "xem trước"
@@ -24,7 +24,7 @@ vi.mock("@/server/store/categories", async (orig) => {
 });
 
 import { asc, eq } from "drizzle-orm";
-import { client, db, resetDb } from "@/test/db";
+import { client, db, resetDb } from "@test/db";
 import {
   categories,
   customers,
@@ -34,8 +34,8 @@ import {
   suppliers,
   warehouses,
 } from "@/server/db/schema";
-import type { DongDoc, KetQuaDoc, LoaiFile } from "./doc-excel";
-import { apDung, lapKeHoach } from "./ap-dung";
+import type { DongDoc, KetQuaDoc, LoaiFile } from "@/server/import/doc-excel";
+import { apDung, lapKeHoach } from "@/server/import/ap-dung";
 
 beforeEach(resetDb);
 beforeEach(() => {

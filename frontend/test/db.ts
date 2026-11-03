@@ -4,8 +4,8 @@
 //
 // Cách dùng trong file test:
 //
-//   vi.mock("@/server/db/client", () => import("@/test/db"));
-//   import { resetDb } from "@/test/db";
+//   vi.mock("@/server/db/client", () => import("@test/db"));
+//   import { resetDb } from "@test/db";
 //   beforeEach(resetDb);
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
@@ -17,7 +17,7 @@ export const client = new PGlite();
 export const db = drizzle(client, { schema });
 
 await migrate(db, {
-  migrationsFolder: fileURLToPath(new URL("../server/db/migrations", import.meta.url)),
+  migrationsFolder: fileURLToPath(new URL("../src/server/db/migrations", import.meta.url)),
 });
 
 /** Xoá sạch dữ liệu mọi bảng (giữ cấu trúc) — gọi trong `beforeEach`. */

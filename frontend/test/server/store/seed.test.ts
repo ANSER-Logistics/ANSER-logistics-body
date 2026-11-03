@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db/client", () => import("@/test/db"));
+vi.mock("@/server/db/client", () => import("@test/db"));
 
-import { db, resetDb } from "@/test/db";
+import { db, resetDb } from "@test/db";
 import {
   automationRules,
   categories,
@@ -12,10 +12,10 @@ import {
   users,
   warehouses,
 } from "@/server/db/schema";
-import { DEFAULT_CATEGORIES, seedCategories } from "./categories";
-import { listProducts, LOW_STOCK_THRESHOLD } from "./products";
-import { DEMO_ACCOUNT } from "./users";
-import { ensureDefaultWarehouseAndBackfill, runStartupSeed, seedInitialData } from "./seed";
+import { DEFAULT_CATEGORIES, seedCategories } from "@/server/store/categories";
+import { listProducts, LOW_STOCK_THRESHOLD } from "@/server/store/products";
+import { DEMO_ACCOUNT } from "@/server/store/users";
+import { ensureDefaultWarehouseAndBackfill, runStartupSeed, seedInitialData } from "@/server/store/seed";
 
 beforeEach(resetDb);
 

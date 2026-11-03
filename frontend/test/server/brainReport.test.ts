@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db/client", () => import("@/test/db"));
+vi.mock("@/server/db/client", () => import("@test/db"));
 
-import { db, resetDb } from "@/test/db";
+import { db, resetDb } from "@test/db";
 import { products, salesInvoiceItems, salesInvoices, warehouses } from "@/server/db/schema";
 import { deleteProduct, updateProduct } from "@/server/store/products";
-import { collectSaleLines } from "./brainReport";
+import { collectSaleLines } from "@/server/brainReport";
 
 // Chỉ giả Date (không giả setTimeout) để cửa sổ "N tháng gần nhất" cố định mà
 // PGlite vẫn chạy bình thường. NOW = 12:00 ngày 15/06/2026 giờ VN.

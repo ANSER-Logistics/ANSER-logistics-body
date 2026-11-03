@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/server/db/client", () => import("@/test/db"));
+vi.mock("@/server/db/client", () => import("@test/db"));
 
-import { db, resetDb } from "@/test/db";
+import { db, resetDb } from "@test/db";
 import { users } from "@/server/db/schema";
 import {
   countAdmins,
@@ -17,7 +17,7 @@ import {
   seedDemoUser,
   toPublicUser,
   updateUser,
-} from "./users";
+} from "@/server/store/users";
 
 beforeEach(resetDb);
 
