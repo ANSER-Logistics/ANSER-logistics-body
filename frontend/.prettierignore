@@ -6,3 +6,17 @@ src/server/db/migrations/
 # Đội Brain đang sửa file này ở PR #3 — format bây giờ làm PR đó xung đột trên mọi dòng.
 # Bỏ dòng này cùng lúc với việc renormalize line ending (BLOCKERS.md K1).
 src/server/brain.ts
+
+# TẠM THỜI — các file đang được viết lại trên nhánh khác (hạn 06/11, bảng việc 1Nov26):
+# format bây giờ thì PR của họ xung đột trên từng dòng. Khi PR đó merge: xoá nhóm dòng
+# tương ứng, chạy `pnpm format`, commit riêng.
+# - Giá nhiều mức (Sĩ, việc 1)
+src/server/db/schema.ts
+src/server/store/sales.ts
+src/server/store/products.ts
+src/server/reports.ts
+src/app/api/sales/invoices/
+src/app/api/products/
+# - Sửa sổ kho createTransaction() (Dương Sơn, việc 2)
+src/server/store/inventory.ts
+src/app/api/inventory/transactions/
