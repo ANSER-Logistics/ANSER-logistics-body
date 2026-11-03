@@ -11,7 +11,7 @@ Ký hiệu nguồn:
 **[H11/10]** = buổi họp với công ty ngày 11/10/2026 (ghi chú họp lưu ngoài repo; nội dung
 **lẫn lộn** giữa thực tế Hoàng Phát và thông lệ chung của ngành — chưa điểm nào trong đó được
 coi là yêu cầu đã xác nhận).
-**[PB]** = `docs/playbook/Project_Playbook_VI.md`. **[CL]** = `frontend/CLAUDE.md`.
+**[PB]** = `docs/playbook/Project_Playbook_VI.md`. **[CL]** = `docs/decisions/5. Database_Session_Log.md`.
 
 ## 1. Giá bán & mức giá
 

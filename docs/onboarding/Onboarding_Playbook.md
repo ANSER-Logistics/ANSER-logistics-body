@@ -549,7 +549,7 @@ Mỗi quy tắc dưới đây đều có lý do thật — phần lớn là lỗ
 | Tra một file cụ thể làm gì, các luồng đăng nhập/đăng ký | `docs/architecture/ARCHITECTURE.md` |
 | Hiểu vì sao một bảng/cột có hình dạng như vậy | Chú thích trong `frontend/src/server/db/schema.ts`, rồi `docs/decisions/3. ERD_CHUAN.md` §4 |
 | Xem từng bước đã triển khai database thế nào | `docs/decisions/4. Database_Implementation_Documentation.md` |
-| Nhật ký chi tiết các lỗi đã tìm/sửa | `frontend/CLAUDE.md` |
+| Nhật ký chi tiết các lỗi đã tìm/sửa | `docs/decisions/5. Database_Session_Log.md` |
 | Vì sao chọn Next.js, Brain/n8n tách riêng | `docs/architecture/STACK_DECISIONS.md` |
 | Lịch sử thiết kế ERD (chỉ khi thật sự cần) | `docs/decisions/`, đọc `0.` → `3.` (mỗi bản thay thế bản trước) |
 
