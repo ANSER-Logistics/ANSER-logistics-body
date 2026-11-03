@@ -1,0 +1,40 @@
+# .github/CODEOWNERS — ai bắt buộc phải duyệt khi PR chạm vào đâu.
+#
+# CHƯA CÓ TÁC DỤNG cho tới khi bật "Require review from Code Owners" trong
+# ruleset của nhánh mặc định (Settings → Rules → Rulesets).
+#
+# Dòng khớp CUỐI CÙNG thắng — ngược với .gitignore. Nên mẫu chung đặt trước,
+# mẫu cụ thể đặt sau.
+#
+# Team được nhắc ở đây PHẢI có quyền Write trở lên trên repo, nếu không GitHub
+# bỏ qua dòng đó MÀ KHÔNG BÁO LỖI.
+
+# Mặc định: mọi thứ trong Body thuộc team body.
+*                                               @ANSER-Logistics/body
+
+# --- Ranh giới với Brain -----------------------------------------------------
+#
+# Những file dưới đây là HỢP ĐỒNG giữa hai repo, không phải mã nội bộ của Body.
+# Đổi một tên trường ở đây là đổi thứ Brain đang dựa vào — và kiểu TypeScript
+# chỉ sống lúc biên dịch, nên bên Brain sẽ không có lỗi nào, chỉ có một ô trống
+# trên màn hình.
+#
+# Thêm @ANSER-Logistics/brain để đội Brain nhìn thấy, KHÔNG phải để họ chặn:
+# quyền quyết vẫn của team body.
+
+/frontend/src/server/brain.ts                   @ANSER-Logistics/body @ANSER-Logistics/brain
+/frontend/src/server/brainReport.ts             @ANSER-Logistics/body @ANSER-Logistics/brain
+/frontend/src/app/api/ai/                       @ANSER-Logistics/body @ANSER-Logistics/brain
+
+# --- Lược đồ DB --------------------------------------------------------------
+#
+# Brain KHÔNG giữ bản sao lược đồ nào — Body là nguồn sự thật duy nhất. Nên đổi
+# ở đây là đổi thứ cả hai bên dựa vào.
+
+/frontend/src/server/db/schema.ts               @ANSER-Logistics/body @ANSER-Logistics/brain
+/frontend/src/server/db/migrations/             @ANSER-Logistics/body
+
+# --- Cổng chất lượng ---------------------------------------------------------
+/.github/workflows/                             @ANSER-Logistics/body
+/.github/CODEOWNERS                             @ANSER-Logistics/body
+/.gitattributes                                 @ANSER-Logistics/body
