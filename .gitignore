@@ -11,6 +11,7 @@ node_modules/
 .claude/settings.local.json
 .claude/worktrees/
 .claude/skills/
+.claude/hooks/
 
 # Knowledge graph sinh bởi graphify (`graphify update .`) — dựng lại được bất kỳ lúc nào.
 graphify-out/
