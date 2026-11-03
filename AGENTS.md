@@ -1,7 +1,8 @@
 # ANSER-v2 — instructions for AI coding agents
 
-Read by Codex and other agents directly, and by Claude Code through `CLAUDE.md`. Keep it short
-and current; details belong in `docs/`, linked below.
+Read by Codex and other agents directly, by Claude Code through `CLAUDE.md`, and by GitHub
+Copilot as the copy in `.github/copilot-instructions.md` — after editing this file, re-copy it
+there. Keep it short and current; details belong in `docs/`, linked below.
 
 ## What this is
 
