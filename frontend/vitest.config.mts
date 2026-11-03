@@ -17,6 +17,9 @@ export default defineConfig({
       include: ["src/server/**/*.ts"],
       exclude: ["src/server/db/migrations/**", "src/**/*.test.ts"],
       reporter: ["text-summary", "text", "html"],
+      // Sàn, không phải mục tiêu: đặt dưới mức hiện có (~77% dòng, 83% nhánh) vài điểm
+      // để code mới chưa có test không làm đỏ ngay. Viết thêm test thì NÂNG các số này lên.
+      thresholds: { lines: 70, statements: 70, functions: 65, branches: 75 },
     },
   },
 });
