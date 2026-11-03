@@ -51,7 +51,13 @@ export async function createCustomer(input: {
 
 export async function updateCustomer(
   id: string,
-  patch: Partial<{ name: string; phone: string | null; email: string | null; address: string | null; note: string | null }>,
+  patch: Partial<{
+    name: string;
+    phone: string | null;
+    email: string | null;
+    address: string | null;
+    note: string | null;
+  }>,
 ) {
   const [customer] = await db.update(customers).set(patch).where(eq(customers.id, id)).returning();
   return customer;

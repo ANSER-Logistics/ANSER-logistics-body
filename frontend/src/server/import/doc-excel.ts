@@ -81,7 +81,11 @@ function chuoi(v: unknown): string {
   // chuỗi trông như dữ liệu, lọt qua mọi phép kiểm rỗng.
   if (typeof v === "object") {
     const o = v as { result?: unknown; richText?: Array<{ text?: string }>; text?: string };
-    if (Array.isArray(o.richText)) return o.richText.map((r) => r.text ?? "").join("").trim();
+    if (Array.isArray(o.richText))
+      return o.richText
+        .map((r) => r.text ?? "")
+        .join("")
+        .trim();
     if (o.text !== undefined) return String(o.text).trim();
     if (o.result !== undefined) return String(o.result).trim();
     return "";
@@ -102,7 +106,7 @@ export function docSo(v: unknown): number | null {
   if (typeof v === "number") return Number.isFinite(v) ? v : null;
   let s = chuoi(v).replace(/\s/g, "");
   if (!s) return null;
-  const am = /^\(.*\)$/.test(s);           // kế toán ghi số âm bằng ngoặc
+  const am = /^\(.*\)$/.test(s); // kế toán ghi số âm bằng ngoặc
   if (am) s = s.slice(1, -1);
   s = s.replace(/[₫đvnd]/gi, "");
   const cham = s.lastIndexOf(".");
@@ -146,7 +150,7 @@ export function docCoKhong(v: unknown): { gt: boolean | null; la: boolean } {
   if (!s || CHUA_BIET.has(s)) return { gt: null, la: false };
   if (CO.has(s)) return { gt: true, la: false };
   if (KHONG.has(s)) return { gt: false, la: false };
-  return { gt: null, la: true };      // đọc không nổi -> đáng cảnh báo
+  return { gt: null, la: true }; // đọc không nổi -> đáng cảnh báo
 }
 
 // --------------------------------------------------------------------------
@@ -200,8 +204,8 @@ function doanLoai(hang: unknown[]): LoaiFile | null {
   const nhan = hang.map(chuan);
   if (nhan.includes("ma khach hang") || nhan.includes("ten khach hang")) return "khach_hang";
   if (nhan.includes("ma nha cung cap") || nhan.includes("ten nha cung cap")) return "nha_cung_cap";
-  if (nhan.some((n) => n.startsWith("giam 2%")) || nhan.includes("don vi tinh chinh")
-      || nhan.includes("so luong ton")) return "hang_hoa";
+  if (nhan.some((n) => n.startsWith("giam 2%")) || nhan.includes("don vi tinh chinh") || nhan.includes("so luong ton"))
+    return "hang_hoa";
   return null;
 }
 
@@ -227,14 +231,14 @@ export async function docExcel(buf: ArrayBuffer | Buffer): Promise<KetQuaDoc> {
   if (!td) {
     throw new Error(
       "Không tìm thấy dòng tiêu đề. File phải là bản xuất MISA của Danh sách " +
-      "hàng hoá/khách hàng/nhà cung cấp, giữ nguyên các cột gốc.",
+        "hàng hoá/khách hàng/nhà cung cấp, giữ nguyên các cột gốc.",
     );
   }
   const loai = doanLoai(rows[td.i]);
   if (!loai) {
     throw new Error(
       "Đọc được tiêu đề nhưng không nhận ra đây là danh sách gì. Cần có một " +
-      "trong: 'Mã khách hàng', 'Mã nhà cung cấp', hoặc 'Đơn vị tính chính'.",
+        "trong: 'Mã khách hàng', 'Mã nhà cung cấp', hoặc 'Đơn vị tính chính'.",
     );
   }
 

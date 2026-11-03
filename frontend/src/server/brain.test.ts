@@ -158,7 +158,11 @@ describe("cấu hình và header", () => {
 
   it.each<[string, number, () => Promise<unknown>]>([
     ["importInventoryFile", 60_000, () => importInventoryFile(excel())],
-    ["uploadKnowledgeDocument", 60_000, () => uploadKnowledgeDocument(new File(["pdf"], "hd.pdf"), { workspaceId: "ws-1" })],
+    [
+      "uploadKnowledgeDocument",
+      60_000,
+      () => uploadKnowledgeDocument(new File(["pdf"], "hd.pdf"), { workspaceId: "ws-1" }),
+    ],
     ["buildReport", 30_000, () => buildReport({ sales: [] })],
   ])("%s gắn AbortSignal.timeout(%i) và không dùng cache", async (_n, ms, run) => {
     const spy = vi.spyOn(AbortSignal, "timeout");
@@ -181,7 +185,12 @@ describe("công cụ JSON", () => {
   });
 
   it.each<[string, () => Promise<unknown>, string, unknown]>([
-    ["buildReport", () => buildReport({ granularity: "month", sales }), "/tools/report", { granularity: "month", sales }],
+    [
+      "buildReport",
+      () => buildReport({ granularity: "month", sales }),
+      "/tools/report",
+      { granularity: "month", sales },
+    ],
     [
       "auditInventory",
       () => auditInventory({ lines: [{ code: "A01", closing_value: null }], warehouse: "Kho 1" }),
@@ -311,7 +320,12 @@ describe("tải file multipart", () => {
   });
 
   it.each<[string, () => Promise<unknown>, string, Record<string, string>]>([
-    ["importInventoryFile có sheet", () => importInventoryFile(excel(), { sheet: "NXT" }), "/tools/inventory-import", { sheet: "NXT" }],
+    [
+      "importInventoryFile có sheet",
+      () => importInventoryFile(excel(), { sheet: "NXT" }),
+      "/tools/inventory-import",
+      { sheet: "NXT" },
+    ],
     ["importInventoryFile không sheet", () => importInventoryFile(excel()), "/tools/inventory-import", {}],
     [
       "importPartnerFile có sheet + role",
@@ -320,7 +334,12 @@ describe("tải file multipart", () => {
       { sheet: "KH", role: "customer" },
     ],
     ["importPartnerFile để Brain tự đoán role", () => importPartnerFile(excel()), "/tools/partner-import", {}],
-    ["importProductFile có sheet", () => importProductFile(excel(), { sheet: "DM" }), "/tools/product-import", { sheet: "DM" }],
+    [
+      "importProductFile có sheet",
+      () => importProductFile(excel(), { sheet: "DM" }),
+      "/tools/product-import",
+      { sheet: "DM" },
+    ],
     ["importProductFile không sheet", () => importProductFile(excel()), "/tools/product-import", {}],
   ])("%s", async (_name, run, path, extra) => {
     fetchMock.mockResolvedValueOnce(json({ audit: null, audit_skipped_reason: "lệch cột" }));

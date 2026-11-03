@@ -59,7 +59,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) {
-      return NextResponse.json({ message: "Đã kích hoạt nhưng chạy thử thất bại — kiểm tra cấu hình." }, { status: 502 });
+      return NextResponse.json(
+        { message: "Đã kích hoạt nhưng chạy thử thất bại — kiểm tra cấu hình." },
+        { status: 502 },
+      );
     }
     return NextResponse.json({ message: "Đã chạy thử — kiểm tra email tại MailHog." });
   } catch {

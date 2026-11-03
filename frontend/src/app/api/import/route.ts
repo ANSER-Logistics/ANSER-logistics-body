@@ -63,10 +63,7 @@ export async function POST(request: Request) {
   } catch (e) {
     // Lỗi đọc file là lỗi NGƯỜI DÙNG SỬA ĐƯỢC (sai file, sai định dạng), nên
     // 400 kèm nguyên câu giải thích của bộ đọc chứ không phải 500 trống trơn.
-    return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Không đọc được file." },
-      { status: 400 },
-    );
+    return NextResponse.json({ message: e instanceof Error ? e.message : "Không đọc được file." }, { status: 400 });
   }
 
   if (!xacNhan) {
@@ -101,9 +98,6 @@ export async function POST(request: Request) {
     const ra = await apDung(kq, warehouseId, user.employeeId ?? undefined);
     return NextResponse.json({ ...ra, loai: kq.loai });
   } catch (e) {
-    return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Ghi thất bại." },
-      { status: 400 },
-    );
+    return NextResponse.json({ message: e instanceof Error ? e.message : "Ghi thất bại." }, { status: 400 });
   }
 }

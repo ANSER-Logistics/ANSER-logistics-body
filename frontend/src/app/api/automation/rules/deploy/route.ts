@@ -60,10 +60,7 @@ export async function POST(request: Request) {
     const raw = fs.readFileSync(path.join(process.cwd(), "n8n-workflows", meta.file), "utf-8");
     template = JSON.parse(raw);
   } catch {
-    return NextResponse.json(
-      { message: `Không đọc được file template n8n-workflows/${meta.file}.` },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: `Không đọc được file template n8n-workflows/${meta.file}.` }, { status: 500 });
   }
 
   try {

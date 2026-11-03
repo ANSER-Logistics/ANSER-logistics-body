@@ -148,14 +148,11 @@ export default function InventoryAuditPanel() {
       <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
         <h3 className="text-sm font-bold">Kiểm sổ từ file kế toán</h3>
         <p className="mt-1 text-sm text-zinc-400">
-          Tải lên bảng <span className="text-zinc-300">Tổng hợp Nhập – Xuất – Tồn</span> xuất từ
-          MISA / Fast / Bravo (.xlsx). Xin file Excel gốc, đừng dùng bản in ra PDF — đọc
-          Excel thì chính xác tuyệt đối, còn đọc ảnh bảng số tiền thì có lúc nhầm 5 thành 6
-          ở đúng cột giá vốn.
+          Tải lên bảng <span className="text-zinc-300">Tổng hợp Nhập – Xuất – Tồn</span> xuất từ MISA / Fast / Bravo
+          (.xlsx). Xin file Excel gốc, đừng dùng bản in ra PDF — đọc Excel thì chính xác tuyệt đối, còn đọc ảnh bảng số
+          tiền thì có lúc nhầm 5 thành 6 ở đúng cột giá vốn.
         </p>
-        <p className="mt-2 text-xs text-zinc-500">
-          File chỉ đi qua để đọc, không được lưu lại ở đâu cả.
-        </p>
+        <p className="mt-2 text-xs text-zinc-500">File chỉ đi qua để đọc, không được lưu lại ở đâu cả.</p>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <input
@@ -196,9 +193,7 @@ export default function InventoryAuditPanel() {
             <span className="text-zinc-400">
               Kỳ:{" "}
               <span className="text-white">
-                {imp.period_start && imp.period_end
-                  ? `${imp.period_start} → ${imp.period_end}`
-                  : "—"}
+                {imp.period_start && imp.period_end ? `${imp.period_start} → ${imp.period_end}` : "—"}
               </span>
             </span>
             <span className="text-zinc-400">
@@ -231,8 +226,7 @@ export default function InventoryAuditPanel() {
           {imp?.checks?.mismatches && imp.checks.mismatches.length > 0 && (
             <div className="mt-3">
               <p className="text-sm text-amber-200/80">
-                {imp.checks.mismatches.length} điểm không khớp khi tự kiểm (dấu hiệu bảng bị
-                lệch cột lúc đọc):
+                {imp.checks.mismatches.length} điểm không khớp khi tự kiểm (dấu hiệu bảng bị lệch cột lúc đọc):
               </p>
               <pre className="mt-2 max-h-56 overflow-auto rounded-xl bg-black/40 p-3 text-xs text-amber-100/80">
                 {JSON.stringify(imp.checks.mismatches.slice(0, 10), null, 2)}
@@ -247,9 +241,8 @@ export default function InventoryAuditPanel() {
         <div className="rounded-2xl border border-sky-500/20 bg-sky-500/[0.06] p-5">
           <h3 className="text-sm font-bold">Lấy giá vốn từ file này</h3>
           <p className="mt-1 text-sm text-zinc-400">
-            File có giá vốn suy được cho <span className="text-white">{unitCosts.length}</span> mặt
-            hàng. Điền vào cột giá vốn đang trống để báo cáo lãi lỗ tính được — hiện phần chưa có
-            giá vốn bị loại khỏi phép tính lãi.
+            File có giá vốn suy được cho <span className="text-white">{unitCosts.length}</span> mặt hàng. Điền vào cột
+            giá vốn đang trống để báo cáo lãi lỗ tính được — hiện phần chưa có giá vốn bị loại khỏi phép tính lãi.
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -263,9 +256,7 @@ export default function InventoryAuditPanel() {
             </button>
           </div>
 
-          {costError && (
-            <p className="mt-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-400">{costError}</p>
-          )}
+          {costError && <p className="mt-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-400">{costError}</p>}
 
           {preview && (
             <div className="mt-5 flex flex-col gap-4">
@@ -278,8 +269,8 @@ export default function InventoryAuditPanel() {
 
               {preview.counts.matched === 0 ? (
                 <p className="rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
-                  Không mã nào trong file khớp với danh mục hàng trong ANSER. Nhiều khả năng
-                  mã hàng bên phần mềm kế toán khác mã bên ANSER — cần đối chiếu mã trước.
+                  Không mã nào trong file khớp với danh mục hàng trong ANSER. Nhiều khả năng mã hàng bên phần mềm kế
+                  toán khác mã bên ANSER — cần đối chiếu mã trước.
                 </p>
               ) : (
                 <>
@@ -336,9 +327,8 @@ export default function InventoryAuditPanel() {
                     <span className="text-zinc-400">
                       Ghi đè cả những mặt hàng <span className="text-zinc-200">đã có</span> giá vốn
                       <span className="mt-0.5 block text-xs text-zinc-500">
-                        Thường KHÔNG nên. Giá vốn dựng dần từ phiếu nhập là giá theo từng lô;
-                        giá trong file này là bình quân cả kỳ. Bật ô này là đánh đổi số chính
-                        xác lấy số ước lượng.
+                        Thường KHÔNG nên. Giá vốn dựng dần từ phiếu nhập là giá theo từng lô; giá trong file này là bình
+                        quân cả kỳ. Bật ô này là đánh đổi số chính xác lấy số ước lượng.
                       </span>
                     </span>
                   </label>
@@ -371,8 +361,8 @@ export default function InventoryAuditPanel() {
                   {applied.skipped > 0 && `, bỏ qua ${applied.skipped}`}.
                   {preview.counts.stillMissing > 0 && (
                     <span className="mt-1 block text-emerald-300/70">
-                      Còn {preview.counts.stillMissing} mặt hàng trong ANSER chưa có giá vốn và
-                      cũng không có trong file này.
+                      Còn {preview.counts.stillMissing} mặt hàng trong ANSER chưa có giá vốn và cũng không có trong file
+                      này.
                     </span>
                   )}
                 </p>
@@ -396,21 +386,23 @@ export default function InventoryAuditPanel() {
               <button
                 type="button"
                 onClick={() =>
-                  downloadCsv(
-                    `kiem-so-kho_${imp?.period_end ?? "ket-qua"}.csv`,
-                    [
-                      ["Kho", imp?.warehouse ?? ""],
-                      ["Kỳ", `${imp?.period_start ?? ""} - ${imp?.period_end ?? ""}`],
-                      ["Số mặt hàng đã kiểm", imp?.rows_parsed ?? 0],
-                      [],
-                      ["Mức", "Loại", "Mã", "Tên hàng", "Vấn đề", "Số tiền liên quan", "Đề nghị", "Bằng chứng"],
-                      ...audit.findings.map((f) => [
-                        f.severity, f.kind, f.code ?? "", f.product ?? "", f.title,
-                        f.money_impact ?? "", f.suggestion,
-                        JSON.stringify(f.evidence),
-                      ]),
-                    ],
-                  )
+                  downloadCsv(`kiem-so-kho_${imp?.period_end ?? "ket-qua"}.csv`, [
+                    ["Kho", imp?.warehouse ?? ""],
+                    ["Kỳ", `${imp?.period_start ?? ""} - ${imp?.period_end ?? ""}`],
+                    ["Số mặt hàng đã kiểm", imp?.rows_parsed ?? 0],
+                    [],
+                    ["Mức", "Loại", "Mã", "Tên hàng", "Vấn đề", "Số tiền liên quan", "Đề nghị", "Bằng chứng"],
+                    ...audit.findings.map((f) => [
+                      f.severity,
+                      f.kind,
+                      f.code ?? "",
+                      f.product ?? "",
+                      f.title,
+                      f.money_impact ?? "",
+                      f.suggestion,
+                      JSON.stringify(f.evidence),
+                    ]),
+                  ])
                 }
                 className="rounded-xl bg-white/[0.08] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/[0.14]"
               >
@@ -433,10 +425,7 @@ export default function InventoryAuditPanel() {
             </div>
           ) : (
             audit.findings.map((f, i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5"
-              >
+              <div key={i} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <span

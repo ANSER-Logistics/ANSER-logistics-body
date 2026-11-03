@@ -219,7 +219,12 @@ describe("getN8nWorkflow / updateN8nWorkflow", () => {
   it("updateN8nWorkflow giữ nguyên settings khi có truyền", async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
 
-    await updateN8nWorkflow("w1", { name: "x", nodes: [], connections: {}, settings: { timezone: "Asia/Ho_Chi_Minh" } });
+    await updateN8nWorkflow("w1", {
+      name: "x",
+      nodes: [],
+      connections: {},
+      settings: { timezone: "Asia/Ho_Chi_Minh" },
+    });
 
     expect(sent().body.settings).toEqual({ timezone: "Asia/Ho_Chi_Minh" });
   });
@@ -273,7 +278,14 @@ describe("listN8nExecutions", () => {
     fetchMock.mockResolvedValue(
       jsonResponse({
         data: [
-          { id: 1, status: "waiting", finished: false, stoppedAt: null, mode: "trigger", startedAt: "2026-01-01T00:00:00Z" },
+          {
+            id: 1,
+            status: "waiting",
+            finished: false,
+            stoppedAt: null,
+            mode: "trigger",
+            startedAt: "2026-01-01T00:00:00Z",
+          },
           { id: 2, finished: false, stoppedAt: null },
           { id: 3, finished: true, stoppedAt: "2026-01-01T00:01:00Z" },
           { id: 4, finished: false, stoppedAt: "2026-01-01T00:02:00Z" },

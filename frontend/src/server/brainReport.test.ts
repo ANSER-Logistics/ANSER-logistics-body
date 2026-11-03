@@ -53,9 +53,7 @@ async function ban(warehouseId: string | null, createdAt: string, dong: Dong[]) 
       createdAt: new Date(createdAt),
     })
     .returning();
-  await db.insert(salesInvoiceItems).values(
-    dong.map((d) => ({ ...d, invoiceId: hd.id, unitPrice: 10_000 })),
-  );
+  await db.insert(salesInvoiceItems).values(dong.map((d) => ({ ...d, invoiceId: hd.id, unitPrice: 10_000 })));
   return hd;
 }
 
@@ -164,12 +162,11 @@ describe("collectSaleLines", () => {
     await ban(hn.id, "2026-06-01T03:00:00Z", [dong(spHn.id, "bán ở Hà Nội")]);
     await ban(km.id, "2026-06-01T03:00:00Z", [dong(spKm.id, "bán ở kho KM")]);
 
-    expect((await collectSaleLines({ warehouseIds: [hn.id] })).lines.map((l) => l.product)).toEqual([
+    expect((await collectSaleLines({ warehouseIds: [hn.id] })).lines.map((l) => l.product)).toEqual(["bán ở Hà Nội"]);
+    expect((await collectSaleLines({ warehouseIds: [hn.id, km.id] })).lines.map((l) => l.product).sort()).toEqual([
       "bán ở Hà Nội",
+      "bán ở kho KM",
     ]);
-    expect(
-      (await collectSaleLines({ warehouseIds: [hn.id, km.id] })).lines.map((l) => l.product).sort(),
-    ).toEqual(["bán ở Hà Nội", "bán ở kho KM"]);
   });
 
   it("hoá đơn cũ (trước B6) chưa ghi warehouse_id vẫn tính theo kho của sản phẩm", async () => {
@@ -177,9 +174,7 @@ describe("collectSaleLines", () => {
     const sp = await taoSanPham(kho.id, "VT001", "Dầu nhớt", 5_000);
     await ban(null, "2026-06-01T03:00:00Z", [dong(sp.id, "hoá đơn cũ")]);
 
-    expect((await collectSaleLines({ warehouseIds: [kho.id] })).lines.map((l) => l.product)).toEqual([
-      "hoá đơn cũ",
-    ]);
+    expect((await collectSaleLines({ warehouseIds: [kho.id] })).lines.map((l) => l.product)).toEqual(["hoá đơn cũ"]);
   });
 
   // schema.ts: sales_invoice_items.product_id là ON DELETE SET NULL và comment

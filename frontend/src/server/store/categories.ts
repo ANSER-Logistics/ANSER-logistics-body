@@ -4,12 +4,7 @@ import { categories } from "@/server/db/schema";
 
 export type Category = typeof categories.$inferSelect;
 
-export const DEFAULT_CATEGORIES = [
-  "Nguyên vật liệu",
-  "Bán thành phẩm",
-  "Thành phẩm",
-  "Phụ liệu",
-] as const;
+export const DEFAULT_CATEGORIES = ["Nguyên vật liệu", "Bán thành phẩm", "Thành phẩm", "Phụ liệu"] as const;
 
 export async function listCategories(): Promise<Category[]> {
   return db.select().from(categories).orderBy(asc(categories.name));

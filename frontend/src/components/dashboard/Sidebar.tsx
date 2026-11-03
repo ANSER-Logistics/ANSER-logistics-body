@@ -38,9 +38,7 @@ export default function Sidebar() {
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-white/[0.08] bg-white/[0.02] p-4 sm:flex">
       <Link href="/" className="mb-8 flex items-center gap-2 px-2 text-lg font-extrabold tracking-tight">
-        <span className="bg-gradient-to-br from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-          ▲
-        </span>
+        <span className="bg-gradient-to-br from-emerald-400 to-teal-300 bg-clip-text text-transparent">▲</span>
         ANSER
       </Link>
 
