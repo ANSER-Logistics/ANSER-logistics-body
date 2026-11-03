@@ -11,6 +11,9 @@ node_modules/
 .claude/settings.local.json
 .claude/worktrees/
 
+# Knowledge graph sinh bởi graphify (`graphify update .`) — dựng lại được bất kỳ lúc nào.
+graphify-out/
+
 # lockfiles
 package-lock.json
 yarn.lock
