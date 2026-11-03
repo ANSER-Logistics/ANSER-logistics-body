@@ -3,9 +3,11 @@
 # Sinh tự động bởi drizzle-kit — sửa tay là lệch với snapshot.
 src/server/db/migrations/
 
-# Đội Brain đang sửa file này ở PR #3 — format bây giờ làm PR đó xung đột trên mọi dòng.
-# Bỏ dòng này cùng lúc với việc renormalize line ending (BLOCKERS.md K1).
+# Đội Brain đang sửa các file này ở PR #3 — format bây giờ làm PR đó xung đột.
+# Khi PR #3 merge: bỏ nhóm này, renormalize line ending brain.ts (BLOCKERS.md K1), chạy `pnpm format`.
 src/server/brain.ts
+src/components/dashboard/icons.tsx
+src/components/dashboard/Sidebar.tsx
 
 # TẠM THỜI — các file đang được viết lại trên nhánh khác (hạn 06/11, bảng việc 1Nov26):
 # format bây giờ thì PR của họ xung đột trên từng dòng. Khi PR đó merge: xoá nhóm dòng
