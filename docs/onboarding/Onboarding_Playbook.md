@@ -408,6 +408,7 @@ gh pr create                            # 6. mở PR vào master (hoặc qua gia
 ```
 
 - **Không push thẳng vào `master`.** Mọi thay đổi đi qua PR.
+- `gh pr create` tự điền sẵn mẫu PR (`.github/pull_request_template.md`); điền hết, đừng xoá checklist. Việc cần ghi lại thì mở issue bằng một trong hai form: **Báo lỗi** hoặc **Việc cần làm**.
 - Tin nhắn commit theo dạng **Conventional Commits**: `feat:` (tính năng), `fix:` (sửa lỗi),
   `docs:` (tài liệu), `chore:` (việc vặt), `test:`… Có thể thêm phạm vi trong ngoặc:
   `fix(task 3): …`, `feat(nhap-excel): …`.
