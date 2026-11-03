@@ -10,6 +10,7 @@ node_modules/
 # Cấu hình Claude Code cá nhân + thư mục worktree tạm.
 .claude/settings.local.json
 .claude/worktrees/
+.claude/skills/
 
 # Knowledge graph sinh bởi graphify (`graphify update .`) — dựng lại được bất kỳ lúc nào.
 graphify-out/
