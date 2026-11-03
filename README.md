@@ -33,9 +33,10 @@ pnpm test            # Vitest; `pnpm test:coverage` also enforces the coverage f
 npx tsc --noEmit     # types, including test files (`next build` checks them too)
 ```
 
-Tests need no database or network: `src/test/db.ts` runs a real Postgres in-process
-(PGlite) with every migration applied. `src/server/store/customers.test.ts` shows the
-pattern. Put a test next to the file it tests, as `<name>.test.ts`.
+Tests need no database or network: `frontend/test/db.ts` runs a real Postgres in-process
+(PGlite) with every migration applied. Tests live in `frontend/test/`, mirroring `src/`:
+`src/server/auth.ts` is tested by `test/server/auth.test.ts`. `test/server/store/customers.test.ts`
+shows the pattern.
 
 ## Package managers and the lockfile
 

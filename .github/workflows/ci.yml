@@ -176,7 +176,7 @@ jobs:
       - name: Cài phụ thuộc
         run: pnpm install --frozen-lockfile
 
-      # Test chạy trên Postgres trong tiến trình (PGlite, xem `src/test/db.ts`) —
+      # Test chạy trên Postgres trong tiến trình (PGlite, xem `frontend/test/db.ts`) —
       # không cần service container. Ngưỡng coverage nằm ở `vitest.config.ts`;
       # tụt dưới ngưỡng là đỏ.
       - name: Vitest

@@ -34,8 +34,9 @@ frontend/
   src/server/db/         schema.ts, client.ts, migrations/ (generated — never edit by hand)
   src/server/import/     MISA Excel import (doc-excel.ts parses, ap-dung.ts plans/applies)
   src/server/brain.ts    Brain AI client;  n8n.ts / n8nApi.ts  n8n webhooks + REST
-  src/test/db.ts         in-process Postgres (PGlite) for tests
   n8n-workflows/         importable n8n workflows
+  test/                  tests, mirroring src/ (src/server/auth.ts → test/server/auth.test.ts)
+  test/db.ts             in-process Postgres (PGlite) for tests
 docs/                    all documentation
 ```
 
@@ -88,9 +89,10 @@ code that uses a Next.js API. Heed deprecation notices. Known traps here: reques
 
 ## Testing
 
-- Tests sit next to the code as `*.test.ts`. Store tests use the real-Postgres PGlite helper:
-  `vi.mock("@/server/db/client", () => import("@/test/db"))` + `beforeEach(resetDb)` — see
-  `src/server/store/customers.test.ts`. Mock `fetch` for Brain/n8n; never hit the network.
+- Tests live in `frontend/test/`, mirroring `src/` (`src/server/auth.ts` → `test/server/auth.test.ts`),
+  never inside `src/`. Import code under test via `@/…`. Store tests use the real-Postgres PGlite helper:
+  `vi.mock("@/server/db/client", () => import("@test/db"))` + `beforeEach(resetDb)` — see
+  `test/server/store/customers.test.ts`. Mock `fetch` for Brain/n8n; never hit the network.
 - A bug you find but don't fix in the same change goes in as `it.todo("BUG: …")`, never as a test
   that asserts the wrong behaviour.
 - Tests must pass in any timezone (CI is UTC, developers are UTC+7).
