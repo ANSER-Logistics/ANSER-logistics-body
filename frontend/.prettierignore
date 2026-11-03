@@ -1,0 +1,8 @@
+# Prettier đã bỏ qua mọi thứ trong .gitignore (node_modules, .next, coverage...).
+
+# Sinh tự động bởi drizzle-kit — sửa tay là lệch với snapshot.
+src/server/db/migrations/
+
+# Đội Brain đang sửa file này ở PR #3 — format bây giờ làm PR đó xung đột trên mọi dòng.
+# Bỏ dòng này cùng lúc với việc renormalize line ending (BLOCKERS.md K1).
+src/server/brain.ts

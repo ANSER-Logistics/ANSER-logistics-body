@@ -10,6 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "format": "prettier --write \"**/*.{js,mjs,cjs,ts,tsx}\"",
+    "format:check": "prettier --check \"**/*.{js,mjs,cjs,ts,tsx}\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
