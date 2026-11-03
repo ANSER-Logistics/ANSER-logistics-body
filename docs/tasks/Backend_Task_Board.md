@@ -156,7 +156,7 @@ tìm được bằng **đọc code** (chưa chạy thử), có trên cả `maste
 
 **Lưu ý kỹ thuật**: dự án dùng **Next.js 16** — file chặn request tên là **`proxy.ts`**, không
 phải `middleware.ts`. Đọc `frontend/node_modules/next/dist/docs/` trước khi viết (xem
-`AGENTS.md` ở thư mục gốc).
+`frontend/AGENTS.md`).
 
 **Tiêu chí hoàn thành**
 
