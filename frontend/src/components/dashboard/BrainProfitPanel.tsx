@@ -74,8 +74,7 @@ export default function BrainProfitPanel() {
         <div>
           <h3 className="text-sm font-semibold text-zinc-200">Lãi gộp theo kỳ</h3>
           <p className="mt-0.5 text-xs text-zinc-500">
-            Tính từ giá vốn đã ghi nhận. Phần chưa có giá vốn bị loại khỏi phép tính lãi,
-            không bị coi là lãi 100%.
+            Tính từ giá vốn đã ghi nhận. Phần chưa có giá vốn bị loại khỏi phép tính lãi, không bị coi là lãi 100%.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -131,8 +130,8 @@ export default function BrainProfitPanel() {
 
           {coverage < 100 && (
             <p className="mt-3 rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-300/90">
-              Còn {(100 - coverage).toFixed(1)}% doanh thu chưa có giá vốn nên chưa tính được
-              lãi. Ghi đơn giá khi tạo phiếu nhập kho để phần này thu hẹp dần.
+              Còn {(100 - coverage).toFixed(1)}% doanh thu chưa có giá vốn nên chưa tính được lãi. Ghi đơn giá khi tạo
+              phiếu nhập kho để phần này thu hẹp dần.
             </p>
           )}
 
@@ -167,9 +166,7 @@ export default function BrainProfitPanel() {
                     <td className="px-3 py-3 font-medium">{String(p.label ?? p.period ?? "—")}</td>
                     <td className="px-3 py-3 text-zinc-400">{vnd(p.revenue)}</td>
                     <td className="px-3 py-3 text-zinc-400">{vnd(p.cogs)}</td>
-                    <td className="px-3 py-3 font-semibold text-emerald-400">
-                      {vnd(p.gross_profit)}
-                    </td>
+                    <td className="px-3 py-3 font-semibold text-emerald-400">{vnd(p.gross_profit)}</td>
                   </tr>
                 ))}
               </tbody>

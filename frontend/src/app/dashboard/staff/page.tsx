@@ -167,14 +167,11 @@ export default function StaffPage() {
       note: employeeForm.note || undefined,
     };
 
-    const res = await fetch(
-      editingEmployeeId ? `/api/employees/${editingEmployeeId}` : "/api/employees",
-      {
-        method: editingEmployeeId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      },
-    );
+    const res = await fetch(editingEmployeeId ? `/api/employees/${editingEmployeeId}` : "/api/employees", {
+      method: editingEmployeeId ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
     setSavingEmployee(false);
 
@@ -262,9 +259,7 @@ export default function StaffPage() {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.12] bg-white/[0.02] px-6 py-16 text-center">
         <h3 className="text-sm font-semibold text-zinc-200">Không có quyền truy cập</h3>
-        <p className="mt-1 max-w-sm text-xs text-zinc-500">
-          Chỉ tài khoản Admin mới xem được trang Nhân sự.
-        </p>
+        <p className="mt-1 max-w-sm text-xs text-zinc-500">Chỉ tài khoản Admin mới xem được trang Nhân sự.</p>
       </div>
     );
   }
@@ -377,9 +372,7 @@ export default function StaffPage() {
                     <td className="px-5 py-3 font-medium">
                       {acc.firstName} {acc.lastName}
                       {acc.id === currentUserId && (
-                        <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-400">
-                          Bạn
-                        </span>
+                        <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-zinc-400">Bạn</span>
                       )}
                     </td>
                     <td className="px-5 py-3 text-zinc-400">{acc.email}</td>
@@ -611,7 +604,9 @@ export default function StaffPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Gắn với nhân viên (tuỳ chọn)</label>
+                  <label className="mb-1.5 block text-xs font-semibold text-zinc-400">
+                    Gắn với nhân viên (tuỳ chọn)
+                  </label>
                   <select
                     value={accountForm.employeeId}
                     onChange={(e) => setAccountForm((f) => ({ ...f, employeeId: e.target.value }))}

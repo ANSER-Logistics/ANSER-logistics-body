@@ -22,34 +22,25 @@ export async function POST(request: Request) {
   try {
     form = await request.formData();
   } catch {
-    return NextResponse.json(
-      { error: "Cần gửi multipart/form-data kèm hai file 'truoc' và 'sau'" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Cần gửi multipart/form-data kèm hai file 'truoc' và 'sau'" }, { status: 400 });
   }
 
   const truoc = form.get("truoc");
   const sau = form.get("sau");
-  for (const [ten, f] of [["truoc", truoc], ["sau", sau]] as const) {
+  for (const [ten, f] of [
+    ["truoc", truoc],
+    ["sau", sau],
+  ] as const) {
     if (!(f instanceof File) || f.size === 0) {
-      return NextResponse.json(
-        { error: `Chưa chọn file '${ten}'. Cần cả hai bản xuất để so.` },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: `Chưa chọn file '${ten}'. Cần cả hai bản xuất để so.` }, { status: 400 });
     }
     if (f.size > MAX_UPLOAD_BYTES) {
-      return NextResponse.json(
-        { error: `File '${ten}' quá lớn (tối đa 5MB)` },
-        { status: 413 },
-      );
+      return NextResponse.json({ error: `File '${ten}' quá lớn (tối đa 5MB)` }, { status: 413 });
     }
   }
 
   try {
-    const [a, b] = await Promise.all([
-      importInventoryFile(truoc as File),
-      importInventoryFile(sau as File),
-    ]);
+    const [a, b] = await Promise.all([importInventoryFile(truoc as File), importInventoryFile(sau as File)]);
 
     // Đọc hỏng thì KHÔNG so. Một bảng lệch cột đem đi so sẽ cho ra hàng loạt
     // "sửa hồi tố" hoàn toàn tưởng tượng — và cáo buộc sổ sách bị sửa là thứ

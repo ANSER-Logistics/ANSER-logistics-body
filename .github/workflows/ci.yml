@@ -90,7 +90,94 @@ jobs:
       - name: ESLint
         run: pnpm run lint
 
-# CHƯA CÓ bước `pnpm run build`: `next build` prerender các trang dashboard, mà
-# `src/server/db/client.ts` ném lỗi ngay lúc import nếu thiếu `DATABASE_URL`.
-# Thêm bước đó cần một database cho CI (Neon branch hoặc Postgres service) —
-# việc riêng, không gộp vào PR về lockfile.
+      # Chỉ file JS/TS (`.prettierignore` liệt kê ngoại lệ). Đỏ ở đây thì chạy
+      # `pnpm format` rồi commit — đừng sửa tay từng dòng.
+      - name: Prettier
+        run: pnpm run format:check
+
+  build:
+    name: Migration + build trên Postgres
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    # Postgres thường chạy cạnh job — KHÔNG dùng Neon: không cần bí mật thật, và
+    # không ai lỡ tay chạy migration của PR lên database dùng chung.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: anser
+          POSTGRES_PASSWORD: anser
+          POSTGRES_DB: anser_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U anser -d anser_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # Giá trị giả, chỉ dành cho CI. `client.ts` ném lỗi ngay lúc import nếu thiếu
+    # `DATABASE_URL`, nên `next build` cần biến này kể cả khi không truy vấn gì.
+    env:
+      DATABASE_URL: postgres://anser:anser@localhost:5432/anser_ci
+      JWT_SECRET: ci-only-not-a-real-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Ba bước dưới giống hệt job `lint` — lý do xem chú thích ở đó.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Bật pnpm cho CI
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.2.2 --activate
+
+      - name: Cài phụ thuộc
+        run: pnpm install --frozen-lockfile
+
+      # Chạy TOÀN BỘ migration lên database trống: migration nào hỏng (sai cú
+      # pháp, phụ thuộc thứ tự, xung đột số 00xx) đỏ ở đây thay vì trên Neon.
+      #
+      # drizzle-kit dùng driver `pg` (TCP) vì có trong devDependencies — driver
+      # `@neondatabase/serverless` của app đi qua WebSocket nên không nói chuyện
+      # được với Postgres thường.
+      - name: Migration
+        run: pnpm db:migrate
+
+      # Build không truy vấn database: các trang dashboard render theo từng request
+      # (`dynamic = "force-dynamic"` trong `src/app/dashboard/layout.tsx`).
+      - name: Build
+        run: pnpm build
+
+  test:
+    name: Unit test + coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Bật pnpm cho CI
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.2.2 --activate
+
+      - name: Cài phụ thuộc
+        run: pnpm install --frozen-lockfile
+
+      # Test chạy trên Postgres trong tiến trình (PGlite, xem `frontend/test/db.ts`) —
+      # không cần service container. Ngưỡng coverage nằm ở `vitest.config.ts`;
+      # tụt dưới ngưỡng là đỏ.
+      - name: Vitest
+        run: pnpm test:coverage

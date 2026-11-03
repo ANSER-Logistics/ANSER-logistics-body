@@ -37,7 +37,7 @@ backend riêng.
 | `docs/decisions/3. ERD_CHUAN.md` | cả hai | **ERD chuẩn** sau khi chạy dữ liệu MISA thật qua bộ nạp. Thêm C1/C2. Có kèm `schema.ts` mục tiêu đầy đủ, index, SQL đối chiếu. | **Đã cũ một phần** — xem §3.1 |
 | `docs/decisions/4. Database_Implementation_Documentation.md` | **chỉ có ở master** | Nhật ký triển khai từng bước cho Task 1–4 của ERD_CHUAN (migrate schema, kiểm tra constraint, sửa quy ước dấu trong `sales.ts`, `/api/inventory/reconcile`), kèm một đoạn nhìn lại ngắn cho Task 5, thêm ngày 18/09. | Chưa merge vào `feat/database-application` — đọc trên `master` |
 | `docs/decisions/evidence/all_constrain.json`, `docs/decisions/evidence/single_table_data_types_and_columns.json` | **chỉ có ở master** | Dữ liệu thô từ Neon (`pg_constraint`/`information_schema`) dùng để kiểm tra Task 2 ở trên | Tài liệu tham chiếu, không phải tài liệu sống |
-| `frontend/CLAUDE.md` | nhánh này, chưa commit | Nhật ký phiên làm việc chi tiết: bug đã tìm/đã sửa, phát hiện khi nhập dữ liệu thật, danh sách việc còn mở theo thứ tự ưu tiên | Mọi thứ ở §5 đều lấy từ đây — đọc trực tiếp để biết chi tiết đầy đủ |
+| `docs/decisions/5. Database_Session_Log.md` | nhánh này, chưa commit | Nhật ký phiên làm việc chi tiết: bug đã tìm/đã sửa, phát hiện khi nhập dữ liệu thật, danh sách việc còn mở theo thứ tự ưu tiên | Mọi thứ ở §5 đều lấy từ đây — đọc trực tiếp để biết chi tiết đầy đủ |
 | `docs/architecture/ARCHITECTURE.md` | nhánh này | Bản đồ đầy đủ từng file của app Next.js, luồng request, bảng hạn chế hiện tại | Còn hiện hành, tiếp tục dùng |
 | `src/server/db/schema.ts` | nhánh này | **Nguồn chuẩn xác nhất.** Đã vượt qua ERD_CHUAN — xem §3.1 | Luôn cập nhật |
 
@@ -370,7 +370,7 @@ tính giá thật sự tính vào hoá đơn nên nằm ở backend tất địn
 
 1. Mới vào codebase, hoặc mới học lập trình? Đọc `docs/onboarding/Onboarding_Playbook.md`
    trước (cài đặt, cách code chia tầng, những điều không bao giờ làm).
-2. Đọc §1–§4 và §6 ở đây để nắm bức tranh toàn cảnh, rồi `frontend/CLAUDE.md` để xem nhật ký
+2. Đọc §1–§4 và §6 ở đây để nắm bức tranh toàn cảnh, rồi `docs/decisions/5. Database_Session_Log.md` để xem nhật ký
    chi tiết (sổ tay này chỉ lập mục lục cho nó).
 3. Chọn việc trong `docs/tasks/Backend_Task_Board.md`, và làm theo quy tắc phối hợp ở đó
    (tạo nhánh từ đâu, ai được tạo migration).
