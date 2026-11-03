@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import { requireSessionUser } from "@/server/session";
-import { createTransaction, InsufficientStockError, listTransactions, TransactionType } from "@/server/store/inventory";
+import {
+  createTransaction,
+  InsufficientStockError,
+  InvalidTransactionError,
+  listTransactions,
+  ProductNotFoundError,
+  SupplierNotFoundError,
+  TransactionType,
+} from "@/server/store/inventory";
 
 export async function GET(request: Request) {
   const { response } = await requireSessionUser();
@@ -21,10 +29,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { response } = await requireSessionUser();
+  const { user, response } = await requireSessionUser();
   if (response) return response;
 
-  const { productId, type, quantity, unitCost, counterparty, note } = await request
+  const { productId, type, quantity, unitCost, counterparty, note, supplierId } = await request
     .json()
     .catch(() => ({}));
 
@@ -55,16 +63,21 @@ export async function POST(request: Request) {
       unitCost: unitCostNum,
       counterparty,
       note,
+      supplierId: supplierId || undefined,
+      // Lấy từ session, không nhận từ client — tránh client tự xưng là người khác.
+      employeeId: user.employeeId ?? undefined,
     });
     return NextResponse.json({ transaction }, { status: 201 });
   } catch (error) {
     if (error instanceof InsufficientStockError) {
       return NextResponse.json({ message: error.message }, { status: 409 });
     }
-    // Trước đây MỌI lỗi đều bị gán "Không tìm thấy sản phẩm" + 404 — kể cả lỗi
-    // DB hay lỗi xác thực. Người dùng đi sửa sai chỗ, còn lỗi thật thì mất dấu.
-    const message = error instanceof Error ? error.message : "Lỗi không xác định.";
-    const notFound = message.includes("Không tìm thấy sản phẩm");
-    return NextResponse.json({ message }, { status: notFound ? 404 : 400 });
+    if (error instanceof ProductNotFoundError || error instanceof SupplierNotFoundError) {
+      return NextResponse.json({ message: error.message }, { status: 404 });
+    }
+    if (error instanceof InvalidTransactionError) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ message: "Lỗi hệ thống." }, { status: 500 });
   }
 }
