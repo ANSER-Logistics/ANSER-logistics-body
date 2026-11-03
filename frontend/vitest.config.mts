@@ -15,11 +15,34 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/server/**/*.ts"],
-      exclude: ["src/server/db/migrations/**", "src/**/*.test.ts"],
+      exclude: [
+        "src/server/db/migrations/**",
+        "src/**/*.test.ts",
+        // Khai báo bảng, không có logic để test.
+        "src/server/db/schema.ts",
+        // Test thay file này bằng PGlite (src/test/db.ts) — đo nó chỉ ra 0% vô nghĩa.
+        "src/server/db/client.ts",
+      ],
       reporter: ["text-summary", "text", "html"],
-      // Sàn, không phải mục tiêu: đặt dưới mức hiện có (~77% dòng, 83% nhánh) vài điểm
-      // để code mới chưa có test không làm đỏ ngay. Viết thêm test thì NÂNG các số này lên.
-      thresholds: { lines: 70, statements: 70, functions: 65, branches: 75 },
+      thresholds: {
+        // Sàn toàn cục, không phải mục tiêu: hiện có ~79% dòng, 83% nhánh, 76% hàm. Để thấp hơn
+        // vài điểm vì sales/products/inventory/reports đang được viết lại và chưa có test —
+        // code mới ở đó không nên làm đỏ ngay. Khi các file đó có test: nâng lên ~85–90.
+        lines: 72,
+        statements: 72,
+        functions: 70,
+        branches: 78,
+        // Phần ĐÃ có test thì giữ ở mức gần 100%: code mới ở đây phải kèm test.
+        "src/server/import/**": { lines: 95, statements: 95, functions: 95, branches: 90 },
+        "src/server/{auth,session,brain,brainReport,n8n,n8nApi,uploadGuard}.ts": {
+          lines: 95,
+          statements: 95,
+          functions: 95,
+          branches: 90,
+        },
+        "src/server/store/{customers,users,employees,warehouses,settings,categories,automation,seed,inventoryCost,inventoryCostMatch,inventoryCostImport}.ts":
+          { lines: 95, statements: 95, functions: 95, branches: 90 },
+      },
     },
   },
 });
