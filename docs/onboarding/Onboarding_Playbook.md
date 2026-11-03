@@ -168,7 +168,7 @@ n8n ở <http://localhost:5679>, hộp thư giả MailHog (xem email n8n "gửi"
 | `Cannot read properties of null (reading 'matches')` khi `npm install` | `node_modules` cũ do pnpm tạo | `rm -rf node_modules` rồi cài lại |
 | CI đỏ ở bước `--frozen-lockfile` | Đổi `package.json` mà chưa cập nhật `pnpm-lock.yaml` | Chạy `pnpm install`, commit lockfile |
 | `git status` báo `brain.ts` bị sửa dù bạn không đụng | File này được commit với line ending CRLF từ trước | Kệ nó, **đừng commit**. Xem `docs/tasks/BLOCKERS.md` |
-| Code mẫu Next.js trên mạng không chạy | Dự án dùng **Next.js 16** — nhiều API đã đổi | Đọc tài liệu đi kèm trong `frontend/node_modules/next/dist/docs/` (xem `frontend/AGENTS.md`) |
+| Code mẫu Next.js trên mạng không chạy | Dự án dùng **Next.js 16** — nhiều API đã đổi | Đọc tài liệu đi kèm trong `frontend/node_modules/next/dist/docs/` (xem `AGENTS.md` ở thư mục gốc) |
 
 ---
 
