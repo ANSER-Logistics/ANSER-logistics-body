@@ -69,7 +69,7 @@ Vì sao chọn kiến trúc này: xem `docs/architecture/STACK_DECISIONS.md`.
 ### 2.2 Lấy code
 
 ```bash
-git clone https://github.com/Dgsonn/ANSER-v2.git
+git clone https://github.com/ANSER-Logistics/ANSER-logistics-body.git
 cd ANSER-v2/frontend
 pnpm install
 ```
