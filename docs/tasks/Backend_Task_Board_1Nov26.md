@@ -83,19 +83,29 @@ Tuân theo `docs/onboarding/Onboarding_Playbook.md` §5.4 (Git) và §8 (những
 ## 4. Chi tiết từng việc
 
 ### Việc 1 - Giá nhiều mức/Giá áp dụng đối với sản phẩm
-Bối cảnh nghiệp vụ và yêu cầu chức năng chủ đạo: `docs/playbook/Project_Playbook_VI.md`
-§6. Các quyết định đã chốt: `docs/tasks/BLOCKERS.md` → "Đã giải quyết".
+**Bối cảnh**: yêu cầu từ chú Quyết ở `docs/playbook/Project_Playbook_VI.md` §6; các quyết định
+đã chốt ở `docs/tasks/BLOCKERS.md` → "Đã giải quyết". Ngoài phạm vi lần này: `BLOCKERS.md` §1 (G1–G7).
 
-**Tiêu chí hoàn thành**
+**Phạm vi** (chốt 22/10/2026):
+- Bảng mới: `price_tiers` (chỉ seed Bán lẻ, Đại lý cấp 1, Đại lý cấp 2), `product_prices` (giá
+  hiện hành, mỗi sản phẩm × mức giá một dòng), `product_price_history` (lịch sử thay đổi, ghi
+  trong cùng transaction với lần sửa giá).
+- Mỗi dòng hoá đơn chọn một mức giá (`sales_invoice_items.price_tier_id`).
+- **Bỏ cột `products.price`** — phá vỡ tương thích: API sản phẩm không còn trường `price`; trang
+  Sản phẩm, Bán hàng và `reports.ts` (bỏ `totalStockValue`) đổi theo.
+- Chỉ `admin` sửa bảng giá (trong form sửa sản phẩm). Sửa giá trên dòng hoá đơn: `admin`/`manager`.
+  Mức giá chưa có giá → `staff` không bán được dòng đó. Không bao giờ bán 0₫ ngầm.
+- Kiểm tra đăng nhập + quyền cho `api/sales/invoices` và `api/products/**` (việc siết xác thực
+  bỏ qua hai route này).
 
-- Cập nhật Entity Relationship Diagram (ERD) theo migration mới nhất (`0014`)
-- Thiết kế Sequence Diagram (SD) cho tính năng mới
-- Cập nhật ERD đề xuất, gửi cho thành viên để bàn luận
-- Khi OK, cập nhật `schema.ts` và chạy `db:migrate`
-- Chuẩn bị logic lưu trữ:
-+ Cách để lưu song song lịch sử giá bán và giá bán mớil
-+ API Endpoint cho mức giá
-+ Cách để cập nhật được giá (qua trang sản phẩm? File Excel?)
+**Mốc và tiêu chí hoàn thành**
+- [ ] ERD (migration `0014` + bảng mới) và Sequence Diagram cho "admin sửa giá", "tạo hoá đơn
+      có mức giá" — gửi nhóm review (hạn …)
+- [ ] Migration: sửa `schema.ts` → `pnpm db:generate` → đối chiếu SQL với `schema.ts` → báo nhóm
+      (§2.2) → `pnpm db:migrate` trên Neon `dev` → kiểm tra ràng buộc đã có thật (hạn …)
+- [ ] Logic store + unit test (hạn …)
+- [ ] API + giao diện (hạn …)
+- [ ] Integration test cho giao dịch tạo hoá đơn; cập nhật Project Playbook §6 (hạn …)
 
 ### Việc 2 - Sửa lỗi sổ kho trong `createTransaction()`
 
@@ -110,8 +120,8 @@ Hàm này mắc đúng loại lỗi đã từng sửa trong `store/sales.ts` (xe
 | Phiếu xuất ghi sai dấu (+ -) số lượng. | `products.stock` bị trừ đúng (`delta` âm), nhưng dòng sổ kho lại ghi `quantity: input.quantity` (số dương) | Phá quy ước `stock = SUM(quantity)`. Mỗi phiếu xuất thủ công làm endpoint kiểm toán `/api/inventory/reconcile` báo sai |
 | Khi hai người ghi vào database cùng lúc, một người sẽ nhận được data sai | Khi `getProductById` gọi trước `db.transaction`, không có `.for("update")` | Trường hợp hai người thao tác cùng lúc: Người A thấy còn 5 sản phẩm, bán 3 sản phẩm; Người B xem cùng lúc với A cũng sẽ thấy 5 sản phẩm, bán 5 sản phẩm -> dẫn đến bán âm kho. Trong trường hợp khác, giá vốn bình quân tính trên số tồn cũ |
 | Ghi giá bán vào cột giá vốn | Hàm ghi `unitCost` người dùng gửi lên cho mọi loại phiếu, kể cả phiếu xuất, nơi con số được gõ vào thường là giá bán | `unit_cost` phải luôn là giá vốn (chú thích trong `schema.ts`). Nhập giá bán vào đây là biến sổ kho thành sổ doanh thu |
-| Thiếu thông tin để truy vết |  | Mất khả năng truy vết |
-| Báo đúng lỗi dựa vào thông báo | - | Route trả `500` thay vì `404` |
+| Thiếu thông tin để truy vết | Hàm không nhận và không ghi supplierId, employeeId. Bảng inventory_transactions có sẵn hai cột này nhưng phiếu thủ công luôn để NULL | Không biết hàng nhập từ nhà cung cấp nào, ai đã tạo phiếu      |
+| Báo đúng lỗi dựa vào thông báo | Store ném Error thường; route đoán loại lỗi bằng message.includes("Không tìm thấy sản phẩm") | Đổi câu thông báo là 404 âm thầm thành 400. Lỗi bất ngờ (mất kết nối DB…) cũng trả 400 "dữ liệu sai", nên người dùng đi sửa dữ liệu của mình, còn lỗi thật thì bị bỏ qua |
 
 **Phạm vi file**: `frontend/src/server/store/inventory.ts`,
 `frontend/src/app/api/inventory/transactions/route.ts`.
