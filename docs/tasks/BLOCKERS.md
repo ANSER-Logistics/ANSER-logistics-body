@@ -58,6 +58,32 @@ coi là yêu cầu đã xác nhận).
 | K3 | CI chưa chạy `pnpm build` — cần một database cho CI (Neon branch hoặc Postgres service) | Trưởng nhóm | CI chỉ kiểm lockfile + ESLint | `.github/workflows/ci.yml` |
 | K4 | Workflow lịch sử thực thi (M2) và mô-đun vận tải | Chú Quyết | Ngoài phạm vi | [CL] |
 
+## 6. Quy chuẩn làm việc
+
+| # | Việc | Cần ai xác nhận | Trong lúc chờ, code làm gì | Nguồn |
+|---|---|---|---|---|
+| S1 | **Quy chuẩn viết code** (`docs/standards/`, file riêng — chưa viết) | Trưởng nhóm + cả nhóm bàn | Theo `docs/onboarding/Onboarding_Playbook.md` §3.2 và §8 | Bàn 01/11/2026 |
+| S2 | **`CLAUDE.md` cho AI assistant**: hiện `frontend/CLAUDE.md` là nhật ký phiên làm việc, không phải quy tắc — mà Claude Code nạp file này vào **mọi** phiên như chỉ dẫn | Trưởng nhóm | Giữ nguyên | Bàn 01/11/2026 |
+
+**Bản nháp S1 — gom từ những quy tắc đã có trong repo, để nhóm bàn, chưa phải quy chuẩn:**
+
+1. **Chia tầng**: trang → API route → store → Drizzle (`Onboarding_Playbook.md` §3.2). Route chỉ đọc
+   request, kiểm tra dữ liệu vào, kiểm tra đăng nhập/quyền, đổi lỗi thành mã HTTP. Quy tắc nghiệp vụ
+   và truy cập DB nằm trong `src/server/store/`.
+2. **Lỗi có kiểu riêng → mã HTTP**: store ném lỗi có tên (`InsufficientStockError`…), route bắt từng
+   loại: `400` dữ liệu sai, `401` chưa đăng nhập, `403` sai quyền, `404` không tìm thấy, `409` xung
+   đột trạng thái. Không để lỗi thường rơi về `500`.
+3. **Dữ liệu tiền & kho** (`Onboarding_Playbook.md` §8): `NULL` ≠ `0`; `quantity` có dấu, tồn = tổng
+   sổ kho; `unit_cost` luôn là giá vốn; không cast `numeric` về số nguyên; ghi nhiều bảng thì dùng
+   transaction, đọc-kiểm-ghi thì khoá dòng (`.for("update")`).
+4. **Chú thích giải thích *vì sao*, không giải thích *cái gì*** — mẫu: các cột trong `schema.ts`.
+5. **Thông báo lỗi cho người dùng bằng tiếng Việt**, trong trường `message`.
+6. **Route mới phải kiểm tra đăng nhập** (`getSessionUser()`), kể cả khi route cũ chưa làm.
+7. **AI không tính con số tài chính** — giá, tổng tiền, công nợ do code xác định tính.
+8. **Trước khi đẩy code**: `pnpm lint` và `npx tsc --noEmit` không lỗi.
+9. *Cần bàn thêm*: ngôn ngữ chú thích (Việt/Anh), quy ước đặt tên file, kiểm tra dữ liệu vào bằng
+   `zod` (sau việc zod trên bảng việc), test bắt buộc tới đâu.
+
 ## Đã giải quyết
 
 | # | Việc | Kết quả | Ngày |
