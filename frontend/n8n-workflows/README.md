@@ -45,7 +45,16 @@ chọn từng file trong thư mục này:
 Sau khi import, mở node **"Gửi Email"** trong mỗi workflow → chọn credential SMTP vừa tạo ở
 bước 2.
 
-## 4. Cấu hình email nhận
+## 4. Token nội bộ (bắt buộc từ khi API `/api/n8n/internal/*` đã siết xác thực)
+
+5 workflow này gọi vào `/api/n8n/internal/*` của app — các route đó giờ đòi header
+`x-internal-token` khớp với biến `N8N_INTERNAL_TOKEN` (xem `BLOCKERS.md` Q3). Đặt biến này
+trong `frontend/.env.local` (dùng chung với app, `docker-compose.yml` đã nạp lại file này vào
+container n8n qua `env_file`), rồi `docker compose up -d` lại để n8n nhận biến mới — các node
+"Lấy..." trong 5 workflow đã tự gắn `{{ $env.N8N_INTERNAL_TOKEN }}` vào header, không cần sửa
+tay nếu import từ các file `.json` trong thư mục này sau khi đã đặt biến.
+
+## 5. Cấu hình email nhận
 
 - **Cảnh báo tồn kho thấp / Báo cáo doanh số**: cần đặt "Email nhận cảnh báo" cho từng kho ở
   bộ chọn kho trên trang **Quản lý kho** (dropdown kho → ô email dưới mỗi kho).
@@ -53,19 +62,19 @@ bước 2.
   `frontend/.env.local` (email admin nhận thông báo mỗi khi có khách hàng mới), rồi restart
   `npm run dev`.
 
-## 5. Bật (Active) từng workflow
+## 6. Bật (Active) từng workflow
 
 Mỗi workflow có toggle **Active** ở góc trên bên phải màn hình chỉnh sửa — bật lên thì:
 - 2 workflow báo cáo doanh số theo lịch tự chạy đúng giờ đã đặt.
 - Workflow "Chào mừng khách hàng mới" sẵn sàng nhận webhook — test bằng cách tạo 1 khách hàng
   mới ở trang Khách hàng, rồi xem email ở MailHog (`localhost:8026`).
 
-## 6. Test thủ công không cần chờ lịch
+## 7. Test thủ công không cần chờ lịch
 
 Trong màn hình chỉnh sửa mỗi workflow, bấm **Execute workflow** (hoặc nút Play ở từng node) để
 chạy ngay một lần, không cần chờ đến giờ lịch đã đặt.
 
-## 7. Liên kết workflow thật với nút Chạy/Dừng/Lịch sử ở trang Tự động hoá
+## 8. Liên kết workflow thật với nút Chạy/Dừng/Lịch sử ở trang Tự động hoá
 
 Trước bước này, nút "Chạy/Tạm dừng" và "Lịch sử" ở trang **Tự động hoá** của app chỉ là
 bookkeeping riêng — không hề bật/tắt hay đọc dữ liệu workflow thật trong n8n. Làm theo các bước
@@ -93,7 +102,7 @@ Sau khi liên kết, với đúng quy tắc đó:
 Quy tắc chưa liên kết Workflow ID vẫn hoạt động như cũ (chỉ đổi cờ `enabled` trong DB của app,
 dùng cho tính "Cảnh báo đang kích hoạt" ở trang này/Dashboard) — không gọi n8n.
 
-## 8. Credential SMTP chỉ cần tạo 1 lần cho mọi mẫu sau này
+## 9. Credential SMTP chỉ cần tạo 1 lần cho mọi mẫu sau này
 
 Tạo credential SMTP (mục 2) chỉ cần làm **1 lần duy nhất** trên toàn hệ thống, không phải lặp
 lại cho từng workflow mới. Khi bấm 1 template ở trang Tự động hoá tạo workflow **mới** (workflow

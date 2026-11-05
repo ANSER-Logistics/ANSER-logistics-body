@@ -198,9 +198,9 @@ Một vài khái niệm bạn sẽ gặp:
   hết**, hoặc **không lệnh nào có hiệu lực**. Dùng cho mọi thao tác ghi nhiều bảng cùng lúc
   (ví dụ: tạo hoá đơn + trừ kho + ghi sổ kho).
 - **Đăng nhập**: JWT lưu trong cookie `httpOnly`. Ở server, lấy người dùng hiện tại bằng
-  `getSessionUser()` (`src/server/session.ts`). Có 3 quyền: `staff`, `manager`, `admin`.
-  **Lưu ý**: hiện nhiều API route **chưa** kiểm tra đăng nhập - đây là hạn chế đã biết
-  (`docs/architecture/ARCHITECTURE.md` §7), không phải mẫu để bắt chước. Route mới **phải** kiểm tra.
+  `getSessionUser()` (`src/server/session.ts`). Có 2 quyền: `staff`, `admin`.
+  Route mới **phải** gọi `requireSessionUser()`/`requireAdminUser()` ở đầu handler (xem
+  `docs/architecture/ARCHITECTURE.md` §4.3) — không còn ngoại lệ "chưa kiểm tra" như trước Việc 2.
 
 ---
 
@@ -391,7 +391,7 @@ mỗi điểm được ghi trong `docs/tasks/BLOCKERS.md`:
   (≈ giá vốn +30–35%). Hiện chỉ ghi lại, hệ thống **không** tự tính giá.
 - Duyệt giá bởi cấp quản lý cao hơn, giá theo hợp đồng có thời hạn hiệu lực.
 - Công nợ bán lẻ ~60 ngày, chiết khấu khi trả ngay, đặt cọc ~50% cho hàng đặt trước.
-- Phân quyền theo phòng ban (Kế toán / Kinh doanh / Kho & Vận tải) thay vì staff/manager/admin.
+- Phân quyền theo phòng ban (Kế toán / Kinh doanh / Kho & Vận tải) thay vì staff/admin.
 
 **Quy tắc khi gặp yêu cầu mới từ khách**: hỏi "đây là cách Hoàng Phát làm **hôm nay**, hay
 là cách nên làm / cách công ty khác làm?" trước khi code. Dự án đã từng suýt thiết kế cả một

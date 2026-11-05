@@ -136,7 +136,7 @@ erDiagram
     }
     users {
         uuid id PK
-        text role "CHECK staff|manager|admin"
+        text role "CHECK staff|admin"
         uuid employee_id FK
     }
     automation_rules {

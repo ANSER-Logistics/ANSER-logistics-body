@@ -80,7 +80,7 @@ export const users = pgTable("users", {
   employeeId: uuid("employee_id").references(() => employees.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  check("users_role_hop_le", sql`${t.role} IN ('staff','manager','admin')`),
+  check("users_role_hop_le", sql`${t.role} IN ('staff','admin')`),
 ]);
 
 export const products = pgTable("products", {

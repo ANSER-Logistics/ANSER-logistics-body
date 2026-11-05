@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { requireAdminUser, requireSessionUser } from "@/server/session";
 import { deleteCustomer, getCustomerById, updateCustomer } from "@/server/store/customers";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireSessionUser();
+  if (response) return response;
+
   const { id } = await params;
   const customer = await getCustomerById(id);
   if (!customer) {
@@ -11,6 +15,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
 
@@ -37,6 +44,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { id } = await params;
   await deleteCustomer(id);
   return new NextResponse(null, { status: 204 });

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { requireAdminUser } from "@/server/session";
 import { updateWarehouse } from "@/server/store/warehouses";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
 
