@@ -19,19 +19,29 @@
 # chỉ sống lúc biên dịch, nên bên Brain sẽ không có lỗi nào, chỉ có một ô trống
 # trên màn hình.
 #
-# Thêm @ANSER-Logistics/brain để đội Brain nhìn thấy, KHÔNG phải để họ chặn:
-# quyền quyết vẫn của team body.
+# Bản đầu ghi thêm @ANSER-Logistics/brain ở những dòng này, với ý "để đội
+# Brain nhìn thấy khi hợp đồng đổi". GitHub TỪ CHỐI cả bốn dòng đó:
+#
+#   Unknown owner: make sure the team @ANSER-Logistics/brain exists,
+#   is publicly visible, and has write access to the repository
+#
+# Team brain chỉ có quyền `pull` trên repo này, và CODEOWNERS đòi `push`.
+# Đó là chủ ý: Brain đọc được lược đồ của Body, không sửa được.
+#
+# Nên không thể dùng CODEOWNERS để BÁO TIN. Nó là danh sách người có quyền
+# duyệt, không phải danh sách người cần biết. Muốn đội Brain hay tin thì
+# dùng cách khác: theo dõi repo, hoặc nhắc tên trong PR.
 
-/frontend/src/server/brain.ts                   @ANSER-Logistics/body @ANSER-Logistics/brain
-/frontend/src/server/brainReport.ts             @ANSER-Logistics/body @ANSER-Logistics/brain
-/frontend/src/app/api/ai/                       @ANSER-Logistics/body @ANSER-Logistics/brain
+/frontend/src/server/brain.ts                   @ANSER-Logistics/body
+/frontend/src/server/brainReport.ts             @ANSER-Logistics/body
+/frontend/src/app/api/ai/                       @ANSER-Logistics/body
 
 # --- Lược đồ DB --------------------------------------------------------------
 #
 # Brain KHÔNG giữ bản sao lược đồ nào — Body là nguồn sự thật duy nhất. Nên đổi
 # ở đây là đổi thứ cả hai bên dựa vào.
 
-/frontend/src/server/db/schema.ts               @ANSER-Logistics/body @ANSER-Logistics/brain
+/frontend/src/server/db/schema.ts               @ANSER-Logistics/body
 /frontend/src/server/db/migrations/             @ANSER-Logistics/body
 
 # --- Cổng chất lượng ---------------------------------------------------------
