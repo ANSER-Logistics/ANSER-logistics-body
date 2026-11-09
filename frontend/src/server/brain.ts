@@ -403,7 +403,13 @@ export type BrainReport = {
   granularity: string;
   periods: Array<Record<string, number | string | null>>;
   products: Array<Record<string, number | string | boolean | null>>;
-  explain: { cogs_coverage_pct: number; confidence: string; formula: string; period_count: number };
+  explain: {
+    /** `null` = CHƯA ĐO ĐƯỢC tỷ lệ phủ giá vốn, không phải bằng 0. */
+    cogs_coverage_pct: number | null;
+    confidence: string;
+    formula: string;
+    period_count: number;
+  };
   warnings: string[];
 };
 

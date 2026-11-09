@@ -66,7 +66,9 @@ export default function BrainProfitPanel() {
   }
 
   const explain = data?.report.explain;
-  const coverage = explain?.cogs_coverage_pct ?? 0;
+  // `?? 0` biến "chưa đo được" thành "đã đo, bằng 0%" — hai chuyện khác hẳn
+  // nhau, và cái sau trông như một phép đo. Giữ nguyên null, phân biệt lúc hiển thị.
+  const coverage = explain?.cogs_coverage_pct ?? null;
 
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02]">
@@ -122,7 +124,13 @@ export default function BrainProfitPanel() {
               độ tin cậy: {explain.confidence}
             </span>
             <span className="text-zinc-400">
-              Có giá vốn: <span className="text-white">{coverage}%</span> doanh thu
+              {coverage == null ? (
+                "Chưa đo được tỷ lệ có giá vốn"
+              ) : (
+                <>
+                  Có giá vốn: <span className="text-white">{coverage}%</span> doanh thu
+                </>
+              )}
             </span>
             <span className="text-zinc-500">
               {data.source.lines_with_cost}/{data.source.sale_lines} dòng bán
