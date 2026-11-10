@@ -65,9 +65,26 @@ describe("triggerN8nWebhook", () => {
     await expect(triggerN8nWebhook("new-customer", {})).resolves.toBeUndefined();
   });
 
-  // Comment đầu n8n.ts: "mọi lỗi ở đây chỉ log lại" — nhưng res.ok không được kiểm,
-  // nên webhook 404/500 bị bỏ qua hoàn toàn, không để lại dấu vết để gỡ lỗi.
-  it.todo("BUG: webhook trả non-2xx (vd 404 khi workflow n8n chưa bật) bị bỏ qua im lặng, không log");
+  it("webhook trả HTTP lỗi thì log đường dẫn và mã trạng thái để gỡ lỗi", async () => {
+    vi.stubEnv("N8N_WEBHOOK_URL", "http://localhost:5679/webhook");
+    fetchMock.mockResolvedValue(new Response("not found", { status: 404 }));
+
+    await triggerN8nWebhook("new-customer", {});
+
+    expect(console.error).toHaveBeenCalledOnce();
+    const logged = vi.mocked(console.error).mock.calls[0].join(" ");
+    expect(logged).toContain("new-customer");
+    expect(logged).toContain("404");
+  });
+
+  it("webhook trả 2xx thì không log gì", async () => {
+    vi.stubEnv("N8N_WEBHOOK_URL", "http://localhost:5679/webhook");
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+
+    await triggerN8nWebhook("new-customer", {});
+
+    expect(console.error).not.toHaveBeenCalled();
+  });
 
   // AbortSignal.timeout chạy trên timer nội bộ của Node, vi.useFakeTimers không
   // tua được — nên kiểm tín hiệu gửi đi là timeout 3s thay vì chờ thật 3 giây.
