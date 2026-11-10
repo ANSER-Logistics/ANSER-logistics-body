@@ -16,7 +16,7 @@ vi.mock("@/server/db/client", () => import("@test/db"));
 import { resetDb } from "@test/db";
 import { COOKIE_NAME, signToken } from "@/server/auth";
 import { createUser, deleteUser, type Role, updateUser } from "@/server/store/users";
-import { getSessionUser, requireAdmin } from "@/server/session";
+import { getSessionUser, requireAdmin, requireAdminUser, requireSessionUser } from "@/server/session";
 
 beforeEach(async () => {
   jar.clear();
@@ -72,8 +72,8 @@ describe("requireAdmin", () => {
     expect(await requireAdmin()).toBeUndefined();
   });
 
-  it.each(["staff", "manager"] as const)("vai trò %s thì không qua", async (role) => {
-    await loginAs(role);
+  it("vai trò staff thì không qua", async () => {
+    await loginAs("staff");
     expect(await requireAdmin()).toBeUndefined();
   });
 
@@ -90,5 +90,42 @@ describe("requireAdmin", () => {
 
     expect(await requireAdmin()).toBeUndefined();
     expect(await getSessionUser()).toMatchObject({ id: admin.id, role: "staff" });
+  });
+});
+
+describe("requireSessionUser", () => {
+  it("chưa đăng nhập thì trả 401 kèm message tiếng Việt", async () => {
+    const { user, response } = await requireSessionUser();
+    expect(user).toBeUndefined();
+    expect(response?.status).toBe(401);
+    expect(await response?.json()).toEqual({ message: "Chưa đăng nhập." });
+  });
+
+  it("đã đăng nhập thì trả tài khoản, không có response", async () => {
+    const staff = await loginAs("staff");
+    const result = await requireSessionUser();
+    expect(result.response).toBeUndefined();
+    expect(result.user).toMatchObject({ id: staff.id });
+  });
+});
+
+describe("requireAdminUser", () => {
+  it("chưa đăng nhập thì trả 401, không phải 403", async () => {
+    expect((await requireAdminUser()).response?.status).toBe(401);
+  });
+
+  it("staff thì trả 403 kèm message tiếng Việt", async () => {
+    await loginAs("staff");
+    const { user, response } = await requireAdminUser();
+    expect(user).toBeUndefined();
+    expect(response?.status).toBe(403);
+    expect(await response?.json()).toEqual({ message: "Không có quyền truy cập." });
+  });
+
+  it("admin thì trả tài khoản", async () => {
+    const admin = await loginAs("admin");
+    const result = await requireAdminUser();
+    expect(result.response).toBeUndefined();
+    expect(result.user).toMatchObject({ id: admin.id, role: "admin" });
   });
 });

@@ -136,7 +136,7 @@ erDiagram
     }
     users {
         uuid id PK
-        text role "CHECK staff|manager|admin"
+        text role "CHECK staff|admin"
         uuid employee_id FK
     }
     automation_rules {
@@ -207,7 +207,7 @@ không đổi phần lõi của schema ngoài các cột `0014` ở trên.
 Danh sách việc tồn đọng không còn nằm trong sổ tay này. Hai tài liệu sống đang theo dõi chúng:
 
 - **Đang chờ quyết định** (chủ doanh nghiệp, đội Brain, trưởng nhóm) → `docs/tasks/BLOCKERS.md`
-- **Sẵn sàng cho người nhận làm** → `docs/tasks/Backend_Task_Board.md`
+- **Sẵn sàng cho người nhận làm** → `docs/tasks/Backend_Task_Board_1Nov26.md`
 
 Từng mục trước đây nằm ở đây đã đi đâu — để các chỗ trích dẫn cũ như "§5 mục 1" hay
 "[PB] §5.2" vẫn dẫn tới đúng nơi:
@@ -372,7 +372,7 @@ tính giá thật sự tính vào hoá đơn nên nằm ở backend tất địn
    trước (cài đặt, cách code chia tầng, những điều không bao giờ làm).
 2. Đọc §1–§4 và §6 ở đây để nắm bức tranh toàn cảnh, rồi `docs/decisions/5. Database_Session_Log.md` để xem nhật ký
    chi tiết (sổ tay này chỉ lập mục lục cho nó).
-3. Chọn việc trong `docs/tasks/Backend_Task_Board.md`, và làm theo quy tắc phối hợp ở đó
+3. Chọn việc trong `docs/tasks/Backend_Task_Board_1Nov26.md`, và làm theo quy tắc phối hợp ở đó
    (tạo nhánh từ đâu, ai được tạo migration).
 4. Trước khi tự quyết điều gì về mức giá, công nợ, phân quyền hay bất thường trong dữ liệu
    thật, xem `docs/tasks/BLOCKERS.md` — nếu việc đó nằm trong danh sách, không phải việc mình

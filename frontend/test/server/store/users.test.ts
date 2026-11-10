@@ -95,10 +95,10 @@ describe("users store", () => {
       passwordHash: "$2a$10$hash",
     });
 
-    const updated = await updateUser(user.id, { role: "manager" });
+    const updated = await updateUser(user.id, { role: "admin" });
 
-    expect(updated).toMatchObject({ role: "manager", phone: "0901234567", passwordHash: "$2a$10$hash" });
-    expect((await findUserById(user.id))?.role).toBe("manager");
+    expect(updated).toMatchObject({ role: "admin", phone: "0901234567", passwordHash: "$2a$10$hash" });
+    expect((await findUserById(user.id))?.role).toBe("admin");
   });
 
   it("updateUser với null thì xoá trường đó", async () => {
@@ -113,12 +113,13 @@ describe("users store", () => {
   });
 
   it("updateUser với id không tồn tại trả undefined", async () => {
-    expect(await updateUser(MISSING_ID, { role: "manager" })).toBeUndefined();
+    expect(await updateUser(MISSING_ID, { role: "admin" })).toBeUndefined();
   });
 
-  it("vai trò ngoài staff/manager/admin bị database từ chối", async () => {
+  // "manager" từng là vai trò hợp lệ; Việc 3 bỏ nó, database phải chặn cả nó.
+  it.each(["owner", "manager"])("vai trò %s (ngoài staff/admin) bị database từ chối", async (role) => {
     const user = await makeUser("a@anser.dev");
-    await expect(updateUser(user.id, { role: "owner" as Role })).rejects.toMatchObject({
+    await expect(updateUser(user.id, { role: role as Role })).rejects.toMatchObject({
       cause: { code: "23514", constraint: "users_role_hop_le" },
     });
     expect((await findUserById(user.id))?.role).toBe("staff");
@@ -132,7 +133,6 @@ describe("users store", () => {
     expect(await countAdmins()).toBe(0);
     const admin = await makeUser("admin1@anser.dev", { role: "admin" });
     await makeUser("admin2@anser.dev", { role: "admin" });
-    await makeUser("ql@anser.dev", { role: "manager" });
     await makeUser("nv@anser.dev", { role: "staff" });
     expect(await countAdmins()).toBe(2);
 

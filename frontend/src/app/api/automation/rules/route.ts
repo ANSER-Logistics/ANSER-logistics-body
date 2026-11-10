@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server";
+import { requireAdminUser, requireSessionUser } from "@/server/session";
 import { createRule, listRules } from "@/server/store/automation";
 import { listWarehouses } from "@/server/store/warehouses";
 
 const RULE_TYPES = ["low_stock_alert", "sales_report", "customer_welcome"];
 
 export async function GET() {
+  const { response } = await requireSessionUser();
+  if (response) return response;
+
   const rules = await listRules();
   return NextResponse.json({ rules });
 }
 
 export async function POST(request: Request) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { name, type, thresholdQty, categoryId, warehouseId, enabled } = await request.json().catch(() => ({}));
 
   if (!name) {

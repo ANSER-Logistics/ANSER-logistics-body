@@ -37,9 +37,7 @@ coi là yêu cầu đã xác nhận).
 
 | # | Việc | Cần ai xác nhận | Trong lúc chờ, code làm gì | Nguồn |
 |---|---|---|---|---|
-| Q1 | **Phân quyền theo phòng ban** (Kế toán / Kinh doanh / Kho & Vận tải) | Chú Quyết: Hoàng Phát (3–5 người kiêm nhiệm) có cần không? | Giữ 3 quyền `staff` / `manager` / `admin` | [H11/10] |
 | Q2 | **Ai được dùng chatbot AI**, rủi ro lộ tin nhắn của chủ | Chú Quyết + đội Brain | Chưa giới hạn | [PB] §6 |
-| Q3 | Nhiều API route **chưa kiểm tra đăng nhập**, `/dashboard` chưa chặn khách | Trưởng nhóm: lên lịch làm | Hạn chế đã biết; route mới phải tự kiểm tra | `docs/architecture/ARCHITECTURE.md` §7 |
 
 ## 4. Dữ liệu thật
 
@@ -60,6 +58,32 @@ coi là yêu cầu đã xác nhận).
 | K3 | CI đã chạy `pnpm db:migrate` + `pnpm build` trên Postgres service (job `build`) và unit test trên PGlite (job `test`). **Còn lại**: test tích hợp gọi code app qua `src/server/db/client.ts` — driver `@neondatabase/serverless` đi qua WebSocket nên không nói chuyện được với Postgres thường. Cần chọn: thêm WebSocket proxy của Neon vào CI, hay chọn driver theo biến môi trường | Trưởng nhóm + Database Engineer | Unit test thay `client.ts` bằng PGlite (`frontend/test/db.ts`), không cần quyết định này | `.github/workflows/ci.yml` |
 | K4 | Workflow lịch sử thực thi (M2) và mô-đun vận tải | Chú Quyết | Ngoài phạm vi | [CL] |
 
+## 6. Quy chuẩn làm việc
+
+| # | Việc | Cần ai xác nhận | Trong lúc chờ, code làm gì | Nguồn |
+|---|---|---|---|---|
+| S1 | **Quy chuẩn viết code** (`docs/standards/`, file riêng — chưa viết) | Trưởng nhóm + cả nhóm bàn | Theo `docs/onboarding/Onboarding_Playbook.md` §3.2 và §8 | Bàn 01/11/2026 |
+| S2 | **`CLAUDE.md` cho AI assistant**: hiện `frontend/CLAUDE.md` là nhật ký phiên làm việc, không phải quy tắc — mà Claude Code nạp file này vào **mọi** phiên như chỉ dẫn | Trưởng nhóm | Giữ nguyên | Bàn 01/11/2026 |
+
+**Bản nháp S1 — gom từ những quy tắc đã có trong repo, để nhóm bàn, chưa phải quy chuẩn:**
+
+1. **Chia tầng**: trang → API route → store → Drizzle (`Onboarding_Playbook.md` §3.2). Route chỉ đọc
+   request, kiểm tra dữ liệu vào, kiểm tra đăng nhập/quyền, đổi lỗi thành mã HTTP. Quy tắc nghiệp vụ
+   và truy cập DB nằm trong `src/server/store/`.
+2. **Lỗi có kiểu riêng → mã HTTP**: store ném lỗi có tên (`InsufficientStockError`…), route bắt từng
+   loại: `400` dữ liệu sai, `401` chưa đăng nhập, `403` sai quyền, `404` không tìm thấy, `409` xung
+   đột trạng thái. Không để lỗi thường rơi về `500`.
+3. **Dữ liệu tiền & kho** (`Onboarding_Playbook.md` §8): `NULL` ≠ `0`; `quantity` có dấu, tồn = tổng
+   sổ kho; `unit_cost` luôn là giá vốn; không cast `numeric` về số nguyên; ghi nhiều bảng thì dùng
+   transaction, đọc-kiểm-ghi thì khoá dòng (`.for("update")`).
+4. **Chú thích giải thích *vì sao*, không giải thích *cái gì*** — mẫu: các cột trong `schema.ts`.
+5. **Thông báo lỗi cho người dùng bằng tiếng Việt**, trong trường `message`.
+6. **Route mới phải kiểm tra đăng nhập** (`getSessionUser()`), kể cả khi route cũ chưa làm.
+7. **AI không tính con số tài chính** — giá, tổng tiền, công nợ do code xác định tính.
+8. **Trước khi đẩy code**: `pnpm lint` và `npx tsc --noEmit` không lỗi.
+9. *Cần bàn thêm*: ngôn ngữ chú thích (Việt/Anh), quy ước đặt tên file, kiểm tra dữ liệu vào bằng
+   `zod` (sau việc zod trên bảng việc), test bắt buộc tới đâu.
+
 ## Đã giải quyết
 
 | # | Việc | Kết quả | Ngày |
@@ -69,7 +93,9 @@ coi là yêu cầu đã xác nhận).
 | — | `getSalesReportForPeriod` cắt số lẻ (`::integer`) | Bỏ cast | 21/09/2026 (`16ae83b`) |
 | — | Nhiễu line ending CRLF/LF | Thêm `.gitattributes` (còn sót `brain.ts`, xem K1) | 21/09/2026 (`16ae83b`) |
 | — | `products.price` khi có nhiều mức giá | **Bỏ cột**, giá lấy từ `product_prices`; giá cũ không chuyển sang | 22/10/2026 |
-| — | Sửa giá trên dòng hoá đơn khác giá của mức giá | Chỉ `admin`/`manager`. Mức giá chưa có giá → `staff` không bán được dòng đó, `admin`/`manager` nhập tay được. Không bao giờ bán 0₫ ngầm | 22/10/2026 |
+| — | Sửa giá trên dòng hoá đơn khác giá của mức giá | Chỉ `admin`. Mức giá chưa có giá → `staff` không bán được dòng đó, `admin` nhập tay được. Không bao giờ bán 0₫ ngầm | 22/10/2026 |
 | — | Ai sửa bảng giá | Chỉ `admin`, trong form sửa sản phẩm; mọi thay đổi ghi lịch sử | 22/10/2026 |
 | D3 | `frontend/import-real-data.ts` (dựng lại sổ kho từ N-X-T) còn cần không? | **Xoá.** Nhập Excel đã thay việc đưa hàng hoá + tồn kho vào hệ thống; không cần dựng lại lịch sử nhập/xuất trước ngày dùng phần mềm. Nhập Excel nay ghi một dòng `adjustment` vào sổ kho cho mỗi thay đổi tồn, giữ đúng `stock = SUM(quantity)`. `allows_zero_value` và các cặp `linked_product_id` (mới biết 2 cặp) đặt tay khi cần. Lấy lại script được từ lịch sử git (`5e9b251`) | 26/10/2026 |
 | D4 | Thiếu file N-X-T kho KHUYẾN MẠI | Không còn cần — chỉ script N-X-T (đã xoá) dùng file này | 26/10/2026 |
+| Q1 | Phân quyền theo phòng ban | **Bỏ cấp `manager`** — chỉ còn 2 cấp `staff`/`admin` (kế hoạch mới, chốt với trưởng nhóm). Phân quyền theo phòng ban (Kế toán/Kinh doanh/Kho) vẫn ngoài phạm vi | 02/11/2026 |
+| Q3 | Route API chưa kiểm tra đăng nhập, `/dashboard` chưa chặn khách | **Siết hầu hết** (Việc 3 — `Backend_Task_Board_1Nov26.md`): `src/proxy.ts` chặn `/dashboard/**` chưa đăng nhập; mọi route `/api/**` **trừ `api/sales/invoices` và `api/products/**`** đòi `requireSessionUser`/`requireAdminUser`; `/api/n8n/internal/*` đổi sang token riêng `N8N_INTERNAL_TOKEN`; bỏ tự đăng ký công khai (`/register`); chặn boot production thiếu `JWT_SECRET`; thêm rate-limit `/api/auth/login`. **2 route loại trừ cố ý chưa làm** — chờ Việc 1 (giá nhiều mức) xong, hạn xác nhận bảng quyền 11/11, hạn hoàn thiện 15/11 | 02–04/11/2026 |

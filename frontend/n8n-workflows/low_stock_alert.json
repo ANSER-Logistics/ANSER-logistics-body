@@ -16,6 +16,10 @@
         "method": "GET",
         "url": "http://host.docker.internal:3000/api/n8n/internal/warehouses",
         "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-internal-token", "value": "={{ $env.N8N_INTERNAL_TOKEN }}" }]
+        },
         "options": {}
       },
       "id": "ls-warehouses",
@@ -40,6 +44,10 @@
         "method": "GET",
         "url": "={{ 'http://host.docker.internal:3000/api/n8n/internal/low-stock?warehouseId=' + $json.id }}",
         "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-internal-token", "value": "={{ $env.N8N_INTERNAL_TOKEN }}" }]
+        },
         "options": {}
       },
       "id": "ls-fetch",

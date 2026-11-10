@@ -52,10 +52,10 @@ export default function LandingPage() {
             Đăng nhập
           </Link>
           <Link
-            href="/register"
+            href="/login"
             className="rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-black transition-all hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]"
           >
-            Bắt đầu ngay
+            Đăng nhập
           </Link>
         </div>
       </nav>
@@ -76,14 +76,8 @@ export default function LandingPage() {
         </p>
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
           <Link
-            href="/register"
-            className="rounded-2xl bg-gradient-to-br from-violet-600 to-sky-500 px-9 py-4 text-base font-bold shadow-[0_10px_30px_rgba(124,58,237,0.4)] transition-shadow hover:shadow-[0_12px_35px_rgba(124,58,237,0.55)]"
-          >
-            Khởi tạo không gian làm việc
-          </Link>
-          <Link
             href="/login"
-            className="rounded-2xl border border-white/[0.08] bg-white/[0.05] px-8 py-4 text-base font-semibold backdrop-blur-md transition-colors hover:border-white/[0.18] hover:bg-white/[0.09]"
+            className="rounded-2xl bg-gradient-to-br from-violet-600 to-sky-500 px-9 py-4 text-base font-bold shadow-[0_10px_30px_rgba(124,58,237,0.4)] transition-shadow hover:shadow-[0_12px_35px_rgba(124,58,237,0.55)]"
           >
             Đăng nhập
           </Link>
@@ -126,7 +120,7 @@ export default function LandingPage() {
       <footer className="relative z-10 px-6 py-28 text-center">
         <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl">Sẵn sàng tối ưu hóa vận hành?</h2>
         <Link
-          href="/register"
+          href="/login"
           className="mt-8 inline-block rounded-2xl bg-gradient-to-br from-violet-600 to-sky-500 px-12 py-4.5 text-lg font-bold shadow-[0_10px_30px_rgba(124,58,237,0.4)] transition-shadow hover:shadow-[0_12px_35px_rgba(124,58,237,0.55)]"
         >
           Triển khai ANSER ngay hôm nay

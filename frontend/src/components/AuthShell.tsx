@@ -22,9 +22,9 @@ type AuthShellProps = {
   brandSubtitle: string;
   formTitle: string;
   formSubtitle: string;
-  switchText: string;
-  switchLinkLabel: string;
-  switchHref: string;
+  switchText?: string;
+  switchLinkLabel?: string;
+  switchHref?: string;
   children: ReactNode;
 };
 
@@ -86,12 +86,14 @@ export default function AuthShell({
 
             {children}
 
-            <div className="mt-6 text-center text-sm text-zinc-400">
-              {switchText}{" "}
-              <Link href={switchHref} className="font-semibold text-white hover:underline">
-                {switchLinkLabel}
-              </Link>
-            </div>
+            {switchText && switchLinkLabel && switchHref && (
+              <div className="mt-6 text-center text-sm text-zinc-400">
+                {switchText}{" "}
+                <Link href={switchHref} className="font-semibold text-white hover:underline">
+                  {switchLinkLabel}
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

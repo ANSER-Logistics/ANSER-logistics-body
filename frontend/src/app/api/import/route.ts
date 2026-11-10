@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { docExcel } from "@/server/import/doc-excel";
 import { apDung, lapKeHoach } from "@/server/import/ap-dung";
-import { getSessionUser } from "@/server/session";
+import { requireAdminUser } from "@/server/session";
 
 // Trần kích thước. Bản xuất thật lớn nhất trong tay: 26KB. 5MB là dư xa, và nó
 // tồn tại để một file 500MB không ăn hết bộ nhớ tiến trình — ExcelJS đọc cả
@@ -22,13 +22,10 @@ const TRAN_BYTE = 5 * 1024 * 1024;
  * việc máy chủ không bao giờ ghi thứ nó chưa tự đọc.
  */
 export async function POST(request: Request) {
-  // Ba route AI chặn khách vãng lai, các route CRUD thì chưa (ARCHITECTURE.md
-  // §7, hạn chế đã biết). Đường này GHI HÀNG TRĂM DÒNG một lượt nên không thể
-  // để ngỏ theo tiền lệ đó.
-  const user = await getSessionUser();
-  if (!user) {
-    return NextResponse.json({ message: "Chưa đăng nhập." }, { status: 401 });
-  }
+  // Ghi hàng trăm dòng sản phẩm/danh mục một lượt — cùng mức nhạy cảm với
+  // POST/PATCH /api/products, nên đòi admin giống route đó (Việc 2 — Siết xác thực).
+  const { user, response } = await requireAdminUser();
+  if (response) return response;
 
   let form: FormData;
   try {

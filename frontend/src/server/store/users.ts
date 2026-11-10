@@ -4,11 +4,11 @@ import { db } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 
 export type User = typeof users.$inferSelect;
-export const ROLES = ["staff", "manager", "admin"] as const;
+export const ROLES = ["staff", "admin"] as const;
 export type Role = (typeof ROLES)[number];
 // "admin" dành riêng cho đội dev ANSER (tài khoản chủ, seed sẵn) — khách hàng chỉ tự quản lý
-// nhân sự của họ ở 2 cấp này qua trang Nhân sự (không tạo/thăng cấp lên admin được từ UI/API).
-export const ASSIGNABLE_ROLES = ["staff", "manager"] as const;
+// nhân sự của họ ở cấp "staff" qua trang Nhân sự (không tạo/thăng cấp lên admin được từ UI/API).
+export const ASSIGNABLE_ROLES = ["staff"] as const;
 
 export async function findUserByEmail(email: string): Promise<User | undefined> {
   const rows = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);

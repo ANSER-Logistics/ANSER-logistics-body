@@ -210,7 +210,7 @@ the core schema beyond the `0014` columns above.
 Open items no longer live in this playbook. Two living docs track them now:
 
 - **Waiting on a decision** (owner, Brain team, team lead) → `docs/tasks/BLOCKERS.md`
-- **Ready for someone to pick up** → `docs/tasks/Backend_Task_Board.md`
+- **Ready for someone to pick up** → `docs/tasks/Backend_Task_Board_1Nov26.md`
 
 Where each item that used to be listed here went, so older references like "§5 item 1"
 or "[PB] §5.2" still lead somewhere:
@@ -374,7 +374,7 @@ thing computing the number that ends up on an invoice.
    (Vietnamese; setup, how the code is layered, never-do rules).
 2. Read §1–§4 and §6 here for the big picture, then `docs/decisions/5. Database_Session_Log.md` for the detailed
    session log (this playbook only indexes it).
-3. Pick work from `docs/tasks/Backend_Task_Board.md`, and follow its coordination rules
+3. Pick work from `docs/tasks/Backend_Task_Board_1Nov26.md`, and follow its coordination rules
    (where to branch from, who may create migrations).
 4. Before deciding anything about pricing tiers, credit terms, roles, or real-data
    anomalies, check `docs/tasks/BLOCKERS.md` — if it's listed there, it's not ours to decide

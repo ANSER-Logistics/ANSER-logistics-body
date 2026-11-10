@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
+import { requireInternalToken } from "@/server/internalAuth";
 import { getSalesReportForPeriod, SalesReportPeriod } from "@/server/reports";
 
 // Dùng bởi 3 workflow n8n "Báo cáo doanh số" (ngày/tuần/tháng).
 export async function GET(request: Request) {
+  const unauthorized = requireInternalToken(request);
+  if (unauthorized) return unauthorized;
+
   const { searchParams } = new URL(request.url);
   const periodParam = searchParams.get("period");
   const period: SalesReportPeriod = periodParam === "week" || periodParam === "month" ? periodParam : "day";

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminUser } from "@/server/session";
 import { getRule, updateRule } from "@/server/store/automation";
 import { activateN8nWorkflow, isN8nApiConfigured } from "@/server/n8nApi";
 
@@ -15,6 +16,9 @@ const WEBHOOK_PATH_BY_TYPE: Record<string, string> = {
 };
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdminUser();
+  if (response) return response;
+
   const { id } = await params;
   const rule = await getRule(id);
   if (!rule) {
