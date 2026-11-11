@@ -20,7 +20,9 @@ const statusStyles: Record<string, string> = {
 
 function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[status] ?? "bg-white/10 text-zinc-300"}`}>
+    <span
+      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[status] ?? "bg-white/10 text-zinc-300"}`}
+    >
       {status}
     </span>
   );
@@ -75,7 +77,14 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <BarChartCard title="Nhập / Xuất kho 7 ngày qua" data={dailyFlow} legendA="Nhập" legendB="Xuất" colorA="bg-sky-500" colorB="bg-violet-600" />
+      <BarChartCard
+        title="Nhập / Xuất kho 7 ngày qua"
+        data={dailyFlow}
+        legendA="Nhập"
+        legendB="Xuất"
+        colorA="bg-sky-500"
+        colorB="bg-violet-600"
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
@@ -162,10 +171,10 @@ export default async function DashboardPage() {
               <div key={`${a.ruleId}-${a.productId}`} className="flex gap-3">
                 <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red-400" />
                 <div>
-                  <p className="text-sm font-medium">
-                    {a.productCode} sắp/đã hết hàng
+                  <p className="text-sm font-medium">{a.productCode} sắp/đã hết hàng</p>
+                  <p className="text-xs text-zinc-500">
+                    Tồn {a.stock}, dưới ngưỡng {a.thresholdQty}
                   </p>
-                  <p className="text-xs text-zinc-500">Tồn {a.stock}, dưới ngưỡng {a.thresholdQty}</p>
                 </div>
               </div>
             ))}

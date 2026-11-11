@@ -9,8 +9,15 @@ function formatVnd(value: number) {
 }
 
 export default async function ReportsPage() {
-  const { totalRevenue, revenue7Days, invoiceCount7Days, dailyRevenue, revenueByCategory, recentInvoices, byWarehouse } =
-    await getReportSummary();
+  const {
+    totalRevenue,
+    revenue7Days,
+    invoiceCount7Days,
+    dailyRevenue,
+    revenueByCategory,
+    recentInvoices,
+    byWarehouse,
+  } = await getReportSummary();
 
   return (
     <div className="flex flex-col gap-6">
@@ -61,9 +68,7 @@ export default async function ReportsPage() {
                 ))}
                 <tr className="bg-white/[0.03]">
                   <td className="px-5 py-3 font-semibold">Tổng</td>
-                  <td className="px-5 py-3 font-semibold">
-                    {byWarehouse.reduce((s, w) => s + w.totalProducts, 0)}
-                  </td>
+                  <td className="px-5 py-3 font-semibold">{byWarehouse.reduce((s, w) => s + w.totalProducts, 0)}</td>
                   <td className="px-5 py-3 font-semibold">
                     {formatVnd(byWarehouse.reduce((s, w) => s + w.revenue7Days, 0))}
                   </td>

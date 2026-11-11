@@ -71,7 +71,13 @@ export async function createN8nWorkflow(input: {
   return { id: String(data.id) };
 }
 
-export type N8nWorkflowNode = { id: string; name: string; type: string; parameters: Record<string, unknown>; [key: string]: unknown };
+export type N8nWorkflowNode = {
+  id: string;
+  name: string;
+  type: string;
+  parameters: Record<string, unknown>;
+  [key: string]: unknown;
+};
 export type N8nWorkflowDetail = {
   name: string;
   nodes: N8nWorkflowNode[];

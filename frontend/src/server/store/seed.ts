@@ -10,7 +10,14 @@ import { seedDemoUser } from "@/server/store/users";
 
 const SEED_PRODUCTS = [
   { code: "SP-001", name: "Trục cán inox 304", categoryName: "Thành phẩm", unit: "Cái", stock: 320, price: 1250000 },
-  { code: "SP-014", name: "Vòng bi công nghiệp", categoryName: "Bán thành phẩm", unit: "Cái", stock: 15, price: 480000 },
+  {
+    code: "SP-014",
+    name: "Vòng bi công nghiệp",
+    categoryName: "Bán thành phẩm",
+    unit: "Cái",
+    stock: 15,
+    price: 480000,
+  },
   { code: "SP-027", name: "Tấm nhôm 5mm", categoryName: "Nguyên vật liệu", unit: "Tấm", stock: 0, price: 620000 },
   { code: "SP-033", name: "Bulong M10 (hộp 100)", categoryName: "Phụ liệu", unit: "Hộp", stock: 540, price: 95000 },
   { code: "SP-041", name: "Motor giảm tốc 1HP", categoryName: "Thành phẩm", unit: "Cái", stock: 42, price: 3150000 },

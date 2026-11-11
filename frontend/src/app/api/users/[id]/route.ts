@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/server/session";
-import { ASSIGNABLE_ROLES, countAdmins, deleteUser, findUserById, toPublicUser, updateUser } from "@/server/store/users";
+import {
+  ASSIGNABLE_ROLES,
+  countAdmins,
+  deleteUser,
+  findUserById,
+  toPublicUser,
+  updateUser,
+} from "@/server/store/users";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const admin = await requireAdmin();

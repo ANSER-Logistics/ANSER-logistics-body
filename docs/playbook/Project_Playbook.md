@@ -34,7 +34,7 @@ into). Single Next.js app: UI + API routes in one project, no separate backend.
 | `docs/decisions/3. ERD_CHUAN.md` | both | **Canonical ERD** after real MISA data was run through it. Added C1/C2. Includes full target `schema.ts`, indexes, reconciliation SQL. | **Partially stale** — see §3.1 |
 | `docs/decisions/4. Database_Implementation_Documentation.md` | **master only** | Step-by-step implementation log for ERD_CHUAN's Task 1–4 (schema migration, constraint verification, `sales.ts` sign-convention fix, `/api/inventory/reconcile`), plus a short retrospective timeline for Task 5, added 18/09. | Not merged into `feat/database-application` — read it on `master` |
 | `docs/decisions/evidence/all_constrain.json`, `docs/decisions/evidence/single_table_data_types_and_columns.json` | **master only** | Raw Neon `pg_constraint`/`information_schema` dumps used to verify Task 2 above | Reference, not living docs |
-| `frontend/CLAUDE.md` | this branch, uncommitted | Dense session log: bugs found/fixed, real-data import findings, prioritized open items | Mine everything in §5 comes from here — read it directly for full detail |
+| `docs/decisions/5. Database_Session_Log.md` | this branch, uncommitted | Dense session log: bugs found/fixed, real-data import findings, prioritized open items | Mine everything in §5 comes from here — read it directly for full detail |
 | `docs/architecture/ARCHITECTURE.md` | this branch | Full file-by-file map of the Next.js app, request flows, current limitations table | Current, keep using it |
 | `src/server/db/schema.ts` | this branch | **Ground truth.** Ahead of ERD_CHUAN — see §3.1 | Always current |
 
@@ -372,7 +372,7 @@ thing computing the number that ends up on an invoice.
 
 1. New to the codebase, or to coding? Read `docs/onboarding/Onboarding_Playbook.md` first
    (Vietnamese; setup, how the code is layered, never-do rules).
-2. Read §1–§4 and §6 here for the big picture, then `frontend/CLAUDE.md` for the detailed
+2. Read §1–§4 and §6 here for the big picture, then `docs/decisions/5. Database_Session_Log.md` for the detailed
    session log (this playbook only indexes it).
 3. Pick work from `docs/tasks/Backend_Task_Board_1Nov26.md`, and follow its coordination rules
    (where to branch from, who may create migrations).

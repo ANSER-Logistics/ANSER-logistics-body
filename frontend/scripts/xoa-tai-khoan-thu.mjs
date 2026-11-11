@@ -19,9 +19,7 @@ const KHUON = /^anser-test-\d+@example\.invalid$/;
 
 const email = process.argv[2];
 if (email && !KHUON.test(email)) {
-  console.error(
-    `Từ chối: '${email}' không đúng khuôn tài khoản thử (anser-test-<số>@example.invalid).`,
-  );
+  console.error(`Từ chối: '${email}' không đúng khuôn tài khoản thử (anser-test-<số>@example.invalid).`);
   process.exit(2);
 }
 

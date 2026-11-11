@@ -67,9 +67,7 @@ export function matchCosts(rows: UnitCostRow[], all: MatchableProduct[]): CostIm
   // Tên trùng giữa nhiều mặt hàng thì BỎ HẲN khỏi bảng tra.
   const nameCounts = new Map<string, number>();
   for (const p of all) nameCounts.set(norm(p.name), (nameCounts.get(norm(p.name)) ?? 0) + 1);
-  const byName = new Map(
-    all.filter((p) => nameCounts.get(norm(p.name)) === 1).map((p) => [norm(p.name), p]),
-  );
+  const byName = new Map(all.filter((p) => nameCounts.get(norm(p.name)) === 1).map((p) => [norm(p.name), p]));
 
   const matches: CostMatch[] = [];
   const unmatchedFromFile: CostImportPreview["unmatchedFromFile"] = [];
