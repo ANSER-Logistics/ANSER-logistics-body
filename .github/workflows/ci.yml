@@ -48,6 +48,20 @@ jobs:
           fi
           echo "✓ đúng một lockfile: frontend/pnpm-lock.yaml"
 
+      # `.gitattributes` chuẩn hoá mọi file text về LF lúc `git add`, nhưng chỉ khi máy
+      # người commit đọc được nó. File đã vào repo với CRLF thì hiện "bị sửa" mãi ở máy
+      # người khác (đúng chuyện brain.ts). Chặn ở đây; ngoại lệ có chủ đích khai `-text`.
+      - name: Không file text nào vào repo với CRLF
+        run: |
+          ds=$(git ls-files --eol | grep 'i/crlf' | grep -v 'attr/-text' || true)
+          if [ -n "$ds" ]; then
+            echo "::error::Các file này được commit với CRLF:"
+            echo "$ds"
+            echo "Sửa:  git add --renormalize <file>  rồi commit riêng."
+            exit 1
+          fi
+          echo "✓ mọi file text trong repo đều LF"
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

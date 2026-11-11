@@ -74,9 +74,10 @@ cd ANSER-logistics-body/frontend
 pnpm install
 ```
 
-> **Lưu ý cho máy Windows**: repo có `.gitattributes` ép mọi file text về line ending `LF`.
-> Hãy để editor của bạn dùng `LF` (VS Code: góc dưới bên phải, chữ `CRLF` → đổi thành `LF`).
-> Nếu không, `git status` sẽ báo hàng loạt file "bị sửa" mà thật ra chỉ khác ký tự xuống dòng.
+> **Lưu ý cho máy Windows**: repo có `.gitattributes` ép mọi file text về line ending `LF` khi
+> commit, và `.editorconfig` để editor tạo file mới bằng `LF` (VS Code cần cài extension
+> "EditorConfig"; hoặc góc dưới bên phải, chữ `CRLF` → đổi thành `LF`). CI chặn file nào lọt
+> vào repo với `CRLF`. Lỡ commit rồi: `git add --renormalize <file>` và commit riêng.
 
 ### 2.3 Tải file `frontend/.env.local`
 
@@ -134,7 +135,7 @@ n8n ở <http://localhost:5679>, hộp thư giả MailHog (xem email n8n "gửi"
 | `DATABASE_URL is not set` | Thiếu `frontend/.env.local` hoặc đặt sai thư mục | File phải nằm trong `frontend/`, không phải thư mục gốc |
 | `Cannot read properties of null (reading 'matches')` khi `npm install` | `node_modules` cũ do pnpm tạo | `rm -rf node_modules` rồi cài lại (Câu lệnh cuối bước 2.2) |
 | CI đỏ ở bước `--frozen-lockfile` | Đổi `package.json` mà chưa cập nhật `pnpm-lock.yaml` | Chạy `pnpm install`, commit lockfile |
-| `git status` báo `brain.ts` bị sửa dù bạn không đụng | File này được commit với line ending CRLF từ trước | Kệ nó, **đừng commit**. Xem `docs/tasks/BLOCKERS.md` |
+| `git status` báo `brain.ts` bị sửa dù bạn không đụng | Bản checkout cũ, trước khi `.gitattributes` khai `brain.ts` là `-text` (file vẫn lưu CRLF tới khi Brain PR #3 merge) | `git pull`, rồi `git restore frontend/src/server/brain.ts` một lần. **Đừng commit** đổi line ending của nó. Xem `docs/tasks/BLOCKERS.md` K1 |
 | Code mẫu Next.js trên mạng không chạy | Dự án dùng **Next.js 16** — nhiều API đã đổi (vd `middleware.ts` thành `proxy.ts`, `params` là `Promise`) | Đọc tài liệu đi kèm trong `frontend/node_modules/next/dist/docs/` (xem `AGENTS.md` ở thư mục gốc) |
 
 ---
