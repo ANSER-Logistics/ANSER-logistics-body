@@ -44,7 +44,12 @@ describe("warehouses store", () => {
     ).toBeUndefined();
   });
 
-  it.todo(
-    "BUG: updateWarehouse(id, {}) ném 'No values to set' — PATCH /api/warehouses/[id] với body không có notificationEmail đi vào đây → 500 thay vì 400 hoặc trả kho hiện tại",
-  );
+  it("updateWarehouse không có trường nào để đổi thì trả kho hiện tại, không ném lỗi", async () => {
+    const kho = await createWarehouse("Kho Hà Nội");
+    expect(await updateWarehouse(kho.id, { notificationEmail: undefined })).toMatchObject({
+      id: kho.id,
+      name: "Kho Hà Nội",
+    });
+    expect(await updateWarehouse("00000000-0000-4000-8000-000000000000", {})).toBeUndefined();
+  });
 });

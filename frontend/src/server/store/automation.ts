@@ -55,6 +55,8 @@ export async function updateRule(
     n8nWorkflowId: string | null;
   }>,
 ) {
+  // Drizzle ném "No values to set" với .set({}) — patch rỗng thì trả bản ghi hiện tại thay vì 500.
+  if (Object.values(patch).every((v) => v === undefined)) return getRule(id);
   const rows = await db.update(automationRules).set(patch).where(eq(automationRules.id, id)).returning();
   return rows[0];
 }

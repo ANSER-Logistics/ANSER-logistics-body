@@ -79,9 +79,11 @@ describe("employees store", () => {
     expect(await updateEmployee(MISSING_ID, { name: "Ai đó" })).toBeUndefined();
   });
 
-  it.todo(
-    "BUG: updateEmployee(id, {}) ném 'No values to set' — PATCH /api/employees/[id] với body không có trường nào đi vào đây → 500 thay vì 400 hoặc trả nhân viên hiện tại",
-  );
+  it("updateEmployee không có trường nào để đổi thì trả nhân viên hiện tại, không ném lỗi", async () => {
+    const employee = await createEmployee({ name: "Phạm Văn Hùng" });
+    expect(await updateEmployee(employee.id, {})).toMatchObject({ id: employee.id, name: "Phạm Văn Hùng" });
+    expect(await updateEmployee("00000000-0000-4000-8000-000000000000", {})).toBeUndefined();
+  });
 
   it("xoá nhân viên thì tài khoản gắn với họ vẫn còn nhưng bị gỡ liên kết", async () => {
     const employee = await createEmployee({ name: "Lê Thị Mai" });
