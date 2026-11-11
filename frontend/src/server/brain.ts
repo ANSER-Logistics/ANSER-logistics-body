@@ -284,6 +284,22 @@ export type BrainHealth = {
   runtime_profile?: string;
   engine_error?: string | null;
   load?: Record<string, Record<string, number | string>>;
+  /**
+   * Brain CÓ đang kiểm token không.
+   *
+   * `require_api_token` bên Brain bỏ qua mọi kiểm tra khi biến môi trường rỗng
+   * — hợp lý lúc chạy máy mình, nhưng nếu biến đặt sai tên lúc triển khai thì
+   * Brain mở toang mà không dấu hiệu nào. Đã xảy ra thật: compose đặt
+   * `API_TOKEN` trong khi mã đọc `API_AUTH_TOKEN`.
+   *
+   * Brain phát tín hiệu này từ 13/08/2026 nhưng KHÔNG AI ĐỌC — kiểu đây thiếu
+   * trường, route health không chuyển tiếp, UI không hiện. Một phòng thủ dựng
+   * dở thì tệ hơn không dựng: nó làm ta tưởng đã che chỗ đó rồi.
+   *
+   * Không bắt buộc vì Brain cũ chưa trả trường này; `undefined` nghĩa là
+   * KHÔNG BIẾT, và không biết thì phải nói là không biết chứ không đoán là an toàn.
+   */
+  auth_enabled?: boolean;
 };
 
 /**

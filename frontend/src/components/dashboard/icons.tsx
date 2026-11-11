@@ -50,6 +50,10 @@ export const ReceiptIcon = (p: IconProps) =>
     <path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2Zm2 5h8m-8 4h8m-8 4h5" />,
     p,
   );
+// Quyển sách mở — mục "Hướng dẫn dùng" ở sidebar.
+export const BookIcon = (p: IconProps) =>
+  base(<path d="M12 6.5C10.5 5.2 8.6 4.6 6 4.6H3v13h3c2.6 0 4.5.6 6 1.9m0-13c1.5-1.3 3.4-1.9 6-1.9h3v13h-3c-2.6 0-4.5.6-6 1.9m0-13v13" />, p);
+
 export const UsersIcon = (p: IconProps) =>
   base(
     <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm9 10v-2a4 4 0 0 0-3-3.87M15 3.13a4 4 0 0 1 0 7.75" />,

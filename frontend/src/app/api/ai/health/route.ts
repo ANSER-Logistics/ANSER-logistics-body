@@ -34,6 +34,16 @@ export async function GET() {
     degraded: health.degraded,
     engine_ready: health.engine_ready,
     vision_ready: health.vision_ready,
+    // Brain có kiểm token không. `undefined` = Brain cũ, chưa trả trường này —
+    // giữ nguyên `undefined` chứ KHÔNG quy về `true`: không biết mà báo là an
+    // toàn thì đúng bằng việc không có cảnh báo nào.
+    auth_enabled: health.auth_enabled,
+    // Cảnh báo dựng sẵn ở đây thay vì để mỗi màn hình tự suy: chỉ có một câu
+    // đúng cho tình huống này, và nó phải giống nhau ở mọi chỗ hiện ra.
+    canh_bao:
+      health.auth_enabled === false
+        ? "Brain đang KHÔNG kiểm token — bất kỳ ai biết địa chỉ đều gọi được. Kiểm biến API_AUTH_TOKEN trên máy chạy Brain trước khi mở cho người ngoài."
+        : null,
     // Thống kê hàng đợi của Brain — nhìn được `peak_queued` / `rejected_total`
     // mới chỉnh được ngưỡng đồng thời, không thì chỉ là đoán.
     load: health.load ?? null,
