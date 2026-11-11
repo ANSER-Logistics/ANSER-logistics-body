@@ -23,8 +23,16 @@ function normalizeCategoryName(name: string): string {
   return name.normalize("NFC").trim().replace(/\s+/g, " ");
 }
 
+export class EmptyCategoryNameError extends Error {
+  constructor() {
+    super("Tên danh mục không được để trống.");
+  }
+}
+
 export async function getOrCreateCategoryByName(name: string): Promise<Category> {
   const normalized = normalizeCategoryName(name);
+  // "   " chuẩn hoá thành "" — không chặn ở đây thì thành một danh mục không tên.
+  if (!normalized) throw new EmptyCategoryNameError();
 
   const existing = await db
     .select()
