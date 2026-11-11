@@ -35,6 +35,8 @@ export async function updateUser(
     employeeId: string | null;
   }>,
 ): Promise<User | undefined> {
+  // Drizzle ném "No values to set" với .set({}) — patch rỗng thì trả bản ghi hiện tại thay vì 500.
+  if (Object.values(patch).every((v) => v === undefined)) return findUserById(id);
   const rows = await db.update(users).set(patch).where(eq(users.id, id)).returning();
   return rows[0];
 }
