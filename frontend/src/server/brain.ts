@@ -475,7 +475,7 @@ export async function auditInventory(req: {
  * KHÔNG đặt Content-Type: fetch phải tự sinh boundary. Đặt tay là hỏng — server
  * không tách được các phần và báo "thiếu file", một lỗi rất khó đoán ra.
  */
-async function uploadToBrain<T>(path: string, form: FormData): Promise<T> {
+async function uploadToBrain<T>(path: string, form: FormData, op: "upload" | "vision" = "upload"): Promise<T> {
   const url = brainUrl(path);
   const headers: Record<string, string> = {};
   const token = process.env.BRAIN_API_TOKEN;
@@ -487,11 +487,11 @@ async function uploadToBrain<T>(path: string, form: FormData): Promise<T> {
       method: "POST",
       headers,
       body: form,
-      signal: AbortSignal.timeout(TIMEOUT_MS.upload),
+      signal: AbortSignal.timeout(timeoutMs(op)),
       cache: "no-store",
     });
   } catch (error) {
-    throw transportError(error, url, path, "upload");
+    throw transportError(error, url, path, op);
   }
   return parseResponse<T>(response, path);
 }
@@ -542,7 +542,7 @@ export type BrainFreightInvoice = {
 export async function readFreightInvoice(file: File): Promise<BrainFreightInvoice> {
   const form = new FormData();
   form.append("file", file, file.name);
-  return uploadToBrain<BrainFreightInvoice>("/ocr/freight", form);
+  return uploadToBrain<BrainFreightInvoice>("/ocr/freight", form, "vision");
 }
 
 // ---------------------------------------------------------------------------
