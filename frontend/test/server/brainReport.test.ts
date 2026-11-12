@@ -177,26 +177,29 @@ describe("collectSaleLines", () => {
     expect((await collectSaleLines({ warehouseIds: [kho.id] })).lines.map((l) => l.product)).toEqual(["hoá đơn cũ"]);
   });
 
-  // schema.ts: sales_invoice_items.product_id là ON DELETE SET NULL và comment
-  // "lịch sử doanh thu phải đúng kể cả khi sản phẩm ... bị xoá". collectSaleLines
-  // INNER JOIN products (và lọc kho qua products.warehouse_id) nên xoá sản phẩm
-  // làm doanh thu cũ của nó biến mất khỏi báo cáo.
-  it.todo("BUG: xoá sản phẩm (deleteProduct) làm mất toàn bộ doanh thu cũ của nó khỏi báo cáo");
-
-  // it.fails: đỏ khi bug trên được sửa — lúc đó đổi thành `it` thường.
-  it.fails("(tái hiện) xoá sản phẩm thì doanh thu cũ của nó vẫn còn trong báo cáo", async () => {
+  // schema.ts: sales_invoice_items.product_id là ON DELETE SET NULL — "lịch sử
+  // doanh thu phải đúng kể cả khi sản phẩm ... bị xoá". Nên báo cáo LEFT JOIN
+  // products và lọc kho theo kho ghi trên hoá đơn (#13).
+  it("xoá sản phẩm thì doanh thu cũ của nó vẫn còn trong báo cáo, giữ giá vốn snapshot", async () => {
     const kho = await taoKho("Kho Hà Nội");
     const sp = await taoSanPham(kho.id, "VT001", "Dầu nhớt", 5_000);
-    await ban(kho.id, "2026-05-01T03:00:00Z", [dong(sp.id, "Dầu nhớt")]);
+    await ban(kho.id, "2026-05-01T03:00:00Z", [dong(sp.id, "Dầu nhớt", { unitCost: 4_000 })]);
     await ban(kho.id, "2026-06-01T03:00:00Z", [dong(sp.id, "Dầu nhớt")]);
 
     await deleteProduct(sp.id);
 
-    expect((await collectSaleLines({ warehouseIds: [kho.id] })).total).toBe(2);
+    const kq = await collectSaleLines({ warehouseIds: [kho.id] });
+    expect(kq.total).toBe(2);
+    // Dòng có snapshot giữ giá vốn; dòng không có thì giờ là CHƯA BIẾT (không còn products.cost để ước lượng).
+    expect(kq.lines.map((l) => [l.date, l.product, l.cogs]).sort()).toEqual([
+      ["2026-05-01", "Dầu nhớt", 4_000],
+      ["2026-06-01", "Dầu nhớt", null],
+    ]);
+    expect(kq.withCost).toBe(1);
   });
 
-  // Cùng gốc: lọc kho theo products.warehouse_id hiện tại thay vì sales_invoices.warehouse_id lúc bán.
-  it.fails("(tái hiện) chuyển sản phẩm sang kho khác không kéo doanh thu cũ đi theo", async () => {
+  // Kho của dòng bán là kho trên hoá đơn lúc bán, không phải products.warehouse_id hiện tại.
+  it("chuyển sản phẩm sang kho khác không kéo doanh thu cũ đi theo", async () => {
     const hn = await taoKho("Kho Hà Nội");
     const hcm = await taoKho("Kho HCM");
     const sp = await taoSanPham(hn.id, "VT001", "Dầu nhớt", 5_000);
@@ -207,18 +210,21 @@ describe("collectSaleLines", () => {
     expect((await collectSaleLines({ warehouseIds: [hn.id] })).total).toBe(1);
   });
 
-  // `since` tính theo giờ địa phương (setHours) nhưng `date` lấy theo UTC
-  // (toISOString). Đơn bán 06:30 ngày 01/04 giờ VN (= 23:30Z 31/03) bị ghi
-  // "2026-03-31" → nhảy sang tháng 3 / quý 1.
-  it.todo("BUG: ngày bán lấy theo UTC nên đơn 00:00–06:59 giờ VN bị tính vào ngày (và tháng/quý) trước");
-
-  it.fails("(tái hiện) đơn 06:30 sáng 01/04 giờ VN được ghi ngày 2026-04-01", async () => {
+  // Ngày bán là ngày theo giờ VN (UTC+7). Đơn bán 06:30 ngày 01/04 giờ VN
+  // (= 23:30Z 31/03) mà ghi "2026-03-31" là nhảy sang tháng 3 / quý 1 (#13).
+  it("đơn 06:30 sáng 01/04 giờ VN được ghi ngày 2026-04-01; ranh giới ngày là 00:00 giờ VN", async () => {
     const kho = await taoKho("Kho Hà Nội");
     const sp = await taoSanPham(kho.id, "VT001", "Dầu nhớt", 5_000);
-    await ban(kho.id, "2026-03-31T23:30:00Z", [dong(sp.id, "Dầu nhớt")]);
+    await ban(kho.id, "2026-03-31T23:30:00Z", [dong(sp.id, "06:30 01/04")]);
+    await ban(kho.id, "2026-04-01T16:59:00Z", [dong(sp.id, "23:59 01/04")]);
+    await ban(kho.id, "2026-04-01T17:00:00Z", [dong(sp.id, "00:00 02/04")]);
 
     const { lines } = await collectSaleLines({ warehouseIds: [kho.id] });
 
-    expect(lines.map((l) => l.date)).toEqual(["2026-04-01"]);
+    expect(lines.map((l) => [l.product, l.date]).sort()).toEqual([
+      ["00:00 02/04", "2026-04-02"],
+      ["06:30 01/04", "2026-04-01"],
+      ["23:59 01/04", "2026-04-01"],
+    ]);
   });
 });
