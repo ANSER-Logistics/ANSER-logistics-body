@@ -28,10 +28,7 @@ export async function POST(request: Request) {
   try {
     form = await request.formData();
   } catch {
-    return NextResponse.json(
-      { error: "Cần gửi dạng multipart/form-data kèm trường 'file'" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Cần gửi dạng multipart/form-data kèm trường 'file'" }, { status: 400 });
   }
 
   const file = form.get("file");

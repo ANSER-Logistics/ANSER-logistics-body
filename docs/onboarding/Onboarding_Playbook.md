@@ -1,9 +1,9 @@
 # ANSER-v2 - Sổ tay cho thành viên mới
 
-> Cập nhật 22/10/2026
-> Dành cho người **mới vào dự án** hoặc **mới làm quen với lập trình web**. Không cần đọc các tài liệu khác trước - tài liệu này dẫn bạn đi từng bước, và chỉ sang tài liệu khác khi bạn cần đào sâu.
+> Cập nhật 03/11/2026
+> Dành cho người **mới vào dự án** hoặc **mới làm quen với lập trình web**. Không cần đọc các tài liệu khác trước — tài liệu này dẫn bạn đi từng bước, và chỉ sang tài liệu khác khi bạn cần đào sâu.
 >
-> **Mốc code được mô tả**: `master` **sau khi** đã merge nhánh `feat/database-application` (có tính năng "Nhập Excel", migration `0013`/`0014`, CI). Nếu bạn đọc lúc PR merge đó chưa vào `master`, vài file nhắc tới bên dưới (`src/server/import/`, `.github/workflows/ci.yml`) chỉ có trên nhánh `feat/database-application`.
+> **Mốc code được mô tả**: `master` sau khi merge `feat/database-application` (tính năng "Nhập Excel", migration `0013`/`0014`), cộng nhánh `ci/minhpt43/dev-tooling` (PR #8: Prettier, test trong `frontend/test/`, CI chạy build và test). Nếu PR #8 chưa vào `master`, mục 2.6 và 5.5 chỉ đúng trên nhánh đó.
 
 ## Mục lục
 
@@ -57,9 +57,9 @@ Vì sao chọn kiến trúc này: xem `docs/architecture/STACK_DECISIONS.md`.
 | Công cụ | Phiên bản | Ghi chú |
 |---|---|---|
 | **Node.js** | ≥ 20.9 (CI dùng 24) | Kiểm tra: `node -v` |
-| **pnpm** | bản mới | `corepack enable` rồi `corepack prepare pnpm@latest --activate`, hoặc cài theo hướng dẫn trên pnpm.io |
-| **Git** | bất kỳ | - |
-| **Docker** | tuỳ chọn | Chỉ cần nếu muốn chạy n8n ở máy |
+| **pnpm** | 11.2.2 (bản CI dùng) | `corepack enable` rồi `corepack prepare pnpm@11.2.2 --activate`. Nếu `corepack enable` báo thiếu quyền (Windows), gõ `corepack pnpm@11.2.2 <lệnh>` thay cho `pnpm <lệnh>` |
+| **Git** | bất kỳ | — |
+| Docker | tuỳ chọn | Chỉ cần nếu muốn chạy n8n ở máy |
 
 **Lưu ý đối với thành viên sử dụng `npm`/`yarn`/`bun`**:
 - Repo chỉ giữ **một lockfile duy nhất**: `frontend/pnpm-lock.yaml`.
@@ -70,13 +70,14 @@ Vì sao chọn kiến trúc này: xem `docs/architecture/STACK_DECISIONS.md`.
 
 ```bash
 git clone https://github.com/ANSER-Logistics/ANSER-logistics-body.git
-cd ANSER-v2/frontend
+cd ANSER-logistics-body/frontend
 pnpm install
 ```
 
-> **Lưu ý cho máy Windows**: repo có `.gitattributes` ép mọi file text về line ending `LF`.
-> Hãy để editor của bạn dùng `LF` (VS Code: góc dưới bên phải, chữ `CRLF` → đổi thành `LF`).
-> Nếu không, `git status` sẽ báo hàng loạt file "bị sửa" mà thật ra chỉ khác ký tự xuống dòng.
+> **Lưu ý cho máy Windows**: repo có `.gitattributes` ép mọi file text về line ending `LF` khi
+> commit, và `.editorconfig` để editor tạo file mới bằng `LF` (VS Code cần cài extension
+> "EditorConfig"; hoặc góc dưới bên phải, chữ `CRLF` → đổi thành `LF`). CI chặn file nào lọt
+> vào repo với `CRLF`. Lỡ commit rồi: `git add --renormalize <file>` và commit riêng.
 
 ### 2.3 Tải file `frontend/.env.local`
 
@@ -107,9 +108,15 @@ Mở <http://localhost:3000>. Ở trang đăng nhập, bấm **"Tài khoản dem
 ### 2.6 Kiểm tra trước khi đẩy code
 
 ```bash
-pnpm lint          # kiểm tra sức khỏe code bằng ESLint
-npx tsc --noEmit   # kiểm tra chính tả TypeScript
+pnpm lint            # ESLint
+pnpm format:check    # Prettier (nếu đỏ: pnpm format rồi commit)
+npx tsc --noEmit     # kiểm tra kiểu TypeScript
+pnpm test            # Vitest, chạy bằng Postgres giả lập trong bộ nhớ, không cần Neon
 ```
+
+CI (`.github/workflows/ci.yml`) chạy bốn việc: chỉ một lockfile; ESLint + Prettier; chạy toàn
+bộ migration từ đầu trên Postgres 17 rồi `pnpm build`; và `pnpm test:coverage` (có ngưỡng độ
+phủ trong `vitest.config.mts`). Cả bốn phải xanh.
 
 ### 2.7 (Optional) Chạy n8n ở máy
 
@@ -128,7 +135,8 @@ n8n ở <http://localhost:5679>, hộp thư giả MailHog (xem email n8n "gửi"
 | `DATABASE_URL is not set` | Thiếu `frontend/.env.local` hoặc đặt sai thư mục | File phải nằm trong `frontend/`, không phải thư mục gốc |
 | `Cannot read properties of null (reading 'matches')` khi `npm install` | `node_modules` cũ do pnpm tạo | `rm -rf node_modules` rồi cài lại (Câu lệnh cuối bước 2.2) |
 | CI đỏ ở bước `--frozen-lockfile` | Đổi `package.json` mà chưa cập nhật `pnpm-lock.yaml` | Chạy `pnpm install`, commit lockfile |
-| `git status` báo `brain.ts` bị sửa dù bạn không đụng | File này được commit với line ending CRLF từ trước | Nhắm mắt cho qua (Xem `docs/tasks/BLOCKERS.md`) |
+| `git status` báo `brain.ts` bị sửa dù bạn không đụng | Bản checkout cũ, trước khi `.gitattributes` khai `brain.ts` là `-text` (file vẫn lưu CRLF tới khi Brain PR #3 merge) | `git pull`, rồi `git restore frontend/src/server/brain.ts` một lần. **Đừng commit** đổi line ending của nó. Xem `docs/tasks/BLOCKERS.md` K1 |
+| Code mẫu Next.js trên mạng không chạy | Dự án dùng **Next.js 16** — nhiều API đã đổi (vd `middleware.ts` thành `proxy.ts`, `params` là `Promise`) | Đọc tài liệu đi kèm trong `frontend/node_modules/next/dist/docs/` (xem `AGENTS.md` ở thư mục gốc) |
 
 ---
 
@@ -137,7 +145,8 @@ n8n ở <http://localhost:5679>, hộp thư giả MailHog (xem email n8n "gửi"
 ### 3.1 Bản đồ thư mục (chỉ những chỗ bạn sẽ đụng)
 
 ```
-ANSER-v2/
+ANSER-logistics/
+├── AGENTS.md               Hướng dẫn cho AI agent (CLAUDE.md và .github/copilot-instructions.md bám theo)
 ├── docs/                   ← TOÀN BỘ TÀI LIỆU ở đây
 │   ├── onboarding/             Sổ tay này
 │   ├── playbook/               Project Playbook (EN + VI) - bức tranh toàn cảnh cho dev
@@ -147,6 +156,7 @@ ANSER-v2/
 └── frontend/               ← TOÀN BỘ CODE ở đây
     ├── .env.local          Bí mật)
     ├── n8n-workflows/      Workflow n8n mẫu (JSON)
+    ├── test/               Test, phản chiếu src/ (src/server/auth.ts → test/server/auth.test.ts)
     └── src/
         ├── app/            ← GIAO DIỆN + API
         │   ├── dashboard/      Các trang sau đăng nhập
@@ -348,19 +358,32 @@ Ví dụ: `GET /api/vi-du`.
 git switch master && git pull           # 1. lấy code mới nhất
 git switch -c feat/ten-tinh-nang        # 2. tạo nhánh riêng (fix/…, docs/… tuỳ loại việc)
 # … sửa code …
-pnpm lint && npx tsc --noEmit           # 3. kiểm tra
-git add <các-file-cụ-thể>               # 4. KHÔNG dùng "git add ." mù - xem lại từng file
+pnpm lint && pnpm format:check && npx tsc --noEmit && pnpm test   # 3. kiểm tra
+git add <các-file-cụ-thể>               # 4. KHÔNG dùng "git add ." mù — xem lại từng file
 git commit -m "feat(sales): them chon muc gia tren dong hoa don"
 git push -u origin feat/ten-tinh-nang   # 5. đẩy lên
 gh pr create                            # 6. mở PR vào master (hoặc qua giao diện GitHub)
 ```
 
 - **Không push thẳng vào `master`.** Mọi thay đổi đi qua PR.
+- `gh pr create` tự điền sẵn mẫu PR (`.github/pull_request_template.md`); điền hết, đừng xoá checklist. Việc cần ghi lại thì mở issue bằng một trong hai form: **Báo lỗi** hoặc **Việc cần làm**.
 - Tin nhắn commit theo dạng **Conventional Commits**: `feat:` (tính năng), `fix:` (sửa lỗi),
   `docs:` (tài liệu), `chore:` (việc vặt), `test:`… Có thể thêm phạm vi trong ngoặc:
   `fix(task 3): …`, `feat(nhap-excel): …`.
 - Mỗi commit làm **một** việc. Dễ review, dễ hoàn tác.
 - Trước `git add`, chạy `git diff` để chắc chỉ có thay đổi bạn định làm.
+
+### 5.5 Viết test
+
+- Test nằm trong `frontend/test/`, phản chiếu `src/`, **không** đặt trong `src/`. Import code cần
+  test qua `@/…`.
+- Test store dùng Postgres thật chạy trong bộ nhớ (PGlite):
+  `vi.mock("@/server/db/client", () => import("@test/db"))` và `beforeEach(resetDb)`. Mẫu:
+  `test/server/store/customers.test.ts`.
+- Gọi Brain/n8n thì mock `fetch`, không gọi mạng thật. Test phải qua ở mọi múi giờ (CI dùng
+  UTC, máy bạn là UTC+7).
+- Thấy lỗi mà chưa sửa trong cùng thay đổi: ghi `it.todo("BUG: …")`, đừng viết test khẳng
+  định hành vi sai.
 
 ---
 
@@ -502,7 +525,7 @@ Mỗi quy tắc dưới đây đều có lý do thật - phần lớn là lỗi 
 | Tra một file cụ thể làm gì, các luồng đăng nhập/đăng ký | `docs/architecture/ARCHITECTURE.md` |
 | Hiểu vì sao một bảng/cột có hình dạng như vậy | Chú thích trong `frontend/src/server/db/schema.ts`, rồi `docs/decisions/3. ERD_CHUAN.md` §4 |
 | Xem từng bước đã triển khai database thế nào | `docs/decisions/4. Database_Implementation_Documentation.md` |
-| Nhật ký chi tiết các lỗi đã tìm/sửa | `frontend/CLAUDE.md` |
+| Nhật ký chi tiết các lỗi đã tìm/sửa | `docs/decisions/5. Database_Session_Log.md` |
 | Vì sao chọn Next.js, Brain/n8n tách riêng | `docs/architecture/STACK_DECISIONS.md` |
 | Lịch sử thiết kế ERD (chỉ khi thật sự cần) | `docs/decisions/`, đọc `0.` → `3.` (mỗi bản thay thế bản trước) |
 

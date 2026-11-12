@@ -9,8 +9,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const periodParam = searchParams.get("period");
-  const period: SalesReportPeriod =
-    periodParam === "week" || periodParam === "month" ? periodParam : "day";
+  const period: SalesReportPeriod = periodParam === "week" || periodParam === "month" ? periodParam : "day";
 
   const report = await getSalesReportForPeriod(period);
 

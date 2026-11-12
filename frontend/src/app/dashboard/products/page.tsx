@@ -276,7 +276,9 @@ export default function ProductsPage() {
         <NhapExcelModal
           dong={() => setNhapOpen(false)}
           khoList={warehouses.map((w) => ({ id: w.id, name: w.name }))}
-          onXong={() => { void load(); }}
+          onXong={() => {
+            void load();
+          }}
         />
       )}
 
@@ -291,9 +293,7 @@ export default function ProductsPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              {error && (
-                <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
-              )}
+              {error && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>}
 
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Tên sản phẩm</label>
@@ -375,9 +375,7 @@ export default function ProductsPage() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-zinc-400">
-                  Giá vốn (₫) — tuỳ chọn
-                </label>
+                <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Giá vốn (₫) — tuỳ chọn</label>
                 <input
                   type="number"
                   min={0}
@@ -387,9 +385,8 @@ export default function ProductsPage() {
                   className="w-full rounded-xl border border-white/[0.08] bg-black/30 px-3 py-2.5 text-sm outline-none focus:border-sky-500"
                 />
                 <p className="mt-1.5 text-xs text-zinc-500">
-                  Bỏ trống nghĩa là <span className="text-zinc-400">chưa biết</span>, khác hẳn số 0.
-                  Doanh thu của mặt hàng chưa có giá vốn bị loại khỏi phép tính lãi, chứ không
-                  bị coi là lãi 100%.
+                  Bỏ trống nghĩa là <span className="text-zinc-400">chưa biết</span>, khác hẳn số 0. Doanh thu của mặt
+                  hàng chưa có giá vốn bị loại khỏi phép tính lãi, chứ không bị coi là lãi 100%.
                 </p>
               </div>
 

@@ -18,37 +18,19 @@ const features = [
     title: "Đồng bộ đa nền tảng",
     desc: "Kết nối liền mạch dữ liệu giữa các bộ phận vận hành trên cùng một hạ tầng bảo mật.",
     span: "",
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M8 7h8m-8 5h8m-8 5h5M4 4h16v16H4z"
-      />
-    ),
+    icon: <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 5h8m-8 5h5M4 4h16v16H4z" />,
   },
   {
     title: "Dự báo rủi ro & nhu cầu",
     desc: "Phân tích chuỗi thời gian, dự báo xu hướng tồn kho và cảnh báo thiếu hụt sớm.",
     span: "",
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4 19V5m4 14v-8m4 8V9m4 10V4m4 15v-6"
-      />
-    ),
+    icon: <path strokeLinecap="round" strokeLinejoin="round" d="M4 19V5m4 14v-8m4 8V9m4 10V4m4 15v-6" />,
   },
   {
     title: "Tự động hóa luồng công việc",
     desc: "Thiết lập kịch bản phản ứng linh hoạt: gửi email, đồng bộ dữ liệu, cảnh báo tức thời khi có sự kiện.",
     span: "md:col-span-2",
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"
-      />
-    ),
+    icon: <path strokeLinecap="round" strokeLinejoin="round" d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z" />,
   },
 ];
 
@@ -59,9 +41,7 @@ export default function LandingPage() {
 
       <nav className="fixed top-0 left-0 z-50 flex w-full items-center justify-between border-b border-white/[0.08] bg-[#030305]/70 px-6 py-5 backdrop-blur-2xl sm:px-12">
         <Link href="/" className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
-          <span className="bg-gradient-to-br from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-            ▲
-          </span>
+          <span className="bg-gradient-to-br from-emerald-400 to-teal-300 bg-clip-text text-transparent">▲</span>
           ANSER
         </Link>
         <div className="hidden items-center gap-8 sm:flex">
@@ -91,8 +71,8 @@ export default function LandingPage() {
           Tối Ưu Tương Lai.
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg">
-          Nền tảng điều hành thế hệ mới. Tích hợp trợ lý AI theo ngữ cảnh, trích xuất dữ liệu
-          bằng OCR và dự báo vận hành bằng mô hình học sâu.
+          Nền tảng điều hành thế hệ mới. Tích hợp trợ lý AI theo ngữ cảnh, trích xuất dữ liệu bằng OCR và dự báo vận
+          hành bằng mô hình học sâu.
         </p>
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
           <Link
@@ -106,9 +86,7 @@ export default function LandingPage() {
 
       <section id="features" className="relative z-10 mx-auto max-w-6xl px-6 py-28 sm:px-12">
         <div className="mb-16 text-center">
-          <div className="mb-3 text-xs font-bold tracking-widest text-sky-400 uppercase">
-            Hệ sinh thái cốt lõi
-          </div>
+          <div className="mb-3 text-xs font-bold tracking-widest text-sky-400 uppercase">Hệ sinh thái cốt lõi</div>
           <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
             Công nghệ vượt xa vận hành truyền thống
           </h2>
@@ -140,9 +118,7 @@ export default function LandingPage() {
       </section>
 
       <footer className="relative z-10 px-6 py-28 text-center">
-        <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-          Sẵn sàng tối ưu hóa vận hành?
-        </h2>
+        <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl">Sẵn sàng tối ưu hóa vận hành?</h2>
         <Link
           href="/login"
           className="mt-8 inline-block rounded-2xl bg-gradient-to-br from-violet-600 to-sky-500 px-12 py-4.5 text-lg font-bold shadow-[0_10px_30px_rgba(124,58,237,0.4)] transition-shadow hover:shadow-[0_12px_35px_rgba(124,58,237,0.55)]"

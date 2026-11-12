@@ -202,58 +202,58 @@ export default function InventoryPage() {
             Số liệu tự tính từ lịch sử phiếu — chỉ xem, không sửa trực tiếp được ở bảng này.
           </p>
           <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02]">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/[0.08] text-xs text-zinc-500 uppercase">
-                  <th className="px-5 py-3 font-medium">Mã SP</th>
-                  <th className="px-5 py-3 font-medium">Tên sản phẩm</th>
-                  <th className="px-5 py-3 font-medium">Kho</th>
-                  <th className="px-5 py-3 font-medium">Tồn kho</th>
-                  <th className="px-5 py-3 font-medium">Giá vốn</th>
-                  <th className="px-5 py-3 font-medium">Trạng thái</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-zinc-500">
-                      Chưa có sản phẩm nào trong (các) kho đang chọn.
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-white/[0.08] text-xs text-zinc-500 uppercase">
+                    <th className="px-5 py-3 font-medium">Mã SP</th>
+                    <th className="px-5 py-3 font-medium">Tên sản phẩm</th>
+                    <th className="px-5 py-3 font-medium">Kho</th>
+                    <th className="px-5 py-3 font-medium">Tồn kho</th>
+                    <th className="px-5 py-3 font-medium">Giá vốn</th>
+                    <th className="px-5 py-3 font-medium">Trạng thái</th>
                   </tr>
-                )}
-                {products.map((p) => {
-                  const status = productStatus(p.stock);
-                  return (
-                    <tr key={p.id} className="border-b border-white/[0.05] last:border-0">
-                      <td className="px-5 py-3 font-mono text-xs text-zinc-400">{p.code}</td>
-                      <td className="px-5 py-3 font-medium">{p.name}</td>
-                      <td className="px-5 py-3 text-zinc-400">{warehouseName(p.warehouseId)}</td>
-                      <td className="px-5 py-3 text-zinc-400">
-                        {p.stock} {p.unit}
-                      </td>
-                      {/* "Chưa có" phải trông KHÁC HẲN số 0 — nhìn nhầm hai thứ
-                          này là hiểu sai toàn bộ báo cáo lãi lỗ. */}
-                      <td className="px-5 py-3 text-zinc-400">
-                        {p.cost === null || p.cost === undefined ? (
-                          <span className="text-amber-500/80" title="Chưa nhập giá vốn — khác với giá vốn bằng 0">
-                            chưa có
-                          </span>
-                        ) : (
-                          `${vnd(p.cost)} ₫`
-                        )}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[status]}`}>
-                          {status}
-                        </span>
+                </thead>
+                <tbody>
+                  {products.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-8 text-center text-zinc-500">
+                        Chưa có sản phẩm nào trong (các) kho đang chọn.
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                  {products.map((p) => {
+                    const status = productStatus(p.stock);
+                    return (
+                      <tr key={p.id} className="border-b border-white/[0.05] last:border-0">
+                        <td className="px-5 py-3 font-mono text-xs text-zinc-400">{p.code}</td>
+                        <td className="px-5 py-3 font-medium">{p.name}</td>
+                        <td className="px-5 py-3 text-zinc-400">{warehouseName(p.warehouseId)}</td>
+                        <td className="px-5 py-3 text-zinc-400">
+                          {p.stock} {p.unit}
+                        </td>
+                        {/* "Chưa có" phải trông KHÁC HẲN số 0 — nhìn nhầm hai thứ
+                          này là hiểu sai toàn bộ báo cáo lãi lỗ. */}
+                        <td className="px-5 py-3 text-zinc-400">
+                          {p.cost === null || p.cost === undefined ? (
+                            <span className="text-amber-500/80" title="Chưa nhập giá vốn — khác với giá vốn bằng 0">
+                              chưa có
+                            </span>
+                          ) : (
+                            `${vnd(p.cost)} ₫`
+                          )}
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[status]}`}>
+                            {status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       ) : (
@@ -391,9 +391,8 @@ export default function InventoryPage() {
                     className="w-full rounded-xl border border-white/[0.08] bg-black/30 px-3 py-2.5 text-sm outline-none focus:border-sky-500"
                   />
                   <p className="mt-1.5 text-xs text-zinc-500">
-                    Đây là giá vốn. Ghi càng đủ thì báo cáo lãi lỗ càng đáng tin —
-                    bỏ trống thì phần doanh thu của mặt hàng này bị loại khỏi phép
-                    tính lãi thay vì bị coi là lãi 100%.
+                    Đây là giá vốn. Ghi càng đủ thì báo cáo lãi lỗ càng đáng tin — bỏ trống thì phần doanh thu của mặt
+                    hàng này bị loại khỏi phép tính lãi thay vì bị coi là lãi 100%.
                   </p>
                 </div>
               )}

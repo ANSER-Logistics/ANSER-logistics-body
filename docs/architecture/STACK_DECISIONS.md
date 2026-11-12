@@ -69,42 +69,19 @@ ngôn ngữ backend chính là gì.
 
 ## 4. Hướng làm & deploy AI (model tự train)
 
-### Khi nào thêm service này vào
+### Hiện trạng
 
-Chỉ thêm khi model tự train đã có kết quả dùng được. Nếu còn đang train/thử
-nghiệm, có thể dùng tạm Claude API (Anthropic) cho OCR/trích xuất hóa đơn —
-gọi trực tiếp từ Route Handler, không cần tự deploy gì thêm — rồi thay bằng
-model tự train khi nó sẵn sàng, không đổi gì phía Next.js ngoài đổi URL gọi.
+Service AI là **Brain** (repo riêng của team, `PCBoiz/ANSER_AI`, Python). Next.js chỉ
+gọi qua HTTP, toàn bộ code gọi nằm ở `frontend/src/server/brain.ts` (và
+`brainReport.ts`); các Route Handler tương ứng ở `frontend/src/app/api/ai/*`
+(chat, documents, health, report, kiểm tra tồn kho/đối tác, ...). Cấu hình qua env
+`BRAIN_URL`, `BRAIN_API_TOKEN`, `BRAIN_CHAT_TIMEOUT_MS`, `BRAIN_KB_WORKSPACE`
+(xem `frontend/.env.example`).
 
-### Cách làm
+Nguyên tắc giữ nguyên: Brain **không bao giờ tính tiền** — các con số tiền do code
+xác định trong `frontend/src/server/` tính (xem `AGENTS.md`, mục Data invariants #8).
 
-1. Đóng gói model thành 1 API nhỏ bằng FastAPI/Flask (chỉ dùng Flask ở vai trò
-   **serving layer cho model**, không phải backend web):
-   ```python
-   # main.py
-   from fastapi import FastAPI, UploadFile
-   import your_model
-
-   app = FastAPI()
-
-   @app.post("/predict")
-   async def predict(file: UploadFile):
-       image = await file.read()
-       result = your_model.run(image)
-       return {"invoice_number": result.number, "total": result.total}
-   ```
-2. Next.js gọi qua 1 Route Handler mới, không đổi code cũ:
-   ```ts
-   // app/api/ocr/route.ts
-   export async function POST(request: Request) {
-     const formData = await request.formData();
-     const res = await fetch(`${process.env.AI_SERVICE_URL}/predict`, {
-       method: "POST",
-       body: formData,
-     });
-     return Response.json(await res.json());
-   }
-   ```
+Chi tiết endpoint và luồng request: `docs/architecture/ARCHITECTURE.md`.
 
 ### Deploy
 
@@ -122,13 +99,16 @@ tách service hay không.
 ### Cách làm
 
 - Tự host n8n bằng Docker image chính thức (`n8nio/n8n`), không cần viết code
-  gì thêm — n8n có UI kéo-thả để dựng workflow.
-- Giao tiếp 2 chiều với Next.js qua webhook:
-  - **Next.js → n8n**: `fetch(N8N_WEBHOOK_URL)` để kích hoạt 1 workflow (ví dụ:
-    "phân tích hóa đơn", "gửi cảnh báo tồn kho").
-  - **n8n → Next.js**: n8n gọi lại 1 Route Handler như
-    `app/api/webhooks/n8n/route.ts` để trả kết quả sau khi workflow chạy xong
-    (tránh chờ đồng bộ, tránh block request).
+  gì thêm — n8n có UI kéo-thả để dựng workflow. Workflow import được nằm ở
+  `frontend/n8n-workflows/`.
+- Giao tiếp 2 chiều với Next.js:
+  - **Next.js → n8n**: `triggerN8nWebhook()` trong `src/server/n8n.ts` gọi
+    `N8N_WEBHOOK_URL/<path>` (timeout 3 giây; lỗi chỉ log, không làm hỏng nghiệp
+    vụ chính). `src/server/n8nApi.ts` gọi REST của n8n (`N8N_API_URL`,
+    `N8N_API_KEY`) để quản lý workflow; các route `/api/automation/*` dùng nó.
+  - **n8n → Next.js**: n8n chủ động đọc dữ liệu qua các route nội bộ
+    `/api/n8n/internal/*` (`daily-sales`, `low-stock`, `warehouses`) cho báo cáo
+    và cảnh báo theo lịch.
 
 ### Deploy
 
@@ -149,7 +129,7 @@ flowchart LR
     end
     NX -->|HTTP nội bộ| AI
     NX -->|webhook| N8N
-    N8N -->|webhook callback| NX
+    N8N -->|đọc /api/n8n/internal/*| NX
 ```
 
 Về mã nguồn: vẫn là **3 project độc lập** (đúng nguyên tắc tách logic). Về hạ

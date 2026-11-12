@@ -1,0 +1,36 @@
+name: Việc cần làm
+description: Tính năng mới, cải tiến, hoặc việc kỹ thuật cần ghi lại
+labels: ["task"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Mục tiêu
+      description: Người dùng hoặc đội dev làm được gì sau khi xong, mà hôm nay chưa làm được.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Xong khi nào
+      description: Các điều kiện kiểm được. Mỗi dòng một điều.
+      placeholder: |
+        - [ ] …
+    validations:
+      required: true
+  - type: dropdown
+    id: confirmed
+    attributes:
+      label: Nghiệp vụ này đã được khách xác nhận chưa
+      description: Nếu chưa, ghi vào `docs/tasks/BLOCKERS.md` và đừng code trước khi có câu trả lời.
+      options:
+        - Đã xác nhận
+        - Chưa xác nhận
+        - Việc kỹ thuật, không liên quan nghiệp vụ
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Liên quan
+      description: File, bảng, PR, issue khác. Có cần migration mới không (nếu có, báo cả nhóm trước khi `pnpm db:generate`).

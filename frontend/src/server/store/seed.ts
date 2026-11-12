@@ -9,13 +9,24 @@ import { ensureCompanySettingsRow } from "@/server/store/settings";
 import { seedDemoUser } from "@/server/store/users";
 
 const SEED_PRODUCTS = [
-  { code: "SP-001", name: "Trục cán inox 304", categoryName: "Thành phẩm", unit: "Cái", stock: 320, price: 1250000 },
-  { code: "SP-014", name: "Vòng bi công nghiệp", categoryName: "Bán thành phẩm", unit: "Cái", stock: 15, price: 480000 },
-  { code: "SP-027", name: "Tấm nhôm 5mm", categoryName: "Nguyên vật liệu", unit: "Tấm", stock: 0, price: 620000 },
-  { code: "SP-033", name: "Bulong M10 (hộp 100)", categoryName: "Phụ liệu", unit: "Hộp", stock: 540, price: 95000 },
-  { code: "SP-041", name: "Motor giảm tốc 1HP", categoryName: "Thành phẩm", unit: "Cái", stock: 42, price: 3150000 },
+  { code: "SP-001", name: "Trục cán inox 304", categoryName: "Thành phẩm", unit: "Cái", price: 1250000 },
+  {
+    code: "SP-014",
+    name: "Vòng bi công nghiệp",
+    categoryName: "Bán thành phẩm",
+    unit: "Cái",
+    price: 480000,
+  },
+  { code: "SP-027", name: "Tấm nhôm 5mm", categoryName: "Nguyên vật liệu", unit: "Tấm", price: 620000 },
+  { code: "SP-033", name: "Bulong M10 (hộp 100)", categoryName: "Phụ liệu", unit: "Hộp", price: 95000 },
+  { code: "SP-041", name: "Motor giảm tốc 1HP", categoryName: "Thành phẩm", unit: "Cái", price: 3150000 },
 ];
 
+// Tồn của hàng mẫu KHÔNG khai riêng mà suy ra từ chính các phiếu nhập mẫu dưới
+// đây: bất biến B1 là `products.stock = SUM(inventory_transactions.quantity)`, và
+// hai con số khai ở hai nơi thì sớm muộn lệch nhau (đã lệch: SP-027 tồn 0 mà có
+// phiếu nhập +45, SP-001 tồn 320 mà không có phiếu nào). Mặt hàng không có phiếu
+// nhập nào thì tồn 0 — vừa đúng sổ, vừa cho bản demo một mặt hàng hết hàng.
 const SEED_IMPORTS = [
   { code: "SP-027", counterparty: "Cty TNHH Vật Liệu An Phát", quantity: 45 },
   { code: "SP-033", counterparty: "Nhà cung cấp Thép Miền Nam", quantity: 128 },
@@ -58,7 +69,7 @@ export async function seedInitialData() {
         name: p.name,
         categoryId: categoryMap.get(p.categoryName) ?? null,
         unit: p.unit,
-        stock: p.stock,
+        stock: SEED_IMPORTS.filter((i) => i.code === p.code).reduce((sum, i) => sum + i.quantity, 0),
         price: p.price,
         warehouseId,
       })),
@@ -70,6 +81,7 @@ export async function seedInitialData() {
     if (!product) continue;
     await db.insert(inventoryTransactions).values({
       productId: product.id,
+      warehouseId,
       type: "import",
       quantity: seed.quantity,
       counterparty: seed.counterparty,

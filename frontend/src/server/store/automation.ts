@@ -79,9 +79,7 @@ export type AutomationAlert = {
 };
 
 export async function evaluateAlerts(warehouseIds?: string[]): Promise<AutomationAlert[]> {
-  const rules = (await listRules(warehouseIds)).filter(
-    (rule) => rule.enabled && rule.type === "low_stock_alert",
-  );
+  const rules = (await listRules(warehouseIds)).filter((rule) => rule.enabled && rule.type === "low_stock_alert");
   if (rules.length === 0) return [];
 
   const products = await listProducts({ warehouseIds });
