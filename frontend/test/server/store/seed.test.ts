@@ -103,9 +103,24 @@ describe("seedInitialData", () => {
     });
   });
 
-  it.todo(
-    "BUG: hàng mẫu có products.stock lệch SUM(inventory_transactions.quantity) — SP-027 tồn 0 nhưng có phiếu nhập +45, SP-001 tồn 320 mà không có phiếu nào",
-  );
+  it("hàng mẫu có products.stock = SUM(inventory_transactions.quantity) (bất biến 1); phiếu nhập ghi đúng kho", async () => {
+    await seedCategories();
+    await seedInitialData();
+
+    const rows = await db.select().from(products);
+    const txs = await db.select().from(inventoryTransactions);
+    const tong = new Map<string, number>();
+    for (const t of txs) tong.set(t.productId, (tong.get(t.productId) ?? 0) + t.quantity);
+
+    expect(Object.fromEntries(rows.map((p) => [p.code, [p.stock, tong.get(p.id) ?? 0]]))).toEqual({
+      "SP-001": [0, 0],
+      "SP-014": [12, 12],
+      "SP-027": [45, 45],
+      "SP-033": [128, 128],
+      "SP-041": [8, 8],
+    });
+    expect(txs.every((t) => t.warehouseId === rows[0].warehouseId)).toBe(true);
+  });
 
   it("chạy lần hai không thay đổi gì", async () => {
     await seedCategories();
