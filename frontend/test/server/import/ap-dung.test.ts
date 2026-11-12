@@ -179,10 +179,7 @@ describe("lapKeHoach — hàng hoá", () => {
     expect(kh.khongDoi).toHaveLength(1);
   });
 
-  it.todo(
-    "BUG: lapKeHoach không so nhóm hàng (category) — đổi nhóm không hiện trong thayDoi; apDung chỉ ghi nhóm mới khi có trường khác cũng đổi",
-  );
-  it.fails("BUG repro: chỉ đổi nhóm hàng thì bị xếp vào khongDoi và nhóm mới không được ghi", async () => {
+  it("chỉ đổi nhóm hàng cũng là thay đổi: vào capNhat và nhóm mới được ghi", async () => {
     const kho = await taoKho();
     const [cu] = await db.insert(categories).values({ name: "Cũ" }).returning();
     await taoHang(kho, { code: "VT001", name: "A", unit: "Lít", stock: 3, categoryId: cu.id });
@@ -194,10 +191,7 @@ describe("lapKeHoach — hàng hoá", () => {
     expect((await hang("VT001")).categoryId).toBe(moi?.id);
   });
 
-  it.todo(
-    "BUG: products.code unique PHÂN BIỆT hoa thường nhưng lapKeHoach gộp theo lower(code) — có cả 'VT001' và 'vt001' thì dòng 'VT001' nhắm vào 'vt001'",
-  );
-  it.fails("BUG repro: mã trùng khớp chính xác vẫn bị gộp với mã khác hoa thường", async () => {
+  it("products.code phân biệt hoa thường: mã khớp chính xác thắng mã chỉ khác hoa thường", async () => {
     const kho = await taoKho();
     const hoa = await taoHang(kho, { code: "VT001", name: "Hoa" });
     await taoHang(kho, { code: "vt001", name: "Thường" }); // nạp sau -> đè lên key "vt001" trong map
@@ -205,6 +199,24 @@ describe("lapKeHoach — hàng hoá", () => {
     const kh = await lapKeHoach(file("hang_hoa", [dong({ code: "VT001", name: "Hoa" })]));
 
     expect(kh.khongDoi).toMatchObject([{ idHienTai: hoa.id }]);
+  });
+
+  it("không có mã khớp chính xác: một ứng viên khác hoa thường thì khớp, nhiều ứng viên thì báo lỗi, không đoán", async () => {
+    const kho = await taoKho();
+    const mot = await taoHang(kho, { code: "VT001", name: "A" });
+    await taoHang(kho, { code: "VT002", name: "B" });
+    await taoHang(kho, { code: "vt002", name: "b" });
+
+    const kh = await lapKeHoach(
+      file("hang_hoa", [dong({ code: "vt001", name: "A" }), dong({ dongExcel: 7, code: "Vt002", name: "B" })]),
+    );
+
+    expect(kh.khongDoi).toMatchObject([{ idHienTai: mot.id }]);
+    expect(kh.capNhat).toEqual([]);
+    expect(kh.themMoi).toEqual([]);
+    expect(kh.loi).toMatchObject([
+      { dongExcel: 7, loi: ["mã khớp nhiều mặt hàng chỉ khác hoa thường (VT002, vt002)"] },
+    ]);
   });
 });
 
@@ -478,10 +490,7 @@ describe("apDung — hàng hoá", () => {
     expect(await hangLech()).toEqual([]);
   });
 
-  it.todo(
-    "BUG: tồn quá 3 chữ số thập phân (5.0004) luôn bị báo 'Tồn kho' đổi và đếm vào sua, dù numeric(14,3) chỉ lưu 5.000 — nhập lại không bao giờ là 'không đổi'",
-  );
-  it.fails("BUG repro: tồn 5.0004 với tồn đang có 5 vẫn bị xếp vào capNhat", async () => {
+  it("tồn quá 3 chữ số thập phân so theo giá trị numeric(14,3) sẽ lưu: 5.0004 với tồn 5 là không đổi", async () => {
     const kho = await taoKho();
     await taoHang(kho, { code: "VT001", name: "A", stock: 5 });
 
@@ -562,10 +571,7 @@ describe("apDung — hàng hoá", () => {
     expect((await db.select().from(categories)).map((c) => c.name)).toEqual(["Dầu nhớt"]);
   });
 
-  it.todo(
-    'BUG: apDung cập nhật hàng hoá ghi `stock ?? 0` / `unit || "Cái"` / `cost ?? null` — trường undefined bị ghi đè dù lapKeHoach báo giữ nguyên',
-  );
-  it.fails("BUG repro: cập nhật hàng hoá — trường undefined bị ghi đè, tồn bị đưa về 0", async () => {
+  it("cập nhật hàng hoá: trường undefined giữ nguyên, không ghi sổ kho khi file không có tồn", async () => {
     const kho = await taoKho();
     await taoHang(kho, { code: "VT001", name: "A", unit: "Lít", stock: 10, cost: 5000, isReducedVat: true });
 
@@ -621,10 +627,7 @@ describe("apDung — khách hàng / nhà cung cấp", () => {
     expect(await apDung(kq)).toEqual({ them: 0, sua: 0, boQua: 2, loi: [] });
   });
 
-  it.todo(
-    "BUG: apDung cập nhật đối tác ghi `address/taxCode/phone ?? null` — ô trống (undefined) xoá dữ liệu đang có dù lapKeHoach báo giữ nguyên",
-  );
-  it.fails("BUG repro: cập nhật đối tác — ô trống (undefined) xoá địa chỉ/MST/điện thoại", async () => {
+  it("cập nhật đối tác: ô trống (undefined) giữ nguyên địa chỉ/MST/điện thoại", async () => {
     await db
       .insert(customers)
       .values({ code: "KH001", name: "Cty A", address: "12 Lê Lợi", taxCode: "0101", phone: "0901" });

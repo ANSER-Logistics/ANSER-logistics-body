@@ -63,8 +63,21 @@ describe("docSo", () => {
     expect(docSo({ formula: "B4" })).toBeNull();
   });
 
-  it.todo("BUG: ô chỉ có ký hiệu tiền ('đ', 'VND', '₫') hoặc '()' ra 0 thay vì null");
-  it.todo("BUG: '0,125' / '0.125' ra 125 — nhóm nghìn không thể đứng sau số 0 đầu, phải là 0.125");
+  it("ô chỉ có ký hiệu tiền hoặc '()' là null (chưa biết), không phải 0", () => {
+    for (const v of ["đ", "VND", "₫", " vnd ", "()", "( đ )"]) expect(docSo(v)).toBeNull();
+  });
+
+  it.each([
+    ["0,125", 0.125],
+    ["0.125", 0.125],
+    ["-0,125", -0.125],
+    [",125", 0.125],
+    ["(0,125)", -0.125],
+    ["10,125", 10125],
+    ["10.125", 10125],
+  ])("nhóm nghìn không đứng sau số 0 đầu: %j -> %d", (s, n) => {
+    expect(docSo(s)).toBe(n);
+  });
 });
 
 describe("docCoKhong", () => {
@@ -144,7 +157,20 @@ describe("docExcel — hàng hoá", () => {
     ]);
   });
 
-  it.todo("BUG: giá trị tồn âm với tồn dương ra giá vốn âm (5 / -1000 -> cost -200), không cảnh báo");
+  it("giá trị tồn âm với tồn dương: giá vốn là null kèm cảnh báo, không ra giá vốn âm", async () => {
+    const kq = await docExcel(
+      await misa(
+        ["Mã hàng", "Tên hàng", "Số lượng tồn", "Giá trị tồn"],
+        ["SP01", "A", 5, -1000],
+        ["SP02", "B", 5, 1000],
+      ),
+    );
+
+    expect(kq.dong.map((d) => [d.code, d.cost, d.canhBao])).toEqual([
+      ["SP01", null, ["giá trị tồn âm — không suy ra được giá vốn, để trống"]],
+      ["SP02", 200, []],
+    ]);
+  });
 
   it("tồn âm vẫn nhập được nhưng gắn cảnh báo; tồn 0 thì không", async () => {
     const kq = await docExcel(
@@ -214,9 +240,17 @@ describe("docExcel — hàng hoá", () => {
     expect([d.stock, d.giaTriTon, d.cost]).toEqual([5, undefined, null]);
   });
 
-  it.todo(
-    "BUG: ô công thức lỗi (#N/A) ở cột chữ (mã, tên…) ra '[object Object]' thay vì trống — dòng không mã lọt qua kiểm tra",
-  );
+  it("ô công thức lỗi (#N/A) ở cột chữ là trống — dòng không mã bị báo 'thiếu mã', không ra '[object Object]'", async () => {
+    const loiNA = { formula: "VLOOKUP(A1,B:B,1,0)", result: { error: "#N/A" } } as O;
+    const kq = await docExcel(
+      await misa(["Mã hàng", "Tên hàng", "Số lượng tồn"], [loiNA, "Sữa", 5], ["SP02", loiNA, 1]),
+    );
+
+    expect(kq.dong.map((d) => [d.code, d.name, d.loi])).toEqual([
+      ["", "Sữa", ["thiếu mã"]],
+      ["SP02", "", ["thiếu tên"]],
+    ]);
+  });
 
   it("nhận ArrayBuffer (kiểu route gửi vào), không chỉ Buffer", async () => {
     const buf = new Uint8Array(await misa(["Mã hàng", "Tên hàng", "Số lượng tồn"], ["SP01", "A", 5])).buffer;
@@ -233,9 +267,30 @@ describe("docExcel — hàng hoá", () => {
     },
   );
 
-  it.todo(
-    "BUG: thiếu hẳn cột (tồn/giá trị/giảm 2%/công nợ) vẫn sinh stock 0, cost/isReducedVat/openingDebt null thay vì undefined (= giữ nguyên)",
-  );
+  it("thiếu hẳn cột (đơn vị/tồn/giá trị/giảm 2%) thì trường là undefined (= giữ nguyên), không phải 0/null", async () => {
+    const kq = await docExcel(
+      await misa(["Mã hàng", "Tên hàng", "Nhóm VTHH", "Đơn vị tính chính"], ["SP01", "A", null, "Lít"]),
+    );
+
+    expect(kq.loai).toBe("hang_hoa");
+    const d = kq.dong[0];
+    expect([d.unit, d.stock, d.giaTriTon, d.cost, d.isReducedVat]).toEqual([
+      "Lít",
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
+
+    // Có cột tồn nhưng thiếu cột giá trị: tồn đọc được, giá vốn giữ nguyên.
+    const kq2 = await docExcel(
+      await misa(["Mã hàng", "Tên hàng", "Số lượng tồn"], ["SP01", "A", 5], ["SP02", "B", null]),
+    );
+    expect(kq2.dong.map((x) => [x.unit, x.stock, x.cost])).toEqual([
+      [undefined, 5, undefined],
+      [undefined, 0, undefined],
+    ]);
+  });
 });
 
 describe("docExcel — khách hàng và nhà cung cấp", () => {
@@ -379,7 +434,36 @@ describe("docExcel — phân loại dòng", () => {
     ]);
   });
 
-  it.todo("BUG: khách/NCC tên 'Tổng công ty …' mà thiếu mã bị coi là dòng tổng cộng (boQua) thay vì lỗi 'thiếu mã'");
+  it("khách/NCC tên 'Tổng công ty …' mà thiếu mã là lỗi 'thiếu mã', chỉ nhãn dòng tổng mới bị bỏ qua", async () => {
+    const kq = await docExcel(
+      await misa(
+        ["Mã khách hàng", "Tên khách hàng", "Công nợ"],
+        [null, "Tổng công ty Xăng dầu Việt Nam", 100], // 4
+        [null, "Tổng đại lý Hà Nội", null], // 5
+        [null, "Tổng", 100], // 6
+        [null, "Tổng cộng:", 100], // 7
+        [null, "Cộng", 100], // 8
+        [null, "Tổng số (VND)", 100], // 9
+      ),
+    );
+
+    expect(kq.dong.map((d) => [d.dongExcel, d.boQua, d.loi])).toEqual([
+      [4, undefined, ["thiếu mã"]],
+      [5, undefined, ["thiếu mã"]],
+      [6, "dòng tổng cộng / không có mã", []],
+      [7, "dòng tổng cộng / không có mã", []],
+      [8, "dòng tổng cộng / không có mã", []],
+      [9, "dòng tổng cộng / không có mã", []],
+    ]);
+  });
+
+  it("thiếu hẳn cột công nợ thì openingDebt là undefined (giữ nguyên), có cột mà ô trống thì null", async () => {
+    const thieu = await docExcel(await misa(["Mã khách hàng", "Tên khách hàng", "Địa chỉ"], ["KH01", "A", null]));
+    expect(thieu.dong[0].openingDebt).toBeUndefined();
+
+    const trong = await docExcel(await misa(["Mã khách hàng", "Tên khách hàng", "Công nợ"], ["KH01", "A", null]));
+    expect(trong.dong[0].openingDebt).toBeNull();
+  });
 
   it("mã trùng trong cùng file (không phân biệt hoa thường) là lỗi ở mọi dòng trùng", async () => {
     const kq = await docExcel(

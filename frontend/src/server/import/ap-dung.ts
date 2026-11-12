@@ -9,7 +9,7 @@
 import { and, eq, isNotNull } from "drizzle-orm";
 
 import { db } from "@/server/db/client";
-import { customers, inventoryTransactions, products, suppliers } from "@/server/db/schema";
+import { categories, customers, inventoryTransactions, products, suppliers } from "@/server/db/schema";
 import { getOrCreateCategoryByName } from "@/server/store/categories";
 import type { DongDoc, KetQuaDoc, LoaiFile } from "./doc-excel";
 
@@ -38,6 +38,16 @@ function so(a: unknown, b: unknown): boolean {
   if (a === null || a === undefined) return b === null || b === undefined;
   if (typeof a === "number" && typeof b === "number") return Math.abs(a - b) < 1e-9;
   return String(a) === String(b);
+}
+
+/** Làm tròn về 3 chữ số thập phân — đúng độ chính xác `numeric(14,3)` sẽ lưu. */
+function lam3(n: number): number {
+  return Math.round(n * 1000) / 1000;
+}
+
+/** So tên nhóm giống cách `getOrCreateCategoryByName` coi là trùng. */
+function tenNhom(s: unknown): string | null {
+  return typeof s === "string" ? s.normalize("NFC").trim().replace(/\s+/g, " ").toLowerCase() : null;
 }
 
 function themNeuKhac(ra: ThayDoi[], truong: string, cu: unknown, moi: unknown) {
@@ -71,10 +81,17 @@ export async function lapKeHoach(kq: KetQuaDoc): Promise<KeHoach> {
 
   // Tải TOÀN BỘ mã đang có rồi so trong bộ nhớ, thay vì một truy vấn IN(...)
   // dài 161 phần tử. Ba bảng này đếm bằng trăm dòng — bản xuất thật: 161 hàng
-  // hoá, 105 khách, 43 nhà cung cấp. Đơn giản hơn, và so được KHÔNG PHÂN BIỆT
-  // HOA THƯỜNG y như unique index `lower(code)` bên dưới, nên hai nơi không
-  // thể lệch nhau về việc "thế nào là trùng".
+  // hoá, 105 khách, 43 nhà cung cấp.
+  //
+  // Thế nào là "trùng mã" phải khớp với ràng buộc unique của TỪNG bảng:
+  //  - customers/suppliers: unique `lower(code)` -> so không phân biệt hoa thường.
+  //  - products: unique `code` PHÂN BIỆT hoa thường, nên DB có thể có cả "VT001"
+  //    lẫn "vt001". Khớp CHÍNH XÁC trước; chỉ khi không có mã nào khớp chính xác
+  //    mới khớp không phân biệt hoa thường — và chỉ khi đúng MỘT ứng viên.
   const map = new Map<string, Record<string, unknown>>();
+  /** products: mã chính xác -> dòng, và lower(mã) -> các dòng. */
+  const chinhXac = new Map<string, Record<string, unknown>>();
+  const theoThuong = new Map<string, Record<string, unknown>[]>();
   if (kq.loai === "hang_hoa") {
     const rows = await db
       .select({
@@ -85,10 +102,16 @@ export async function lapKeHoach(kq: KetQuaDoc): Promise<KeHoach> {
         stock: products.stock,
         cost: products.cost,
         categoryId: products.categoryId,
+        category: categories.name,
         isReducedVat: products.isReducedVat,
       })
-      .from(products);
-    rows.forEach((r) => map.set(r.code.toLowerCase(), r));
+      .from(products)
+      .leftJoin(categories, eq(products.categoryId, categories.id));
+    for (const r of rows) {
+      chinhXac.set(r.code, r);
+      const k = r.code.toLowerCase();
+      theoThuong.set(k, [...(theoThuong.get(k) ?? []), r]);
+    }
   } else {
     const bang = kq.loai === "khach_hang" ? customers : suppliers;
     const rows = await db
@@ -109,7 +132,22 @@ export async function lapKeHoach(kq: KetQuaDoc): Promise<KeHoach> {
   }
 
   for (const d of nhap) {
-    const ht = map.get(d.code.toLowerCase());
+    let ht: Record<string, unknown> | undefined;
+    if (kq.loai === "hang_hoa") {
+      ht = chinhXac.get(d.code);
+      if (!ht) {
+        const ungVien = theoThuong.get(d.code.toLowerCase()) ?? [];
+        if (ungVien.length > 1) {
+          // Không đoán: ghi nhầm vào mặt hàng khác là sai số liệu không ai thấy.
+          kh.loi.push({
+            ...d,
+            loi: [`mã khớp nhiều mặt hàng chỉ khác hoa thường (${ungVien.map((r) => r.code).join(", ")})`],
+          });
+          continue;
+        }
+        ht = ungVien[0];
+      }
+    } else ht = map.get(d.code.toLowerCase());
     if (!ht) {
       kh.themMoi.push({ dong: d });
       continue;
@@ -119,9 +157,14 @@ export async function lapKeHoach(kq: KetQuaDoc): Promise<KeHoach> {
     themNeuKhac(td, "Tên", ht.name, d.name);
     if (kq.loai === "hang_hoa") {
       themNeuKhac(td, "Đơn vị tính", ht.unit, d.unit);
-      themNeuKhac(td, "Tồn kho", ht.stock, d.stock);
+      // So trên con số DB SẼ LƯU (numeric(14,3)), không phải con số trong file:
+      // tồn 5.0004 lưu thành 5.000, nên với tồn đang có 5 là "không đổi".
+      themNeuKhac(td, "Tồn kho", ht.stock, d.stock === undefined ? undefined : lam3(d.stock));
       themNeuKhac(td, "Giá vốn", ht.cost, d.cost);
       themNeuKhac(td, "Giảm 2% VAT", ht.isReducedVat, d.isReducedVat);
+      if (d.category !== undefined && tenNhom(ht.category) !== tenNhom(d.category)) {
+        td.push({ truong: "Nhóm hàng", cu: ht.category ?? null, moi: d.category });
+      }
     } else {
       themNeuKhac(td, "Địa chỉ", ht.address, d.address);
       themNeuKhac(td, "Mã số thuế", ht.taxCode, d.taxCode);
@@ -208,7 +251,7 @@ export async function apDung(kq: KetQuaDoc, warehouseId?: string, employeeId?: s
     if (kq.loai === "hang_hoa") {
       for (const m of kh.themMoi) {
         const d = m.dong;
-        const stock = d.stock ?? 0;
+        const stock = lam3(d.stock ?? 0);
         const [moi] = await tx
           .insert(products)
           .values({
@@ -234,12 +277,15 @@ export async function apDung(kq: KetQuaDoc, warehouseId?: string, employeeId?: s
       }
       for (const m of kh.capNhat) {
         const d = m.dong;
-        const stock = d.stock ?? 0;
+        // Chỉ ghi trường file CÓ nhắc tới (bất biến 7): `undefined` = giữ nguyên,
+        // đúng như bảng xem trước đã hứa với người bấm Xác nhận. Ghi `stock ?? 0`
+        // hay `unit || "Cái"` ở đây là xoá dữ liệu mà màn hình không hề báo.
+        const stock = d.stock === undefined ? undefined : lam3(d.stock);
         // Đọc lại tồn TRONG giao dịch và khoá dòng: con số ở bước xem trước có
         // thể đã cũ (một hoá đơn bán vừa trừ kho giữa lúc xem và lúc xác nhận),
         // và chênh lệch ghi vào sổ kho phải tính trên tồn thật ngay lúc ghi.
         const [ht] = await tx
-          .select({ stock: products.stock, warehouseId: products.warehouseId })
+          .select({ stock: products.stock, warehouseId: products.warehouseId, cost: products.cost })
           .from(products)
           .where(eq(products.id, m.idHienTai!))
           .for("update");
@@ -247,22 +293,24 @@ export async function apDung(kq: KetQuaDoc, warehouseId?: string, employeeId?: s
           .update(products)
           .set({
             name: d.name,
-            unit: d.unit || "Cái",
-            stock,
-            cost: d.cost ?? null,
-            isReducedVat: d.isReducedVat ?? null,
+            ...(d.unit ? { unit: d.unit } : {}),
+            ...(stock !== undefined ? { stock } : {}),
+            ...(d.cost !== undefined ? { cost: d.cost } : {}),
+            ...(d.isReducedVat !== undefined ? { isReducedVat: d.isReducedVat } : {}),
             ...(d.category ? { categoryId: idNhom.get(d.category) ?? null } : {}),
             updatedAt: new Date(),
           })
           .where(eq(products.id, m.idHienTai!));
-        await ghiSoKho(tx, {
-          productId: m.idHienTai!,
-          warehouseId: ht.warehouseId,
-          delta: stock - ht.stock,
-          unitCost: d.cost ?? null,
-          employeeId,
-          note: `Nhập Excel MISA: điều chỉnh tồn ${ht.stock} → ${stock}`,
-        });
+        if (stock !== undefined) {
+          await ghiSoKho(tx, {
+            productId: m.idHienTai!,
+            warehouseId: ht.warehouseId,
+            delta: stock - ht.stock,
+            unitCost: d.cost === undefined ? ht.cost : d.cost,
+            employeeId,
+            note: `Nhập Excel MISA: điều chỉnh tồn ${ht.stock} → ${stock}`,
+          });
+        }
         ra.sua++;
       }
     } else {
@@ -284,11 +332,12 @@ export async function apDung(kq: KetQuaDoc, warehouseId?: string, employeeId?: s
         await tx
           .update(bang)
           .set({
+            // Ô trống / cột thiếu (`undefined`) = giữ nguyên, không phải xoá.
             name: d.name,
-            address: d.address ?? null,
-            taxCode: d.taxCode ?? null,
-            phone: d.phone ?? null,
-            openingDebt: d.openingDebt ?? null,
+            ...(d.address !== undefined ? { address: d.address } : {}),
+            ...(d.taxCode !== undefined ? { taxCode: d.taxCode } : {}),
+            ...(d.phone !== undefined ? { phone: d.phone } : {}),
+            ...(d.openingDebt !== undefined ? { openingDebt: d.openingDebt } : {}),
           })
           .where(and(eq(bang.id, m.idHienTai!)));
         ra.sua++;
