@@ -580,6 +580,8 @@ describe("askBrain", () => {
       user_id: "u-1",
       store_id: "kho-1",
       message: "Tồn kho mã A01 còn bao nhiêu?",
+      // Luôn gửi, kể cả rỗng: có trường thì Brain không lùi về đọc 6 bảng chat không tồn tại (Body#28).
+      history: [],
     });
 
     for (const i of [1, 2]) {
@@ -662,6 +664,28 @@ describe("timeout của /chat", () => {
     const err = await caught(askBrain("xin chào", who));
     expect(timeoutSpy).toHaveBeenCalledWith(180_000);
     expect(err).toMatchObject({ kind: "timeout", message: "Brain không trả lời trong 180s (/chat)." });
+  });
+
+  it("gửi kèm history theo đúng thứ tự, cạnh message", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "Date"] });
+    const history = [
+      { role: "user" as const, content: "báo giá HN đi HP xe 5 tấn" },
+      { role: "assistant" as const, content: "Giá 12 triệu, chưa gồm VAT." },
+    ];
+    fetchMock
+      .mockResolvedValueOnce(json({ task_id: "t-1", status: "processing" }))
+      .mockResolvedValueOnce(json({ status: "completed", result: { answer: "Xe 3 tấn: 9 triệu." } }));
+
+    const done = askBrain("thế xe 3 tấn thì sao?", who, history);
+    await vi.runAllTimersAsync();
+    await done;
+
+    expect(JSON.parse(call(0).init.body as string)).toEqual({
+      user_id: "u-1",
+      store_id: "kho-1",
+      message: "thế xe 3 tấn thì sao?",
+      history,
+    });
   });
 
   it.each(["abc", "0", "-5", ""])("BRAIN_CHAT_TIMEOUT_MS=%j không hợp lệ thì giữ 60s", async (raw) => {
