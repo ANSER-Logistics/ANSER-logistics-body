@@ -12,7 +12,3 @@ trim_trailing_whitespace = true
 
 [*.md]
 trim_trailing_whitespace = false
-
-# Xem .gitattributes: giữ nguyên CRLF tới khi Brain PR #3 merge.
-[frontend/src/server/brain.ts]
-end_of_line = unset
