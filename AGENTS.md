@@ -108,6 +108,6 @@ code that uses a Next.js API. Heed deprecation notices. Known traps here: reques
   line by line (drizzle-kit has dropped CHECK constraints before), never edit an applied migration.
 - Files a teammate is rewriting right now are listed in `frontend/.prettierignore` (temporary
   block). Don't refactor or reformat them without asking.
-- `frontend/src/server/brain.ts` belongs to the Brain team's open PR #3; don't commit
-  line-ending-only changes to it (`BLOCKERS.md` K1).
+- `frontend/src/server/brain.ts`, `brainReport.ts` and `src/app/api/ai/` are co-owned with the Brain
+  team (`.github/CODEOWNERS`); their review is required.
 - Never commit secrets (`.env.local`, tokens); `ENABLE_STARTUP_SEED` stays off in production.

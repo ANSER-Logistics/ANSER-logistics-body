@@ -135,7 +135,7 @@ n8n ở <http://localhost:5679>, hộp thư giả MailHog (xem email n8n "gửi"
 | `DATABASE_URL is not set` | Thiếu `frontend/.env.local` hoặc đặt sai thư mục | File phải nằm trong `frontend/`, không phải thư mục gốc |
 | `Cannot read properties of null (reading 'matches')` khi `npm install` | `node_modules` cũ do pnpm tạo | `rm -rf node_modules` rồi cài lại (Câu lệnh cuối bước 2.2) |
 | CI đỏ ở bước `--frozen-lockfile` | Đổi `package.json` mà chưa cập nhật `pnpm-lock.yaml` | Chạy `pnpm install`, commit lockfile |
-| `git status` báo `brain.ts` bị sửa dù bạn không đụng | Bản checkout cũ, trước khi `.gitattributes` khai `brain.ts` là `-text` (file vẫn lưu CRLF tới khi Brain PR #3 merge) | `git pull`, rồi `git restore frontend/src/server/brain.ts` một lần. **Đừng commit** đổi line ending của nó. Xem `docs/tasks/BLOCKERS.md` K1 |
+| `git status` báo một file bị sửa toàn bộ dù bạn không đụng | Khác line ending (CRLF/LF), thường do editor | `git restore <file>`, đặt editor dùng `LF` (xem §2.2). **Đừng commit** |
 | Code mẫu Next.js trên mạng không chạy | Dự án dùng **Next.js 16** — nhiều API đã đổi (vd `middleware.ts` thành `proxy.ts`, `params` là `Promise`) | Đọc tài liệu đi kèm trong `frontend/node_modules/next/dist/docs/` (xem `AGENTS.md` ở thư mục gốc) |
 
 ---

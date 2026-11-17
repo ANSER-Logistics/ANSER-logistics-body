@@ -96,7 +96,7 @@ chưa quen review code và điều hướng nhiều branch.
 - **Không commit bí mật**: `.env.local`, mật khẩu, token. Lỡ commit → báo trưởng nhóm để đổi
   khoá ngay; xoá khỏi commit sau là không đủ.
 - **Không `git add .` hay "Stage All" mù quáng.** Stage từng file, xem `git diff --staged`
-  trước khi commit. Đặc biệt đừng commit đổi line ending của `frontend/src/server/brain.ts`
-  (xem `docs/tasks/BLOCKERS.md` K1) — nó cố ý giữ CRLF tới khi Brain PR #3 merge.
+  trước khi commit. Thấy một file "đổi" toàn bộ mà nội dung y nguyên thì đó là line ending —
+  đừng commit nó (CI cũng chặn file lưu CRLF).
 - **Không commit lockfile khác `frontend/pnpm-lock.yaml`**.
 - **Không sửa migration đã chạy** — tạo migration mới (`docs/onboarding/Onboarding_Playbook.md` §5.1).
