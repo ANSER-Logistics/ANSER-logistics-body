@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { withErrorHandler } from "@/server/http";
 import { requireInternalToken } from "@/server/internalAuth";
 import { getSalesReportForPeriod, SalesReportPeriod } from "@/server/reports";
 
 // Dùng bởi 3 workflow n8n "Báo cáo doanh số" (ngày/tuần/tháng).
-export async function GET(request: Request) {
+export const GET = withErrorHandler(async (request: Request) => {
   const unauthorized = requireInternalToken(request);
   if (unauthorized) return unauthorized;
 
@@ -26,4 +27,4 @@ export async function GET(request: Request) {
       revenue: p.revenue,
     })),
   });
-}
+});

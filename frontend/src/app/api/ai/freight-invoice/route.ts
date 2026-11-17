@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { brainErrorToHttp, readFreightInvoice } from "@/server/brain";
-import { getSessionUser } from "@/server/session";
+import { jsonError, withErrorHandler } from "@/server/http";
+import { readFreightInvoice } from "@/server/brain";
+import { brainErrorResponse } from "@/server/brainHttp";
+import { requireSessionUser } from "@/server/session";
 
 /**
  * Đọc ảnh hoá đơn cước của nhà xe.
@@ -19,43 +21,33 @@ const MAX_BYTES = 5 * 1024 * 1024;
 
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/heic"];
 
-export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+export const POST = withErrorHandler(async (request: Request) => {
+  const { response } = await requireSessionUser();
+  if (response) return response;
 
   let form: FormData;
   try {
     form = await request.formData();
   } catch {
-    return NextResponse.json({ error: "Cần gửi dạng multipart/form-data" }, { status: 400 });
+    return jsonError("Cần gửi dạng multipart/form-data", 400);
   }
 
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return NextResponse.json({ error: "Chưa chọn ảnh" }, { status: 400 });
+    return jsonError("Chưa chọn ảnh", 400);
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json(
-      {
-        error:
-          `Ảnh quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB, tối đa 5MB). ` +
-          "Chụp lại ở chế độ chất lượng thấp hơn, hoặc gửi ảnh đã nén.",
-      },
-      { status: 413 },
-    );
+    return jsonError(`Ảnh quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB, tối đa 5MB). ` +
+          "Chụp lại ở chế độ chất lượng thấp hơn, hoặc gửi ảnh đã nén.", 413);
   }
   // Kiểm nhẹ tay: điện thoại đôi khi không gắn MIME. Có gắn mà sai loại thì chặn.
   if (file.type && !ALLOWED.includes(file.type)) {
-    return NextResponse.json(
-      { error: `Chưa đọc được định dạng ${file.type}. Gửi ảnh JPG hoặc PNG.` },
-      { status: 400 },
-    );
+    return jsonError(`Chưa đọc được định dạng ${file.type}. Gửi ảnh JPG hoặc PNG.`, 400);
   }
 
   try {
     return NextResponse.json(await readFreightInvoice(file));
   } catch (error) {
-    const { status, body, headers } = brainErrorToHttp(error);
-    return NextResponse.json(body, { status, headers });
+    return brainErrorResponse(error);
   }
-}
+});

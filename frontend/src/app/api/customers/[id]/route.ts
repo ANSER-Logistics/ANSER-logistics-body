@@ -1,29 +1,41 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { jsonError, withErrorHandler } from "@/server/http";
 import { requireAdminUser, requireSessionUser } from "@/server/session";
 import { deleteCustomer, getCustomerById, updateCustomer } from "@/server/store/customers";
+import { nullableEmail, nullablePhone, nullableText, parseJsonBody, requiredText } from "@/server/validation";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+const patchCustomerSchema = z.object({
+  name: requiredText("Tên khách hàng không được để trống.").optional(),
+  phone: nullablePhone(),
+  email: nullableEmail(),
+  address: nullableText("Địa chỉ"),
+  note: nullableText("Ghi chú"),
+});
+
+export const GET = withErrorHandler(async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { response } = await requireSessionUser();
   if (response) return response;
 
   const { id } = await params;
   const customer = await getCustomerById(id);
   if (!customer) {
-    return NextResponse.json({ message: "Không tìm thấy khách hàng." }, { status: 404 });
+    return jsonError("Không tìm thấy khách hàng.", 404);
   }
   return NextResponse.json({ customer });
-}
+});
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withErrorHandler(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { response } = await requireAdminUser();
   if (response) return response;
 
   const { id } = await params;
-  const body = await request.json().catch(() => ({}));
+  const { data: body, response: invalid } = await parseJsonBody(request, patchCustomerSchema);
+  if (invalid) return invalid;
 
   const existing = await getCustomerById(id);
   if (!existing) {
-    return NextResponse.json({ message: "Không tìm thấy khách hàng." }, { status: 404 });
+    return jsonError("Không tìm thấy khách hàng.", 404);
   }
 
   const patch: Partial<{
@@ -41,13 +53,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const customer = await updateCustomer(id, patch);
   return NextResponse.json({ customer });
-}
+});
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = withErrorHandler(async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { response } = await requireAdminUser();
   if (response) return response;
 
   const { id } = await params;
   await deleteCustomer(id);
   return new NextResponse(null, { status: 204 });
-}
+});

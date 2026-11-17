@@ -59,6 +59,13 @@ export type KetQuaDoc = {
   canhBao: string[];
 };
 
+export class InvalidExcelFileError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidExcelFileError";
+  }
+}
+
 // --------------------------------------------------------------------------
 // Chuẩn hoá + đọc số
 // --------------------------------------------------------------------------
@@ -211,9 +218,13 @@ function doanLoai(hang: unknown[]): LoaiFile | null {
 
 export async function docExcel(buf: ArrayBuffer | Buffer): Promise<KetQuaDoc> {
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(buf as ArrayBuffer);
+  try {
+    await wb.xlsx.load(buf as ArrayBuffer);
+  } catch {
+    throw new InvalidExcelFileError("Không đọc được file Excel. Hãy kiểm tra file và thử lại.");
+  }
   const ws = wb.worksheets[0];
-  if (!ws) throw new Error("File không có sheet nào.");
+  if (!ws) throw new InvalidExcelFileError("File không có sheet nào.");
 
   const rows: unknown[][] = [];
   ws.eachRow({ includeEmpty: true }, (row) => {
@@ -225,14 +236,14 @@ export async function docExcel(buf: ArrayBuffer | Buffer): Promise<KetQuaDoc> {
 
   const td = timTieuDe(rows);
   if (!td) {
-    throw new Error(
+    throw new InvalidExcelFileError(
       "Không tìm thấy dòng tiêu đề. File phải là bản xuất MISA của Danh sách " +
       "hàng hoá/khách hàng/nhà cung cấp, giữ nguyên các cột gốc.",
     );
   }
   const loai = doanLoai(rows[td.i]);
   if (!loai) {
-    throw new Error(
+    throw new InvalidExcelFileError(
       "Đọc được tiêu đề nhưng không nhận ra đây là danh sách gì. Cần có một " +
       "trong: 'Mã khách hàng', 'Mã nhà cung cấp', hoặc 'Đơn vị tính chính'.",
     );

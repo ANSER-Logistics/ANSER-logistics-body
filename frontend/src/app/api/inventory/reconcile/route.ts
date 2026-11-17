@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { withErrorHandler } from "@/server/http";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { getSessionUser } from "@/server/session";
+import { requireSessionUser } from "@/server/session";
 import { inventoryTransactions, products } from "@/server/db/schema";
 
 /**
@@ -28,9 +29,9 @@ import { inventoryTransactions, products } from "@/server/db/schema";
 // phải sai lệch thật. Không dùng so sánh `!==` trực tiếp trên số thực.
 const EPSILON = 0.001;
 
-export async function GET(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+export const GET = withErrorHandler(async (request: Request) => {
+  const { response } = await requireSessionUser();
+  if (response) return response;
 
   const { searchParams } = new URL(request.url);
   const warehouseId = searchParams.get("warehouseId") ?? undefined;
@@ -78,4 +79,4 @@ export async function GET(request: Request) {
     mismatchCount: mismatches.length,
     mismatches,
   });
-}
+});

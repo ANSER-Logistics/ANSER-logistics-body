@@ -1,42 +1,50 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { jsonError, withErrorHandler } from "@/server/http";
 import { requireAdmin } from "@/server/session";
 import { createEmployee, listEmployees } from "@/server/store/employees";
 import { listWarehouses } from "@/server/store/warehouses";
+import { optionalEmail, optionalPhone, optionalText, parseJsonBody, requiredText } from "@/server/validation";
 
-export async function GET() {
+const createEmployeeSchema = z.object({
+  name: requiredText("Thiếu tên nhân viên."),
+  position: optionalText("Chức vụ"),
+  phone: optionalPhone(),
+  email: optionalEmail(),
+  hireDate: z.preprocess(
+    (value) => (value === "" || value === null ? undefined : value),
+    z.coerce.date({ error: "Ngày vào làm không hợp lệ." }).optional(),
+  ),
+  warehouseId: optionalText("Kho"),
+  note: optionalText("Ghi chú"),
+});
+
+export const GET = withErrorHandler(async () => {
   const admin = await requireAdmin();
   if (!admin) {
-    return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
+    return jsonError("Không có quyền truy cập.", 403);
   }
   const employees = await listEmployees();
   return NextResponse.json({ employees });
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async (request: Request) => {
   const admin = await requireAdmin();
   if (!admin) {
-    return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
+    return jsonError("Không có quyền truy cập.", 403);
   }
 
-  const body = await request.json().catch(() => ({}));
-  if (!body.name || !String(body.name).trim()) {
-    return NextResponse.json({ message: "Thiếu tên nhân viên." }, { status: 400 });
-  }
+  const { data: body, response: invalid } = await parseJsonBody(request, createEmployeeSchema);
+  if (invalid) return invalid;
   if (body.warehouseId) {
     const validWarehouses = await listWarehouses();
     if (!validWarehouses.some((w) => w.id === body.warehouseId)) {
-      return NextResponse.json({ message: "Kho không hợp lệ." }, { status: 400 });
+      return jsonError("Kho không hợp lệ.", 400);
     }
   }
 
   const employee = await createEmployee({
-    name: body.name,
-    position: body.position || undefined,
-    phone: body.phone || undefined,
-    email: body.email || undefined,
-    hireDate: body.hireDate ? new Date(body.hireDate) : undefined,
-    warehouseId: body.warehouseId || undefined,
-    note: body.note || undefined,
+    ...body,
   });
   return NextResponse.json({ employee }, { status: 201 });
-}
+});

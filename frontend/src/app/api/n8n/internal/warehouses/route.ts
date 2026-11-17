@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { withErrorHandler } from "@/server/http";
 import { requireInternalToken } from "@/server/internalAuth";
 import { listWarehouses } from "@/server/store/warehouses";
 
 // Dùng bởi workflow n8n (Cảnh báo tồn kho thấp, Báo cáo doanh số định kỳ) để biết
 // gửi email cho địa chỉ nào ứng với từng kho.
-export async function GET(request: Request) {
+export const GET = withErrorHandler(async (request: Request) => {
   const unauthorized = requireInternalToken(request);
   if (unauthorized) return unauthorized;
 
@@ -16,4 +17,4 @@ export async function GET(request: Request) {
       notification_email: w.notificationEmail,
     })),
   });
-}
+});

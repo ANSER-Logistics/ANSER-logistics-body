@@ -62,7 +62,7 @@ export default function BrainChat() {
           ...m,
           {
             role: "error",
-            text: data.detail ?? data.error ?? `Lỗi ${res.status}`,
+            text: data.message ?? data.detail ?? data.error ?? `Lỗi ${res.status}`,
             retryAfter: Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined,
           },
         ]);

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { brainErrorToHttp, importInventoryFile } from "@/server/brain";
-import { getSessionUser } from "@/server/session";
+import { jsonError, withErrorHandler } from "@/server/http";
+import { importInventoryFile } from "@/server/brain";
+import { brainErrorResponse } from "@/server/brainHttp";
+import { requireSessionUser } from "@/server/session";
 
 /**
  * Kiểm sổ kho từ file Excel khách xuất ra (MISA / Fast / Bravo).
@@ -20,29 +22,23 @@ import { getSessionUser } from "@/server/session";
 // Rộng rãi cho việc này: một bảng tổng hợp N-X-T vài trăm dòng chỉ cỡ 50KB.
 const MAX_BYTES = 5 * 1024 * 1024;
 
-export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+export const POST = withErrorHandler(async (request: Request) => {
+  const { response } = await requireSessionUser();
+  if (response) return response;
 
   let form: FormData;
   try {
     form = await request.formData();
   } catch {
-    return NextResponse.json(
-      { error: "Cần gửi dạng multipart/form-data kèm trường 'file'" },
-      { status: 400 },
-    );
+    return jsonError("Cần gửi dạng multipart/form-data kèm trường 'file'", 400);
   }
 
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return NextResponse.json({ error: "Chưa chọn file" }, { status: 400 });
+    return jsonError("Chưa chọn file", 400);
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json(
-      { error: `File quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB, tối đa 5MB)` },
-      { status: 413 },
-    );
+    return jsonError(`File quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB, tối đa 5MB)`, 413);
   }
 
   const sheet = form.get("sheet");
@@ -53,7 +49,6 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(result);
   } catch (error) {
-    const { status, body, headers } = brainErrorToHttp(error);
-    return NextResponse.json(body, { status, headers });
+    return brainErrorResponse(error);
   }
-}
+});

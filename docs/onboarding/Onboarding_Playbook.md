@@ -316,22 +316,42 @@ Ví dụ: `GET /api/vi-du`.
 1. Tạo `frontend/src/app/api/vi-du/route.ts`.
 2. Mẫu tối thiểu:
    ```ts
+   import { z } from "zod";
    import { NextResponse } from "next/server";
-   import { getSessionUser } from "@/server/session";
-   import { listSomething } from "@/server/store/something";
+   import { withErrorHandler } from "@/server/http";
+   import { requireSessionUser } from "@/server/session";
+   import { createSomething, listSomething } from "@/server/store/something";
+   import { parseJsonBody, requiredText } from "@/server/validation";
 
-   export async function GET() {
-     const user = await getSessionUser();
-     if (!user) {
-       return NextResponse.json({ message: "Chưa đăng nhập." }, { status: 401 });
-     }
+   const createSchema = z.object({
+     name: requiredText("Thiếu tên."),
+   });
+
+   export const GET = withErrorHandler(async () => {
+     const { response } = await requireSessionUser();
+     if (response) return response;
      const items = await listSomething();
      return NextResponse.json({ items });
-   }
+   });
+
+   export const POST = withErrorHandler(async (request: Request) => {
+     const { response } = await requireSessionUser();
+     if (response) return response;
+
+     const { data, response: invalid } = await parseJsonBody(request, createSchema);
+     if (invalid) return invalid;
+     const item = await createSomething(data);
+     return NextResponse.json({ item }, { status: 201 });
+   });
    ```
 3. Logic đọc/ghi DB đặt trong `src/server/store/…`, **không** viết thẳng trong route.
-4. Thông báo lỗi trả về cho người dùng viết **tiếng Việt**, trong trường `message`.
-5. Thử bằng trình duyệt (GET) hoặc `curl` (POST - nhớ gửi kèm cookie đăng nhập).
+4. Route Handler dùng `withErrorHandler` để lỗi không lường trước được ghi log ở server và trả
+   `500 { "message": "Lỗi hệ thống, vui lòng thử lại sau." }` — không trả chi tiết lỗi nội bộ.
+5. Body JSON phải đọc/kiểm tra qua `parseJsonBody(request, schema)`; schema đặt thông báo lỗi
+   tiếng Việt. Body sai cú pháp hoặc không hợp lệ trả `400 { "message": "..." }`.
+6. Các lỗi có chủ đích trả qua `jsonError(message, status)`; giữ mã HTTP hiện có và luôn dùng
+   trường `message` để giao diện hiển thị được.
+7. Thử bằng trình duyệt (GET) hoặc `curl` (POST - nhớ gửi kèm cookie đăng nhập).
 
 ### 5.3 Thêm một trang trong dashboard
 

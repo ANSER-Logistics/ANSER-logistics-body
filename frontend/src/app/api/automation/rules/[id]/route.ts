@@ -1,26 +1,41 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { jsonError, withErrorHandler } from "@/server/http";
 import { requireAdminUser } from "@/server/session";
 import { activateN8nWorkflow, deactivateN8nWorkflow } from "@/server/n8nApi";
 import { deleteRule, getRule, updateRule } from "@/server/store/automation";
 import { listWarehouses } from "@/server/store/warehouses";
+import { nullableText, numberLike, parseJsonBody, requiredText } from "@/server/validation";
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+const patchRuleSchema = z.object({
+  name: requiredText("Tên quy tắc không được để trống.").optional(),
+  thresholdQty: numberLike("Ngưỡng tồn kho không hợp lệ.")
+    .pipe(z.number().min(0, "Ngưỡng tồn kho không hợp lệ."))
+    .optional(),
+  categoryId: nullableText("Danh mục"),
+  warehouseId: nullableText("Kho"),
+  enabled: z.boolean({ error: "Trạng thái quy tắc không hợp lệ." }).optional(),
+  n8nWorkflowId: nullableText("Workflow n8n"),
+});
+
+export const PATCH = withErrorHandler(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { response } = await requireAdminUser();
   if (response) return response;
 
   const { id } = await params;
-  const body = await request.json().catch(() => ({}));
+  const { data: body, response: invalid } = await parseJsonBody(request, patchRuleSchema);
+  if (invalid) return invalid;
 
   if (body.warehouseId) {
     const validWarehouses = await listWarehouses();
     if (!validWarehouses.some((w) => w.id === body.warehouseId)) {
-      return NextResponse.json({ message: "Kho không hợp lệ." }, { status: 400 });
+      return jsonError("Kho không hợp lệ.", 400);
     }
   }
 
   const existing = await getRule(id);
   if (!existing) {
-    return NextResponse.json({ message: "Không tìm thấy quy tắc." }, { status: 404 });
+    return jsonError("Không tìm thấy quy tắc.", 404);
   }
 
   // Rule đang liên kết với 1 workflow n8n thật (n8nWorkflowId đã được dán vào) — bật/tắt ở đây
@@ -32,10 +47,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       if (body.enabled) await activateN8nWorkflow(linkedWorkflowId);
       else await deactivateN8nWorkflow(linkedWorkflowId);
     } catch (error) {
-      return NextResponse.json(
-        { message: error instanceof Error ? error.message : "Không gọi được n8n." },
-        { status: 502 },
-      );
+      console.error("[api] Không thể cập nhật trạng thái workflow n8n:", error);
+      return jsonError("Không thể cập nhật trạng thái workflow n8n. Vui lòng kiểm tra cấu hình.", 502);
     }
   }
 
@@ -48,24 +61,24 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     n8nWorkflowId: string | null;
   }> = {};
   if (body.name !== undefined) patch.name = body.name;
-  if (body.thresholdQty !== undefined) patch.thresholdQty = Number(body.thresholdQty);
-  if (body.categoryId !== undefined) patch.categoryId = body.categoryId || null;
-  if (body.warehouseId !== undefined) patch.warehouseId = body.warehouseId || null;
-  if (body.enabled !== undefined) patch.enabled = Boolean(body.enabled);
-  if (body.n8nWorkflowId !== undefined) patch.n8nWorkflowId = body.n8nWorkflowId || null;
+  if (body.thresholdQty !== undefined) patch.thresholdQty = body.thresholdQty;
+  if (body.categoryId !== undefined) patch.categoryId = body.categoryId;
+  if (body.warehouseId !== undefined) patch.warehouseId = body.warehouseId;
+  if (body.enabled !== undefined) patch.enabled = body.enabled;
+  if (body.n8nWorkflowId !== undefined) patch.n8nWorkflowId = body.n8nWorkflowId;
 
   const rule = await updateRule(id, patch);
   if (!rule) {
-    return NextResponse.json({ message: "Không tìm thấy quy tắc." }, { status: 404 });
+    return jsonError("Không tìm thấy quy tắc.", 404);
   }
   return NextResponse.json({ rule });
-}
+});
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = withErrorHandler(async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { response } = await requireAdminUser();
   if (response) return response;
 
   const { id } = await params;
   await deleteRule(id);
   return new NextResponse(null, { status: 204 });
-}
+});

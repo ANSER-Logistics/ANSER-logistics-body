@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { jsonError, withErrorHandler } from "@/server/http";
 import { requireSessionUser } from "@/server/session";
 import {
   createTransaction,
@@ -9,8 +11,24 @@ import {
   SupplierNotFoundError,
   TransactionType,
 } from "@/server/store/inventory";
+import { numberLike, optionalText, parseJsonBody, requiredText } from "@/server/validation";
 
-export async function GET(request: Request) {
+const createTransactionSchema = z.object({
+  productId: requiredText("Thiếu sản phẩm hoặc loại phiếu không hợp lệ."),
+  type: z.enum(["import", "export"], { error: "Thiếu sản phẩm hoặc loại phiếu không hợp lệ." }),
+  quantity: numberLike("Số lượng phải lớn hơn 0.").pipe(z.number().gt(0, "Số lượng phải lớn hơn 0.")),
+  unitCost: z
+    .union([
+      z.string().trim().length(0).transform(() => null),
+      numberLike("Đơn giá phải là số không âm.").pipe(z.number().min(0, "Đơn giá phải là số không âm.")),
+    ], { error: "Đơn giá phải là số không âm." })
+    .nullish(),
+  counterparty: optionalText("Đối tác"),
+  note: optionalText("Ghi chú"),
+  supplierId: optionalText("Nhà cung cấp"),
+});
+
+export const GET = withErrorHandler(async (request: Request) => {
   const { response } = await requireSessionUser();
   if (response) return response;
 
@@ -26,58 +44,33 @@ export async function GET(request: Request) {
     warehouseIds,
   });
   return NextResponse.json({ transactions });
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async (request: Request) => {
   const { user, response } = await requireSessionUser();
   if (response) return response;
 
-  const { productId, type, quantity, unitCost, counterparty, note, supplierId } = await request
-    .json()
-    .catch(() => ({}));
-
-  if (!productId || (type !== "import" && type !== "export")) {
-    return NextResponse.json({ message: "Thiếu sản phẩm hoặc loại phiếu không hợp lệ." }, { status: 400 });
-  }
-  const quantityNum = Number(quantity);
-  if (!Number.isFinite(quantityNum) || quantityNum <= 0) {
-    return NextResponse.json({ message: "Số lượng phải lớn hơn 0." }, { status: 400 });
-  }
-
-  // Bỏ trống đơn giá = CHƯA BIẾT giá vốn, không phải 0. Chuỗi rỗng từ form phải
-  // ra `null`, chứ Number("") = 0 sẽ ghi nhận "hàng không tốn đồng nào" và đẩy
-  // lãi gộp lên 100%.
-  let unitCostNum: number | null = null;
-  if (unitCost !== undefined && unitCost !== null && String(unitCost).trim() !== "") {
-    unitCostNum = Number(unitCost);
-    if (!Number.isFinite(unitCostNum) || unitCostNum < 0) {
-      return NextResponse.json({ message: "Đơn giá phải là số không âm." }, { status: 400 });
-    }
-  }
+  const { data, response: invalid } = await parseJsonBody(request, createTransactionSchema);
+  if (invalid) return invalid;
 
   try {
     const transaction = await createTransaction({
-      productId,
-      type,
-      quantity: quantityNum,
-      unitCost: unitCostNum,
-      counterparty,
-      note,
-      supplierId: supplierId || undefined,
+      ...data,
+      unitCost: data.unitCost ?? null,
       // Lấy từ session, không nhận từ client — tránh client tự xưng là người khác.
       employeeId: user.employeeId ?? undefined,
     });
     return NextResponse.json({ transaction }, { status: 201 });
   } catch (error) {
     if (error instanceof InsufficientStockError) {
-      return NextResponse.json({ message: error.message }, { status: 409 });
+      return jsonError(error.message, 409);
     }
     if (error instanceof ProductNotFoundError || error instanceof SupplierNotFoundError) {
-      return NextResponse.json({ message: error.message }, { status: 404 });
+      return jsonError(error.message, 404);
     }
     if (error instanceof InvalidTransactionError) {
-      return NextResponse.json({ message: error.message }, { status: 400 });
+      return jsonError(error.message, 400);
     }
-    return NextResponse.json({ message: "Lỗi hệ thống." }, { status: 500 });
+    throw error;
   }
-}
+});
