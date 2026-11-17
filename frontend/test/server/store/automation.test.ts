@@ -110,9 +110,11 @@ describe("updateRule / getRule / deleteRule", () => {
     expect(await updateRule(missing, { enabled: false })).toBeUndefined();
   });
 
-  it.todo(
-    "BUG: updateRule(id, {}) ném 'No values to set' (drizzle .set({})) thay vì trả rule không đổi — PATCH /api/automation/rules/[id] với body {} trả 500",
-  );
+  it("updateRule không có trường nào để đổi thì trả rule hiện tại, không ném lỗi", async () => {
+    const rule = await createRule({ name: "Tồn thấp" });
+    expect(await updateRule(rule.id, {})).toMatchObject({ id: rule.id, name: "Tồn thấp" });
+    expect(await updateRule("00000000-0000-4000-8000-000000000000", {})).toBeUndefined();
+  });
 
   it("deleteRule chỉ xoá đúng rule đó", async () => {
     const keep = await createRule({ name: "Giữ lại" });

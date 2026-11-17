@@ -7,6 +7,7 @@ import { db, resetDb } from "@test/db";
 import { categories } from "@/server/db/schema";
 import {
   DEFAULT_CATEGORIES,
+  EmptyCategoryNameError,
   getCategoryById,
   getOrCreateCategoryByName,
   listCategories,
@@ -50,9 +51,10 @@ describe("getOrCreateCategoryByName", () => {
     expect(await db.select().from(categories)).toHaveLength(0);
   });
 
-  it.todo(
-    'BUG: tên chỉ toàn khoảng trắng ("   ") được chuẩn hoá thành "" rồi lưu thành danh mục tên rỗng thay vì bị từ chối (vào được qua POST /api/products, updateProduct và nhập MISA ap-dung.ts)',
-  );
+  it.each(["", "   ", "\t \n"])("tên rỗng hoặc toàn khoảng trắng (%j) bị từ chối, không tạo danh mục", async (name) => {
+    await expect(getOrCreateCategoryByName(name)).rejects.toThrow(EmptyCategoryNameError);
+    expect(await db.select().from(categories)).toHaveLength(0);
+  });
 });
 
 describe("categories schema", () => {

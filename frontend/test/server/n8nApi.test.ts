@@ -230,9 +230,20 @@ describe("getN8nWorkflow / updateN8nWorkflow", () => {
   });
 
   // n8nWorkflowId do người dùng dán vào (PATCH /api/automation/rules/[id]) được ghép
-  // thẳng vào path; listN8nExecutions thì có encodeURIComponent. Id "../credentials"
-  // khiến URL chuẩn hoá thành /api/v1/credentials — gọi nhầm endpoint bằng API key server.
-  it.todo("BUG: get/update/activate/deactivate không encodeURIComponent workflowId khi ghép vào path");
+  // vào path. Không mã hoá thì "../credentials" bị chuẩn hoá thành /api/v1/credentials —
+  // gọi nhầm endpoint bằng API key của server.
+  it.each([
+    ["getN8nWorkflow", (id: string) => getN8nWorkflow(id), "", "GET"],
+    ["updateN8nWorkflow", (id: string) => updateN8nWorkflow(id, { name: "x", nodes: [], connections: {} }), "", "PUT"],
+    ["activateN8nWorkflow", (id: string) => activateN8nWorkflow(id), "/activate", "POST"],
+    ["deactivateN8nWorkflow", (id: string) => deactivateN8nWorkflow(id), "/deactivate", "POST"],
+  ])("%s mã hoá workflowId khi ghép vào path", async (_name, call, suffix, method) => {
+    fetchMock.mockResolvedValue(jsonResponse({ name: "x", nodes: [], connections: {} }));
+
+    await call("../credentials");
+
+    expect(sent()).toMatchObject({ url: `${BASE}/api/v1/workflows/..%2Fcredentials${suffix}`, method });
+  });
 });
 
 describe("activate / deactivate", () => {

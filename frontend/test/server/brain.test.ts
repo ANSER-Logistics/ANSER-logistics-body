@@ -164,6 +164,7 @@ describe("cấu hình và header", () => {
       () => uploadKnowledgeDocument(new File(["pdf"], "hd.pdf"), { workspaceId: "ws-1" }),
     ],
     ["buildReport", 30_000, () => buildReport({ sales: [] })],
+    ["readFreightInvoice", 120_000, () => readFreightInvoice(anh())],
   ])("%s gắn AbortSignal.timeout(%i) và không dùng cache", async (_n, ms, run) => {
     const spy = vi.spyOn(AbortSignal, "timeout");
     fetchMock.mockResolvedValueOnce(json({ source: "hd.pdf" }));
@@ -455,16 +456,13 @@ describe("lỗi vận chuyển", () => {
   it.each<[string, () => Promise<unknown>, string]>([
     ["công cụ 30s", () => buildReport({ sales: [] }), "Brain không trả lời trong 30s (/tools/report)."],
     ["tải file 60s", () => importInventoryFile(excel()), "Brain không trả lời trong 60s (/tools/inventory-import)."],
+    ["đọc ảnh 120s", () => readFreightInvoice(anh()), "Brain không trả lời trong 120s (/ocr/freight)."],
   ])("TimeoutError là timeout, nêu đúng ngân sách (%s)", async (_name, run, message) => {
     fetchMock.mockRejectedValueOnce(timeoutErr());
     const err = await caught(run());
     expect(err.kind).toBe("timeout");
     expect(err.message).toBe(message);
   });
-
-  it.todo(
-    "BUG: readFreightInvoice (đọc ảnh bằng VLM) dùng timeout upload 60s; TIMEOUT_MS.vision = 120s khai báo cho OCR nhưng không đường nào dùng",
-  );
 
   it("fetch hỏng (Brain tắt, sai URL) là unreachable, nêu URL và nguyên nhân", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
