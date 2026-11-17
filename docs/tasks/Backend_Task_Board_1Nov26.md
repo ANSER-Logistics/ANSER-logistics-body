@@ -215,11 +215,11 @@ kiểu, lỗi không lường trước rơi về `500` mặc định của Next.
 
 **Tiêu chí hoàn thành**
 
-- [ ] Thêm `zod` (nhớ `pnpm install` và commit `pnpm-lock.yaml`).
-- [ ] Một hàm dùng chung đọc + kiểm tra body theo schema zod, trả `400` với `message` tiếng Việt.
-- [ ] Một định dạng lỗi thống nhất `{ message: string }` (khớp cái giao diện đang đọc), và một wrapper bắt lỗi không lường trước → `500` + ghi log, không lộ chi tiết lỗi ra ngoài.
-- [ ] Áp dụng cho các route trong phạm vi; mỗi route giữ đúng mã HTTP hiện có.
-- [ ] Ghi quy ước mới vào `docs/onboarding/Onboarding_Playbook.md` §5.2 (mẫu thêm API route).
+- [x] Thêm `zod` (nhớ `pnpm install` và commit `pnpm-lock.yaml`).
+- [x] Một hàm dùng chung đọc + kiểm tra body theo schema zod, trả `400` với `message` tiếng Việt.
+- [x] Một định dạng lỗi thống nhất `{ message: string }` (khớp cái giao diện đang đọc), và một wrapper bắt lỗi không lường trước → `500` + ghi log, không lộ chi tiết lỗi ra ngoài.
+- [x] Áp dụng cho các route trong phạm vi; mỗi route giữ đúng mã HTTP hiện có.
+- [x] Ghi quy ước mới vào `docs/onboarding/Onboarding_Playbook.md` §5.2 (mẫu thêm API route).
 
 ---
 

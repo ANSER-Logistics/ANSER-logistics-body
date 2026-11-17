@@ -391,8 +391,6 @@ kiểm tra quyền chi tiết theo role vẫn nằm ở từng Route Handler (`r
 |---|---|---|
 | `generateProductCode()` đếm `count(*)+1` để sinh mã `SP-XXX` | Race condition nhỏ nếu 2 request tạo sản phẩm cùng lúc (chặn bởi unique constraint trên `code`, nhưng request thua sẽ lỗi thay vì tự retry) | Chuyển sang Postgres sequence riêng nếu tần suất tạo sản phẩm đồng thời tăng |
 | Quy tắc tự động hoá giờ chỉ tạo được qua Templates (đã bỏ form "+ Thêm quy tắc" khỏi giao diện theo yêu cầu — khách hàng không tự tạo quy tắc tự do) | Không còn cách tạo rule tuỳ chỉnh (danh mục/kho riêng) từ UI | `POST /api/automation/rules` vẫn nhận đủ tham số — để dành cho tính năng AI tạo quy tắc sau này |
-| Validate input thủ công (`if (!x)`) | Lọt dữ liệu sai định dạng (email, phone...) | Dùng `zod` để validate schema request body |
-| Không có error handler tập trung | Lỗi runtime không kiểm soát trong Route Handler trả về 500 mặc định của Next, không có format nhất quán | Viết helper `apiError()`/wrapper dùng chung cho mọi route |
 | Dashboard toàn dữ liệu mock hardcode | Không phản ánh dữ liệu thật | Xây API sản phẩm/kho/sản xuất thật (thêm route trong `api/`), thay dữ liệu mock bằng `fetch` |
 | Rate-limit đăng nhập chỉ trong bộ nhớ 1 process (`src/server/rateLimit.ts`) | Không đồng bộ nếu scale ngang nhiều instance — giới hạn thật cao hơn số đặt ra | Chuyển sang Redis (hoặc tương tự) nếu scale ngang |
 | Phân quyền theo phòng ban (Kế toán/Kinh doanh/Kho) chưa làm — chỉ 2 cấp staff/admin | Không phân biệt được ai được xem/sửa gì trong cùng cấp `staff` | Chờ xác nhận nhu cầu thật từ khách hàng (`BLOCKERS.md` Q1, đã đóng theo hướng "không cần") |
@@ -405,4 +403,10 @@ chặn boot production nếu thiếu (`src/instrumentation.ts`); `/dashboard` đ
 (`requireInternalToken()`); bỏ tự đăng ký công khai. 2 route loại trừ trên **cố ý chưa đụng** —
 tính năng giá nhiều mức (Việc 1) đang sửa đúng 2 chỗ đó cùng lúc; bảng quyền cho chúng chờ
 Việc 1 xong rồi làm tiếp (xem `Backend_Task_Board_1Nov26.md` Việc 3, hạn 11/11 và 15/11). Xem
+
+**Đã xử lý (Việc 5 — Kiểm tra dữ liệu vào và lỗi dùng chung):** Body JSON ở các route trong
+phạm vi được đọc/kiểm tra qua schema Zod (`src/server/validation.ts`); lỗi không hợp lệ trả
+`400 { message }`. Route Handler dùng `withErrorHandler()` trong `src/server/http.ts` để ghi
+log lỗi không lường trước và trả lỗi `500` không lộ chi tiết. Các route `/api/sales/invoices`
+và `/api/products/**` vẫn được loại trừ theo phạm vi Việc 5.
 `BLOCKERS.md` Q3.
