@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
+import { jsonError, withErrorHandler } from "@/server/http";
 import { requireSessionUser } from "@/server/session";
 import {
   SupplierCodeTakenError,
   createSupplier,
+  createSupplierSchema,
   listSuppliers,
-  parseSupplierInput,
-  type SupplierInput,
 } from "@/server/store/suppliers";
+import { parseJsonBody } from "@/server/validation";
 
 // Quyền theo mẫu `api/customers` (bảng gần giống): xem/tạo = đã đăng nhập, sửa/xoá = admin.
-export async function GET(request: Request) {
+export const GET = withErrorHandler(async (request: Request) => {
   const { response } = await requireSessionUser();
   if (response) return response;
 
@@ -17,26 +18,20 @@ export async function GET(request: Request) {
   const search = searchParams.get("search")?.trim() || undefined;
   const suppliers = await listSuppliers(search);
   return NextResponse.json({ suppliers });
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async (request: Request) => {
   const { response } = await requireSessionUser();
   if (response) return response;
 
-  const body = await request.json().catch(() => ({}));
-  const parsed = parseSupplierInput(body ?? {}, false);
-  if (parsed.message !== undefined) {
-    return NextResponse.json({ message: parsed.message }, { status: 400 });
-  }
+  const { data, response: invalid } = await parseJsonBody(request, createSupplierSchema);
+  if (invalid) return invalid;
 
   try {
-    // partial = false nên mọi trường đều đã được điền.
-    const supplier = await createSupplier(parsed.data as SupplierInput);
+    const supplier = await createSupplier(data);
     return NextResponse.json({ supplier }, { status: 201 });
   } catch (err) {
-    if (err instanceof SupplierCodeTakenError) {
-      return NextResponse.json({ message: err.message }, { status: 409 });
-    }
+    if (err instanceof SupplierCodeTakenError) return jsonError(err.message, 409);
     throw err;
   }
-}
+});

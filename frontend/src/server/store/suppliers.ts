@@ -1,6 +1,8 @@
 import { asc, eq, or, sql } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/server/db/client";
 import { inventoryTransactions, suppliers } from "@/server/db/schema";
+import { nullableEmail, nullablePhone, nullableText, numberLike, requiredText } from "@/server/validation";
 
 export type Supplier = typeof suppliers.$inferSelect;
 
@@ -23,50 +25,46 @@ export class SupplierCodeTakenError extends Error {
   }
 }
 
-const TEXT_FIELDS = ["code", "taxCode", "phone", "email", "address", "note"] as const;
+const DEBT_MESSAGE = "Công nợ đầu kỳ phải là một số hợp lệ.";
 
-// Kiểm tra body cho POST (partial = false) và PATCH (partial = true). Chuỗi rỗng → NULL.
-// Tạm viết tay — việc 5 (zod) sẽ thay bằng schema dùng chung.
-export function parseSupplierInput(
-  body: Record<string, unknown>,
-  partial: boolean,
-): { data: Partial<SupplierInput>; message?: undefined } | { data?: undefined; message: string } {
-  const data: Partial<SupplierInput> = {};
+// Không gửi / null / "" → NULL ("chưa biết công nợ", khác 0). Cho phép số âm.
+const openingDebtField = z.union(
+  [
+    z.null(),
+    z.literal("").transform(() => null),
+    // numeric(18, 2): tối đa 16 chữ số phần nguyên.
+    numberLike(DEBT_MESSAGE).pipe(z.number().refine((v) => Math.abs(v) < 1e16, DEBT_MESSAGE)),
+  ],
+  { error: DEBT_MESSAGE },
+);
 
-  if (body.name !== undefined || !partial) {
-    const name = typeof body.name === "string" ? body.name.trim() : "";
-    if (!name) return { message: "Thiếu tên nhà cung cấp." };
-    data.name = name;
-  }
+const supplierFields = {
+  name: requiredText("Thiếu tên nhà cung cấp."),
+  code: nullableText("Mã nhà cung cấp"),
+  taxCode: nullableText("Mã số thuế"),
+  phone: nullablePhone(),
+  email: nullableEmail(),
+  address: nullableText("Địa chỉ"),
+  openingDebt: openingDebtField.optional(),
+  note: nullableText("Ghi chú"),
+};
 
-  for (const field of TEXT_FIELDS) {
-    const value = body[field];
-    if (value === undefined) {
-      if (!partial) data[field] = null;
-      continue;
-    }
-    if (value !== null && typeof value !== "string") {
-      return { message: `Trường "${field}" phải là chuỗi.` };
-    }
-    data[field] = value?.trim() || null;
-  }
+// PATCH: trường không gửi = không đổi; "" / null = xoá giá trị.
+export const patchSupplierSchema = z.object(supplierFields).partial();
 
-  if (body.openingDebt !== undefined || !partial) {
-    const raw = body.openingDebt;
-    if (raw === undefined || raw === null || raw === "") {
-      data.openingDebt = null;
-    } else {
-      const debt = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
-      // numeric(18, 2): tối đa 16 chữ số phần nguyên.
-      if (!Number.isFinite(debt) || Math.abs(debt) >= 1e16) {
-        return { message: "Công nợ đầu kỳ phải là một số hợp lệ." };
-      }
-      data.openingDebt = debt;
-    }
-  }
-
-  return { data };
-}
+// POST: trường không gửi = NULL, để `createSupplier` luôn nhận đủ `SupplierInput`.
+export const createSupplierSchema = z.object(supplierFields).transform(
+  (body): SupplierInput => ({
+    name: body.name,
+    code: body.code ?? null,
+    taxCode: body.taxCode ?? null,
+    phone: body.phone ?? null,
+    email: body.email ?? null,
+    address: body.address ?? null,
+    openingDebt: body.openingDebt ?? null,
+    note: body.note ?? null,
+  }),
+);
 
 // Drizzle bọc lỗi Postgres trong `cause`, nên kiểm cả hai tầng.
 function isUniqueViolation(err: unknown) {
