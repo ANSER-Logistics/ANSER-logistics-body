@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { jsonError, withErrorHandler } from "@/server/http";
 import { requireAdminUser } from "@/server/session";
 import { getRule } from "@/server/store/automation";
 import { getN8nWorkflow, isN8nApiConfigured, updateN8nWorkflow, type N8nWorkflowNode } from "@/server/n8nApi";
+import { numberLike, parseJsonBody } from "@/server/validation";
+
+const scheduleSchema = z.object({
+  hour: numberLike("Giờ chạy không hợp lệ (0-23).").pipe(
+    z.number().min(0, "Giờ chạy không hợp lệ (0-23).").max(23, "Giờ chạy không hợp lệ (0-23)."),
+  ),
+  day: numberLike("Ngày chạy không hợp lệ.").optional(),
+});
 
 // Giống ANSER Flask (routes/n8n_api.py sync_report_hour/sync_daily_report_hour): đổi giờ/ngày
 // chạy báo cáo ở đây sẽ tự cập nhật thẳng node Schedule Trigger của workflow đã tạo trong n8n —
@@ -16,31 +26,27 @@ function buildInterval(type: string, hour: number, day?: number) {
   return [{ field: "hours", hoursInterval: 24, triggerAtHour: hour }];
 }
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withErrorHandler(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { response } = await requireAdminUser();
   if (response) return response;
 
   const { id } = await params;
-  const body = await request.json().catch(() => ({}));
-  const hour = Number(body.hour);
-  const day = body.day !== undefined ? Number(body.day) : undefined;
-
-  if (!Number.isFinite(hour) || hour < 0 || hour > 23) {
-    return NextResponse.json({ message: "Giờ chạy không hợp lệ (0-23)." }, { status: 400 });
-  }
+  const { data, response: invalid } = await parseJsonBody(request, scheduleSchema);
+  if (invalid) return invalid;
+  const { hour, day } = data;
 
   const rule = await getRule(id);
   if (!rule) {
-    return NextResponse.json({ message: "Không tìm thấy quy tắc." }, { status: 404 });
+    return jsonError("Không tìm thấy quy tắc.", 404);
   }
   if (!["sales_report_daily", "sales_report_weekly", "sales_report_monthly"].includes(rule.type)) {
-    return NextResponse.json({ message: "Quy tắc này không hỗ trợ đặt lịch chạy." }, { status: 400 });
+    return jsonError("Quy tắc này không hỗ trợ đặt lịch chạy.", 400);
   }
   if (!rule.n8nWorkflowId) {
-    return NextResponse.json({ message: "Quy tắc này chưa được thêm từ Templates." }, { status: 400 });
+    return jsonError("Quy tắc này chưa được thêm từ Templates.", 400);
   }
   if (!isN8nApiConfigured()) {
-    return NextResponse.json({ message: "Tự động hoá chưa được thiết lập." }, { status: 400 });
+    return jsonError("Tự động hoá chưa được thiết lập.", 400);
   }
 
   try {
@@ -58,9 +64,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
     return NextResponse.json({ message: "Đã cập nhật lịch chạy." });
   } catch (error) {
-    return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Không cập nhật được lịch chạy." },
-      { status: 502 },
-    );
+    console.error("[api] Không thể cập nhật lịch workflow n8n:", error);
+    return jsonError("Không thể cập nhật lịch chạy. Vui lòng kiểm tra cấu hình.", 502);
   }
-}
+});

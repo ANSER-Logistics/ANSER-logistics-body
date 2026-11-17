@@ -1,28 +1,33 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { withErrorHandler } from "@/server/http";
 import { requireAdminUser, requireSessionUser } from "@/server/session";
 import { getCompanySettings, updateCompanySettings } from "@/server/store/settings";
+import { nullableEmail, nullablePhone, nullableText, parseJsonBody, requiredText } from "@/server/validation";
 
-export async function GET() {
+const patchCompanySchema = z.object({
+  name: requiredText("Tên doanh nghiệp không được để trống.").optional(),
+  address: nullableText("Địa chỉ"),
+  phone: nullablePhone(),
+  email: nullableEmail(),
+  taxCode: nullableText("Mã số thuế"),
+  currency: z.enum(["VND", "USD"], { error: "Đơn vị tiền tệ không hợp lệ." }).optional(),
+});
+
+export const GET = withErrorHandler(async () => {
   const { response } = await requireSessionUser();
   if (response) return response;
 
   const settings = await getCompanySettings();
   return NextResponse.json({ settings });
-}
+});
 
-export async function PATCH(request: Request) {
+export const PATCH = withErrorHandler(async (request: Request) => {
   const { response } = await requireAdminUser();
   if (response) return response;
 
-  const body = await request.json().catch(() => ({}));
-
-  if (body.name !== undefined && !String(body.name).trim()) {
-    return NextResponse.json({ message: "Tên doanh nghiệp không được để trống." }, { status: 400 });
-  }
-
-  if (body.currency !== undefined && !["VND", "USD"].includes(body.currency)) {
-    return NextResponse.json({ message: "Đơn vị tiền tệ không hợp lệ." }, { status: 400 });
-  }
+  const { data: body, response: invalid } = await parseJsonBody(request, patchCompanySchema);
+  if (invalid) return invalid;
 
   const settings = await updateCompanySettings({
     name: body.name !== undefined ? body.name : undefined,
@@ -33,4 +38,4 @@ export async function PATCH(request: Request) {
     currency: body.currency,
   });
   return NextResponse.json({ settings });
-}
+});
