@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { jsonError, withErrorHandler } from "@/server/http";
 import {
-  brainErrorToHttp,
   deleteKnowledgeDocument,
   listKnowledgeDocuments,
   uploadKnowledgeDocument,
 } from "@/server/brain";
-import { getSessionUser } from "@/server/session";
+import { brainErrorResponse } from "@/server/brainHttp";
+import { requireSessionUser } from "@/server/session";
 
 /**
  * Tài liệu nội bộ đưa vào kho tri thức: hợp đồng, bảng giá cước, quy định
@@ -34,38 +35,34 @@ function workspaceId(): string {
   return process.env.BRAIN_KB_WORKSPACE?.trim() || "default";
 }
 
-export async function GET() {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+export const GET = withErrorHandler(async () => {
+  const { response } = await requireSessionUser();
+  if (response) return response;
 
   try {
     return NextResponse.json({ documents: await listKnowledgeDocuments(workspaceId()) });
   } catch (error) {
-    const { status, body, headers } = brainErrorToHttp(error);
-    return NextResponse.json(body, { status, headers });
+    return brainErrorResponse(error);
   }
-}
+});
 
-export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+export const POST = withErrorHandler(async (request: Request) => {
+  const { response } = await requireSessionUser();
+  if (response) return response;
 
   let form: FormData;
   try {
     form = await request.formData();
   } catch {
-    return NextResponse.json({ error: "Cần gửi dạng multipart/form-data" }, { status: 400 });
+    return jsonError("Cần gửi dạng multipart/form-data", 400);
   }
 
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return NextResponse.json({ error: "Chưa chọn file" }, { status: 400 });
+    return jsonError("Chưa chọn file", 400);
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json(
-      { error: `File quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB, tối đa 5MB)` },
-      { status: 413 },
-    );
+    return jsonError(`File quá lớn (${(file.size / 1024 / 1024).toFixed(1)}MB, tối đa 5MB)`, 413);
   }
 
   const str = (k: string) => {
@@ -82,23 +79,21 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(result);
   } catch (error) {
-    const { status, body, headers } = brainErrorToHttp(error);
-    return NextResponse.json(body, { status, headers });
+    return brainErrorResponse(error);
   }
-}
+});
 
-export async function DELETE(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+export const DELETE = withErrorHandler(async (request: Request) => {
+  const { response } = await requireSessionUser();
+  if (response) return response;
 
   const source = new URL(request.url).searchParams.get("source");
-  if (!source) return NextResponse.json({ error: "Thiếu tên tài liệu" }, { status: 400 });
+  if (!source) return jsonError("Thiếu tên tài liệu", 400);
 
   try {
     await deleteKnowledgeDocument(workspaceId(), source);
     return NextResponse.json({ source, deleted: true });
   } catch (error) {
-    const { status, body, headers } = brainErrorToHttp(error);
-    return NextResponse.json(body, { status, headers });
+    return brainErrorResponse(error);
   }
-}
+});

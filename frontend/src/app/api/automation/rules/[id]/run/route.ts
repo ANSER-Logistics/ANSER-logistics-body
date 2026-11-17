@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { jsonError, withErrorHandler } from "@/server/http";
 import { requireAdminUser } from "@/server/session";
 import { getRule, updateRule } from "@/server/store/automation";
 import { activateN8nWorkflow, isN8nApiConfigured } from "@/server/n8nApi";
@@ -15,20 +16,20 @@ const WEBHOOK_PATH_BY_TYPE: Record<string, string> = {
   customer_welcome: "new-customer",
 };
 
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withErrorHandler(async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { response } = await requireAdminUser();
   if (response) return response;
 
   const { id } = await params;
   const rule = await getRule(id);
   if (!rule) {
-    return NextResponse.json({ message: "Không tìm thấy quy tắc." }, { status: 404 });
+    return jsonError("Không tìm thấy quy tắc.", 404);
   }
   if (!rule.n8nWorkflowId) {
-    return NextResponse.json({ message: "Quy tắc này chưa được thêm từ Templates." }, { status: 400 });
+    return jsonError("Quy tắc này chưa được thêm từ Templates.", 400);
   }
   if (!isN8nApiConfigured()) {
-    return NextResponse.json({ message: "Tự động hoá chưa được thiết lập." }, { status: 400 });
+    return jsonError("Tự động hoá chưa được thiết lập.", 400);
   }
 
   let active = rule.enabled;
@@ -36,12 +37,13 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     try {
       const result = await activateN8nWorkflow(rule.n8nWorkflowId);
       active = Boolean(result.active);
-    } catch {
+    } catch (error) {
+      console.error("[api] Không thể kích hoạt workflow n8n:", error);
       active = false;
     }
     await updateRule(rule.id, { enabled: active });
     if (!active) {
-      return NextResponse.json({ message: "Không thể kích hoạt — kiểm tra cấu hình." }, { status: 502 });
+      return jsonError("Không thể kích hoạt — kiểm tra cấu hình.", 502);
     }
   }
 
@@ -63,10 +65,12 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) {
-      return NextResponse.json({ message: "Đã kích hoạt nhưng chạy thử thất bại — kiểm tra cấu hình." }, { status: 502 });
+      console.error(`[api] Webhook n8n trả về HTTP ${res.status}.`);
+      return jsonError("Đã kích hoạt nhưng chạy thử thất bại — kiểm tra cấu hình.", 502);
     }
     return NextResponse.json({ message: "Đã chạy thử — kiểm tra email tại MailHog." });
-  } catch {
-    return NextResponse.json({ message: "Đã kích hoạt nhưng chạy thử thất bại — kiểm tra cấu hình." }, { status: 502 });
+  } catch (error) {
+    console.error("[api] Không thể gọi webhook chạy thử của n8n:", error);
+    return jsonError("Đã kích hoạt nhưng chạy thử thất bại — kiểm tra cấu hình.", 502);
   }
-}
+});

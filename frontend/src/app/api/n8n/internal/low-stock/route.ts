@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { jsonError, withErrorHandler } from "@/server/http";
 import { requireInternalToken } from "@/server/internalAuth";
 import { evaluateAlerts } from "@/server/store/automation";
 import { listWarehouses } from "@/server/store/warehouses";
 
 // Dùng bởi workflow n8n "Cảnh báo tồn kho thấp" — tái dùng nguyên vẹn evaluateAlerts()
 // (cùng logic với trang Tự động hoá), chỉ lọc theo 1 kho cụ thể trong vòng lặp của n8n.
-export async function GET(request: Request) {
+export const GET = withErrorHandler(async (request: Request) => {
   const unauthorized = requireInternalToken(request);
   if (unauthorized) return unauthorized;
 
@@ -13,13 +14,13 @@ export async function GET(request: Request) {
   const warehouseId = searchParams.get("warehouseId");
 
   if (!warehouseId) {
-    return NextResponse.json({ message: "Thiếu warehouseId." }, { status: 400 });
+    return jsonError("Thiếu warehouseId.", 400);
   }
 
   const warehouses = await listWarehouses();
   const warehouse = warehouses.find((w) => w.id === warehouseId);
   if (!warehouse) {
-    return NextResponse.json({ message: "Không tìm thấy kho." }, { status: 404 });
+    return jsonError("Không tìm thấy kho.", 404);
   }
 
   const alerts = await evaluateAlerts([warehouseId]);
@@ -35,4 +36,4 @@ export async function GET(request: Request) {
       threshold: a.thresholdQty,
     })),
   });
-}
+});

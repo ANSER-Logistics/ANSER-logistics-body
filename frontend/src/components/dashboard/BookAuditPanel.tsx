@@ -49,7 +49,7 @@ export default function BookAuditPanel() {
       const res = await fetch("/api/ai/period-diff", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setLoi(data.detail ?? data.error ?? `Lỗi ${res.status}`);
+        setLoi(data.message ?? data.detail ?? data.error ?? `Lỗi ${res.status}`);
         return;
       }
       setDiff(data as KetQuaDiff);
@@ -71,7 +71,7 @@ export default function BookAuditPanel() {
       const res = await fetch("/api/ai/vat-catalog", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setLoi(data.detail ?? data.error ?? `Lỗi ${res.status}`);
+        setLoi(data.message ?? data.detail ?? data.error ?? `Lỗi ${res.status}`);
         return;
       }
       setThue(data as BrainProductImport);

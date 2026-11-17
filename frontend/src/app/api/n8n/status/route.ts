@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { withErrorHandler } from "@/server/http";
 import { requireSessionUser } from "@/server/session";
 
 // n8n mặc định có endpoint /healthz không cần xác thực — dùng để hiện pill trạng thái
 // kết nối trên trang Tự động hoá, giống ANSER Flask.
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const { response } = await requireSessionUser();
   if (response) return response;
 
@@ -21,4 +22,4 @@ export async function GET() {
   } catch {
     return NextResponse.json({ configured: true, connected: false, apiConfigured });
   }
-}
+});

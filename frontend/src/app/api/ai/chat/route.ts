@@ -1,39 +1,40 @@
 import { NextResponse } from "next/server";
-import { askBrain, brainErrorToHttp } from "@/server/brain";
-import { getSessionUser } from "@/server/session";
+import { z } from "zod";
+import { askBrain } from "@/server/brain";
+import { brainErrorResponse } from "@/server/brainHttp";
+import { jsonError, withErrorHandler } from "@/server/http";
+import { requireSessionUser } from "@/server/session";
 import { listWarehouses } from "@/server/store/warehouses";
+import { parseJsonBody } from "@/server/validation";
 
-export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+const chatSchema = z.object({
+  message: z
+    .string({ error: "Thiếu nội dung tin nhắn" })
+    .trim()
+    .min(1, "Thiếu nội dung tin nhắn")
+    // Chặn ngay ở cửa thay vì để Brain nuốt một prompt khổng lồ rồi mới hết giờ.
+    .max(4000, "Tin nhắn quá dài (tối đa 4000 ký tự)"),
+  // Chỉ là gợi ý — sai kiểu thì bỏ qua (về kho mặc định) chứ không báo lỗi, như trước.
+  warehouseId: z.string().optional().catch(undefined),
+});
 
-  let body: { message?: unknown; warehouseId?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Body phải là JSON" }, { status: 400 });
-  }
+export const POST = withErrorHandler(async (request: Request) => {
+  const { user, response } = await requireSessionUser();
+  if (response) return response;
 
-  const message = typeof body.message === "string" ? body.message.trim() : "";
-  if (!message) {
-    return NextResponse.json({ error: "Thiếu nội dung tin nhắn" }, { status: 400 });
-  }
-  // Chặn ngay ở cửa thay vì để Brain nuốt một prompt khổng lồ rồi mới hết giờ.
-  if (message.length > 4000) {
-    return NextResponse.json({ error: "Tin nhắn quá dài (tối đa 4000 ký tự)" }, { status: 400 });
-  }
+  const { data: body, response: invalid } = await parseJsonBody(request, chatSchema);
+  if (invalid) return invalid;
 
   // `warehouseId` từ client CHỈ là gợi ý — phải đối chiếu với kho có thật.
   // Nhận thẳng giá trị client gửi là mở đường cho việc hỏi dữ liệu kho khác.
   const warehouses = await listWarehouses();
   if (warehouses.length === 0) {
-    return NextResponse.json({ error: "Chưa có kho nào" }, { status: 409 });
+    return jsonError("Chưa có kho nào", 409);
   }
-  const requested = typeof body.warehouseId === "string" ? body.warehouseId : null;
-  const warehouse = warehouses.find((w) => w.id === requested) ?? warehouses[0];
+  const warehouse = warehouses.find((w) => w.id === body.warehouseId) ?? warehouses[0];
 
   try {
-    const answer = await askBrain(message, { userId: user.id, warehouseId: warehouse.id });
+    const answer = await askBrain(body.message, { userId: user.id, warehouseId: warehouse.id });
     return NextResponse.json({
       reply: answer.answer,
       sources: answer.sources ?? null,
@@ -42,7 +43,6 @@ export async function POST(request: Request) {
       taskId: answer.taskId,
     });
   } catch (error) {
-    const { status, body: errorBody, headers } = brainErrorToHttp(error);
-    return NextResponse.json(errorBody, { status, headers });
+    return brainErrorResponse(error);
   }
-}
+});

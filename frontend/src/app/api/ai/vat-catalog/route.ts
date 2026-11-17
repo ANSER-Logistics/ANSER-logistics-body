@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { brainErrorToHttp, importProductFile } from "@/server/brain";
-import { getSessionUser } from "@/server/session";
+import { withErrorHandler } from "@/server/http";
+import { importProductFile } from "@/server/brain";
+import { brainErrorResponse } from "@/server/brainHttp";
+import { requireSessionUser } from "@/server/session";
 import { layFileTaiLen, truongText } from "@/server/uploadGuard";
 
 /**
@@ -14,9 +16,9 @@ import { layFileTaiLen, truongText } from "@/server/uploadGuard";
  * Kết quả là ĐỀ XUẤT kèm căn cứ, không phải quyết định thay kế toán — giao diện
  * phải giữ nguyên câu lưu ý đó.
  */
-export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+export const POST = withErrorHandler(async (request: Request) => {
+  const { response } = await requireSessionUser();
+  if (response) return response;
 
   const kq = await layFileTaiLen(request);
   if (kq instanceof NextResponse) return kq;
@@ -26,7 +28,6 @@ export async function POST(request: Request) {
       await importProductFile(kq.file, { sheet: truongText(kq.form, "sheet") }),
     );
   } catch (error) {
-    const { status, body, headers } = brainErrorToHttp(error);
-    return NextResponse.json(body, { status, headers });
+    return brainErrorResponse(error);
   }
-}
+});

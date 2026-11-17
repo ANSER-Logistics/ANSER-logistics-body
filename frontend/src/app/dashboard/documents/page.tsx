@@ -75,7 +75,7 @@ function KhoTaiLieu() {
       const r = await fetch("/api/ai/documents", { cache: "no-store" });
       const d = await r.json();
       if (r.ok) setDocs(d.documents ?? []);
-      else setError(d.detail ?? d.error ?? `Lỗi ${r.status}`);
+      else setError(d.message ?? d.detail ?? d.error ?? `Lỗi ${r.status}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -104,7 +104,7 @@ function KhoTaiLieu() {
       const r = await fetch("/api/ai/documents", { method: "POST", body: form });
       const d = await r.json();
       if (!r.ok) {
-        setError(d.detail ?? d.error ?? `Lỗi ${r.status}`);
+        setError(d.message ?? d.detail ?? d.error ?? `Lỗi ${r.status}`);
         return;
       }
       setResult(d as BrainIngestResult);
@@ -124,7 +124,7 @@ function KhoTaiLieu() {
     });
     if (!r.ok) {
       const d = await r.json().catch(() => ({}));
-      setError(d.detail ?? d.error ?? `Không xoá được (${r.status})`);
+      setError(d.message ?? d.detail ?? d.error ?? `Không xoá được (${r.status})`);
       return;
     }
     await load();
@@ -290,7 +290,7 @@ function DocHoaDon() {
       const r = await fetch("/api/ai/freight-invoice", { method: "POST", body: form });
       const d = await r.json();
       if (!r.ok) {
-        setError(d.detail ?? d.error ?? `Lỗi ${r.status}`);
+        setError(d.message ?? d.detail ?? d.error ?? `Lỗi ${r.status}`);
         return;
       }
       setKq(d as BrainFreightInvoice);

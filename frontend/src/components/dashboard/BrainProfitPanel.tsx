@@ -52,7 +52,7 @@ export default function BrainProfitPanel() {
       const res = await fetch(`/api/ai/report?granularity=${g}&months=12`, { cache: "no-store" });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(body.detail ?? body.error ?? `Lỗi ${res.status}`);
+        setError(body.message ?? body.detail ?? body.error ?? `Lỗi ${res.status}`);
         setData(null);
         return;
       }
