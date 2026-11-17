@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { brainErrorToHttp, buildReport } from "@/server/brain";
+import { jsonError, withErrorHandler } from "@/server/http";
+import { buildReport } from "@/server/brain";
 import { collectSaleLines } from "@/server/brainReport";
-import { getSessionUser } from "@/server/session";
+import { brainErrorResponse } from "@/server/brainHttp";
+import { requireSessionUser } from "@/server/session";
 import { listWarehouses } from "@/server/store/warehouses";
 
 const GRANULARITIES = ["month", "quarter", "half", "year"] as const;
@@ -20,9 +22,9 @@ function parseGranularity(value: string | null): Granularity {
  * bằng code thuần, không phải model sinh SQL — con số tài chính sai mà nghe
  * xuôi tai là loại lỗi không ai phát hiện tới lúc quyết toán.
  */
-export async function GET(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+export const GET = withErrorHandler(async (request: Request) => {
+  const { response } = await requireSessionUser();
+  if (response) return response;
 
   const { searchParams } = new URL(request.url);
   const granularity = parseGranularity(searchParams.get("granularity"));
@@ -35,10 +37,7 @@ export async function GET(request: Request) {
   });
 
   if (lines.length === 0) {
-    return NextResponse.json({
-      error: "Chưa có dòng bán nào trong khoảng thời gian này",
-      months,
-    }, { status: 409 });
+    return jsonError("Chưa có dòng bán nào trong khoảng thời gian này", 409, { extra: { months } });
   }
 
   try {
@@ -55,7 +54,6 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    const { status, body, headers } = brainErrorToHttp(error);
-    return NextResponse.json(body, { status, headers });
+    return brainErrorResponse(error);
   }
-}
+});

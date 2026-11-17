@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { brainErrorToHttp, importInventoryFile } from "@/server/brain";
+import { jsonError, withErrorHandler } from "@/server/http";
+import { importInventoryFile } from "@/server/brain";
 import { comparePeriods } from "@/server/brain";
-import { getSessionUser } from "@/server/session";
+import { brainErrorResponse } from "@/server/brainHttp";
+import { requireSessionUser } from "@/server/session";
 import { MAX_UPLOAD_BYTES } from "@/server/uploadGuard";
 
 /**
@@ -14,34 +16,25 @@ import { MAX_UPLOAD_BYTES } from "@/server/uploadGuard";
  * Thứ tự QUAN TRỌNG: 'truoc' phải là bản xuất sớm hơn. Truyền ngược thì Brain
  * từ chối so và nói rõ là nhầm thứ tự, chứ không cho ra một kết quả vô nghĩa.
  */
-export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+export const POST = withErrorHandler(async (request: Request) => {
+  const { response } = await requireSessionUser();
+  if (response) return response;
 
   let form: FormData;
   try {
     form = await request.formData();
   } catch {
-    return NextResponse.json(
-      { error: "Cần gửi multipart/form-data kèm hai file 'truoc' và 'sau'" },
-      { status: 400 },
-    );
+    return jsonError("Cần gửi multipart/form-data kèm hai file 'truoc' và 'sau'", 400);
   }
 
   const truoc = form.get("truoc");
   const sau = form.get("sau");
   for (const [ten, f] of [["truoc", truoc], ["sau", sau]] as const) {
     if (!(f instanceof File) || f.size === 0) {
-      return NextResponse.json(
-        { error: `Chưa chọn file '${ten}'. Cần cả hai bản xuất để so.` },
-        { status: 400 },
-      );
+      return jsonError(`Chưa chọn file '${ten}'. Cần cả hai bản xuất để so.`, 400);
     }
     if (f.size > MAX_UPLOAD_BYTES) {
-      return NextResponse.json(
-        { error: `File '${ten}' quá lớn (tối đa 5MB)` },
-        { status: 413 },
-      );
+      return jsonError(`File '${ten}' quá lớn (tối đa 5MB)`, 413);
     }
   }
 
@@ -87,7 +80,6 @@ export async function POST(request: Request) {
     );
     return NextResponse.json({ ...diff, imports: { truoc: a.import, sau: b.import } });
   } catch (error) {
-    const { status, body, headers } = brainErrorToHttp(error);
-    return NextResponse.json(body, { status, headers });
+    return brainErrorResponse(error);
   }
-}
+});
