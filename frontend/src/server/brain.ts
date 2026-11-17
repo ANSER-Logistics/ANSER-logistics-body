@@ -306,6 +306,9 @@ export async function checkBrainHealth(): Promise<
 // Hội thoại
 // ---------------------------------------------------------------------------
 
+/** Một lượt hội thoại trước câu hiện tại. Hợp đồng `history` của `/chat`: Body#28, Brain#128. */
+export type BrainChatTurn = { role: "user" | "assistant"; content: string };
+
 export type BrainChatResponse = {
   answer: string;
   sources?: string[] | null;
@@ -332,12 +335,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export async function askBrain(
   message: string,
   identity: BrainIdentity,
+  // Luôn gửi, kể cả rỗng: vắng trường thì Brain lùi về đọc 6 bảng chat không tồn tại (Body#28).
+  history: BrainChatTurn[] = [],
 ): Promise<BrainChatResponse & { taskId: string }> {
   const accepted = await callBrain<TaskAccepted>("/chat", "chat", {
     method: "POST",
     identity,
     // Brain lấy danh tính từ header khi có; thân request giữ cho tương thích.
-    body: { user_id: identity.userId, store_id: identity.warehouseId, message },
+    body: { user_id: identity.userId, store_id: identity.warehouseId, message, history },
   });
 
   if (!accepted?.task_id) {

@@ -44,6 +44,20 @@ export default function BrainChat() {
     const question = text.trim();
     if (!question || busy) return;
 
+    // Hội thoại chỉ sống trong state này (không lưu DB): gửi kèm các lượt trước để Brain hiểu câu
+    // nối tiếp. Bỏ bong bóng lỗi. `text` của Brain là nguyên `answer` — nhánh "giải thích số" bên
+    // Brain tìm khối JSON trong đó. Cắt 4000 ký tự vì route và Brain từ chối tin dài hơn.
+    const history = messages
+      .flatMap((m) =>
+        m.role === "user"
+          ? [{ role: "user", content: m.text }]
+          : m.role === "brain"
+            ? [{ role: "assistant", content: m.text }]
+            : [],
+      )
+      .slice(-6)
+      .map((t) => ({ ...t, content: t.content.slice(0, 4000) }));
+
     setMessages((m) => [...m, { role: "user", text: question }]);
     setInput("");
     setBusy(true);
@@ -52,7 +66,7 @@ export default function BrainChat() {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: question }),
+        body: JSON.stringify({ message: question, history }),
       });
       const data = await res.json().catch(() => ({}));
 
