@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import TrangThaiAI from "@/components/dashboard/TrangThaiAI";
 import {
   AlertTriangleIcon,
   BoltIcon,
+  BookIcon,
   BoxIcon,
   ChartIcon,
   HomeIcon,
@@ -30,6 +32,9 @@ const navItems = [
   { label: "Tự động hoá", icon: BoltIcon, href: "/dashboard/automation" },
   { label: "Nhân sự", icon: StaffIcon, href: "/dashboard/staff" },
   { label: "Cài đặt", icon: SettingsIcon, href: "/dashboard/settings" },
+  // Cuối danh sách, nhưng CÓ trong danh sách: hướng dẫn nằm trong tài liệu
+  // riêng thì lúc bí không ai nhớ nó ở đâu.
+  { label: "Hướng dẫn dùng", icon: BookIcon, href: "/dashboard/huong-dan" },
 ];
 
 export default function Sidebar() {
@@ -38,9 +43,7 @@ export default function Sidebar() {
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-white/[0.08] bg-white/[0.02] p-4 sm:flex">
       <Link href="/" className="mb-8 flex items-center gap-2 px-2 text-lg font-extrabold tracking-tight">
-        <span className="bg-gradient-to-br from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-          ▲
-        </span>
+        <span className="bg-gradient-to-br from-emerald-400 to-teal-300 bg-clip-text text-transparent">▲</span>
         ANSER
       </Link>
 
@@ -85,9 +88,14 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="rounded-xl border border-white/[0.08] bg-black/30 p-4">
-        <p className="text-xs font-semibold text-zinc-300">ANSER Engine v2.0</p>
-        <p className="mt-1 text-[11px] text-zinc-500">Bản demo — dữ liệu mẫu</p>
+      <div className="space-y-3 rounded-xl border border-white/[0.08] bg-black/30 p-4">
+        <div>
+          <p className="text-xs font-semibold text-zinc-300">ANSER Engine v2.0</p>
+          <p className="mt-1 text-[11px] text-zinc-500">Bản demo — dữ liệu mẫu</p>
+        </div>
+        <div className="border-t border-white/[0.06] pt-3">
+          <TrangThaiAI />
+        </div>
       </div>
     </aside>
   );

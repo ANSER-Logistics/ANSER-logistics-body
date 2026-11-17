@@ -41,11 +41,7 @@ export class BrainError extends Error {
   /** Chỉ có khi kind === "overloaded" — số giây Brain đề nghị chờ. */
   readonly retryAfterSeconds?: number;
 
-  constructor(
-    kind: BrainErrorKind,
-    message: string,
-    opts: { status?: number; retryAfterSeconds?: number } = {},
-  ) {
+  constructor(kind: BrainErrorKind, message: string, opts: { status?: number; retryAfterSeconds?: number } = {}) {
     super(message);
     this.name = "BrainError";
     this.kind = kind;
@@ -96,9 +92,7 @@ export function brainErrorToHttp(error: unknown): {
       detail: err.message,
       ...(err.retryAfterSeconds ? { retry_after_s: err.retryAfterSeconds } : {}),
     },
-    ...(err.retryAfterSeconds
-      ? { headers: { "Retry-After": String(err.retryAfterSeconds) } }
-      : {}),
+    ...(err.retryAfterSeconds ? { headers: { "Retry-After": String(err.retryAfterSeconds) } } : {}),
   };
 }
 
@@ -143,10 +137,7 @@ export function isBrainConfigured(): boolean {
 function brainUrl(path: string): string {
   const base = process.env.BRAIN_URL;
   if (!base) {
-    throw new BrainError(
-      "not_configured",
-      "Chưa cấu hình BRAIN_URL — Body không biết gọi Brain ở đâu.",
-    );
+    throw new BrainError("not_configured", "Chưa cấu hình BRAIN_URL — Body không biết gọi Brain ở đâu.");
   }
   return `${base.replace(/\/$/, "")}${path}`;
 }
@@ -172,10 +163,7 @@ export type BrainIdentity = {
 function transportError(error: unknown, url: string, path: string, op: Op): BrainError {
   // AbortSignal.timeout() ném TimeoutError; mọi thứ khác là không nối được.
   if (error instanceof DOMException && error.name === "TimeoutError") {
-    return new BrainError(
-      "timeout",
-      `Brain không trả lời trong ${timeoutMs(op) / 1000}s (${path}).`,
-    );
+    return new BrainError("timeout", `Brain không trả lời trong ${timeoutMs(op) / 1000}s (${path}).`);
   }
   return new BrainError(
     "unreachable",
@@ -236,11 +224,7 @@ async function parseResponse<T>(response: Response, path: string): Promise<T> {
       } catch {
         /* không phải JSON — giữ nguyên văn */
       }
-      throw new BrainError(
-        "not_ready",
-        ly || "Một thành phần của Brain chưa sẵn sàng.",
-        { status: 503 },
-      );
+      throw new BrainError("not_ready", ly || "Một thành phần của Brain chưa sẵn sàng.", { status: 503 });
     }
     if (response.status === 401 || response.status === 403) {
       throw new BrainError("unauthorized", "BRAIN_API_TOKEN sai hoặc thiếu.", {
@@ -284,6 +268,22 @@ export type BrainHealth = {
   runtime_profile?: string;
   engine_error?: string | null;
   load?: Record<string, Record<string, number | string>>;
+  /**
+   * Brain CÓ đang kiểm token không.
+   *
+   * `require_api_token` bên Brain bỏ qua mọi kiểm tra khi biến môi trường rỗng
+   * — hợp lý lúc chạy máy mình, nhưng nếu biến đặt sai tên lúc triển khai thì
+   * Brain mở toang mà không dấu hiệu nào. Đã xảy ra thật: compose đặt
+   * `API_TOKEN` trong khi mã đọc `API_AUTH_TOKEN`.
+   *
+   * Brain phát tín hiệu này từ 13/08/2026 nhưng KHÔNG AI ĐỌC — kiểu đây thiếu
+   * trường, route health không chuyển tiếp, UI không hiện. Một phòng thủ dựng
+   * dở thì tệ hơn không dựng: nó làm ta tưởng đã che chỗ đó rồi.
+   *
+   * Không bắt buộc vì Brain cũ chưa trả trường này; `undefined` nghĩa là
+   * KHÔNG BIẾT, và không biết thì phải nói là không biết chứ không đoán là an toàn.
+   */
+  auth_enabled?: boolean;
 };
 
 /**
@@ -467,7 +467,6 @@ export async function auditInventory(req: {
   });
 }
 
-
 /**
  * Gửi multipart lên Brain. Ba đường dùng chung: nạp bảng N-X-T, nạp tài liệu
  * vào kho tri thức, và đọc ảnh hoá đơn nhà xe.
@@ -596,21 +595,19 @@ export async function uploadKnowledgeDocument(
 
 export async function listKnowledgeDocuments(workspaceId: string): Promise<BrainDocument[]> {
   const q = new URLSearchParams({ workspace_id: workspaceId });
-  const r = await callBrain<{ documents: BrainDocument[] }>(
-    `/knowledge/documents?${q}`, "tool", { method: "GET" },
-  );
+  const r = await callBrain<{ documents: BrainDocument[] }>(`/knowledge/documents?${q}`, "tool", { method: "GET" });
   return r.documents ?? [];
 }
 
-export async function deleteKnowledgeDocument(
-  workspaceId: string, source: string,
-): Promise<void> {
+export async function deleteKnowledgeDocument(workspaceId: string, source: string): Promise<void> {
   const q = new URLSearchParams({ workspace_id: workspaceId, source });
   await callBrain(`/knowledge/documents?${q}`, "tool", { method: "DELETE" });
 }
 
 export async function searchKnowledge(
-  workspaceId: string, query: string, topK = 5,
+  workspaceId: string,
+  query: string,
+  topK = 5,
 ): Promise<{ passages: BrainPassage[]; empty_reason: string | null }> {
   return callBrain("/knowledge/search", "tool", {
     method: "POST",
@@ -665,10 +662,7 @@ export type BrainInventoryImport = {
  * `audit` có thể là null — khi đó `audit_skipped_reason` nói vì sao, và giao
  * diện PHẢI hiện lý do đó chứ không được coi như "không có lỗi nào".
  */
-export async function importInventoryFile(
-  file: File,
-  opts: { sheet?: string } = {},
-): Promise<BrainInventoryImport> {
+export async function importInventoryFile(file: File, opts: { sheet?: string } = {}): Promise<BrainInventoryImport> {
   const form = new FormData();
   form.append("file", file, file.name);
   if (opts.sheet) form.append("sheet", opts.sheet);
@@ -796,10 +790,7 @@ export type BrainProductImport = {
   audit_skipped_reason: string | null;
 };
 
-export async function importProductFile(
-  file: File,
-  opts: { sheet?: string } = {},
-): Promise<BrainProductImport> {
+export async function importProductFile(file: File, opts: { sheet?: string } = {}): Promise<BrainProductImport> {
   const form = new FormData();
   form.append("file", file, file.name);
   if (opts.sheet) form.append("sheet", opts.sheet);
@@ -847,10 +838,7 @@ export type BrainPeriodDiff = {
  * `truoc` phải là bản xuất SỚM hơn. Truyền ngược thì Brain từ chối so và nói rõ
  * là nhầm thứ tự, chứ không im lặng cho ra kết quả vô nghĩa.
  */
-export async function comparePeriods(
-  truoc: BrainPeriodSide,
-  sau: BrainPeriodSide,
-): Promise<BrainPeriodDiff> {
+export async function comparePeriods(truoc: BrainPeriodSide, sau: BrainPeriodSide): Promise<BrainPeriodDiff> {
   return callBrain<BrainPeriodDiff>("/tools/period-diff", "tool", {
     method: "POST",
     body: { truoc, sau },
