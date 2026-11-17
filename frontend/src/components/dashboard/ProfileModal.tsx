@@ -90,9 +90,7 @@ export default function ProfileModal({
         <div className="flex flex-col gap-4">
           <h3 className="text-xs font-semibold text-zinc-400 uppercase">Thông tin cá nhân</h3>
           {profileError && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{profileError}</p>}
-          {profileSaved && (
-            <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">Đã lưu.</p>
-          )}
+          {profileSaved && <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">Đã lưu.</p>}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -142,9 +140,7 @@ export default function ProfileModal({
           <hr className="border-white/[0.08]" />
 
           <h3 className="text-xs font-semibold text-zinc-400 uppercase">Đổi mật khẩu</h3>
-          {passwordError && (
-            <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{passwordError}</p>
-          )}
+          {passwordError && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{passwordError}</p>}
           {passwordSaved && (
             <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">Đã đổi mật khẩu.</p>
           )}

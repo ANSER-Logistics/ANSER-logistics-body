@@ -46,10 +46,7 @@ export async function POST(request: Request) {
   }
   // Kiểm nhẹ tay: điện thoại đôi khi không gắn MIME. Có gắn mà sai loại thì chặn.
   if (file.type && !ALLOWED.includes(file.type)) {
-    return NextResponse.json(
-      { error: `Chưa đọc được định dạng ${file.type}. Gửi ảnh JPG hoặc PNG.` },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: `Chưa đọc được định dạng ${file.type}. Gửi ảnh JPG hoặc PNG.` }, { status: 400 });
   }
 
   try {

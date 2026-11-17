@@ -251,7 +251,9 @@ export default function AutomationPage() {
         <div>
           <h1 className="text-2xl font-bold">Tự động hoá</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[n8nStatus]}`}>
+            <span
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[n8nStatus]}`}
+            >
               <span className={`h-1.5 w-1.5 rounded-full ${statusDot[n8nStatus]}`} />
               {statusText[n8nStatus]}
             </span>
@@ -275,9 +277,7 @@ export default function AutomationPage() {
 
       {showTemplates && (
         <div className="rounded-2xl border border-sky-500/20 bg-sky-500/[0.04] p-5">
-          <p className="mb-4 text-xs font-semibold text-sky-400">
-            Chọn mẫu có sẵn để thêm nhanh vào Quy tắc bên dưới.
-          </p>
+          <p className="mb-4 text-xs font-semibold text-sky-400">Chọn mẫu có sẵn để thêm nhanh vào Quy tắc bên dưới.</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {WORKFLOW_TEMPLATES.map((t) => {
               const meta = ruleTypeMeta(t.type);
@@ -318,9 +318,7 @@ export default function AutomationPage() {
               <BoltIcon className="h-6 w-6" />
             </div>
             <h3 className="mt-4 text-sm font-semibold text-zinc-200">Chưa có quy tắc nào</h3>
-            <p className="mt-1 max-w-sm text-xs text-zinc-500">
-              Chọn mẫu có sẵn trong Templates để bắt đầu.
-            </p>
+            <p className="mt-1 max-w-sm text-xs text-zinc-500">Chọn mẫu có sẵn trong Templates để bắt đầu.</p>
             <button
               onClick={() => setShowTemplates(true)}
               className="mt-4 flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition-transform hover:-translate-y-0.5"
@@ -365,7 +363,9 @@ export default function AutomationPage() {
                     {rule.type === "low_stock_alert" ? (
                       <>
                         Ngưỡng tồn kho &lt; {rule.thresholdQty ?? 20}
-                        {rule.categoryId ? ` · ${categoryName(rule.categoryId) ?? "Danh mục đã xoá"}` : " · Mọi danh mục"}
+                        {rule.categoryId
+                          ? ` · ${categoryName(rule.categoryId) ?? "Danh mục đã xoá"}`
+                          : " · Mọi danh mục"}
                         {rule.warehouseId ? ` · ${warehouseName(rule.warehouseId) ?? "Kho đã xoá"}` : " · Mọi kho"}
                       </>
                     ) : (
@@ -463,10 +463,7 @@ export default function AutomationPage() {
           <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-zinc-950 p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Lịch sử chạy — {historyRule.name}</h2>
-              <button
-                onClick={() => setHistoryRule(null)}
-                className="rounded-lg p-1 text-zinc-400 hover:text-white"
-              >
+              <button onClick={() => setHistoryRule(null)} className="rounded-lg p-1 text-zinc-400 hover:text-white">
                 <XIcon className="h-5 w-5" />
               </button>
             </div>

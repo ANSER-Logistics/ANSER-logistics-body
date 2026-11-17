@@ -16,8 +16,7 @@ import type { BrainDocument, BrainFreightInvoice, BrainIngestResult } from "@/se
  *     và "đã kiểm và đúng" là hai trạng thái khác nhau.
  */
 
-const vnd = (n: number | null | undefined) =>
-  n === null || n === undefined ? "—" : `${n.toLocaleString("vi-VN")} ₫`;
+const vnd = (n: number | null | undefined) => (n === null || n === undefined ? "—" : `${n.toLocaleString("vi-VN")} ₫`);
 
 type Tab = "tai-lieu" | "hoa-don";
 
@@ -28,28 +27,27 @@ export default function DocumentsPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold">Tài liệu &amp; hoá đơn</h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          Nạp tài liệu nội bộ để hỏi đáp, và đọc hoá đơn nhà xe từ ảnh chụp.
-        </p>
+        <p className="mt-1 text-sm text-zinc-400">Nạp tài liệu nội bộ để hỏi đáp, và đọc hoá đơn nhà xe từ ảnh chụp.</p>
       </div>
 
       <div className="flex gap-2 border-b border-white/[0.08]">
-        {([["tai-lieu", "Tài liệu nội bộ"], ["hoa-don", "Hoá đơn nhà xe"]] as const).map(
-          ([k, label]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setTab(k)}
-              className={`px-4 py-2.5 text-sm font-semibold transition-colors ${
-                tab === k
-                  ? "border-b-2 border-sky-500 text-white"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {label}
-            </button>
-          ),
-        )}
+        {(
+          [
+            ["tai-lieu", "Tài liệu nội bộ"],
+            ["hoa-don", "Hoá đơn nhà xe"],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setTab(k)}
+            className={`px-4 py-2.5 text-sm font-semibold transition-colors ${
+              tab === k ? "border-b-2 border-sky-500 text-white" : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {tab === "tai-lieu" ? <KhoTaiLieu /> : <DocHoaDon />}
@@ -135,8 +133,8 @@ function KhoTaiLieu() {
       <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
         <h3 className="text-sm font-bold">Nạp tài liệu</h3>
         <p className="mt-1 text-sm text-zinc-400">
-          Hợp đồng, bảng giá cước, quy định giao nhận, chính sách công nợ.
-          Nhận <span className="text-zinc-300">.pdf, .docx, .txt, .md</span>.
+          Hợp đồng, bảng giá cước, quy định giao nhận, chính sách công nợ. Nhận{" "}
+          <span className="text-zinc-300">.pdf, .docx, .txt, .md</span>.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">
@@ -173,8 +171,8 @@ function KhoTaiLieu() {
           </div>
 
           <p className="text-xs text-zinc-500">
-            Điền ngày hiệu lực thì bảng giá cũ tự động không được dùng để trả lời câu hỏi
-            hôm nay — nhưng vẫn tra cứu lại được khi cần xem quá khứ.
+            Điền ngày hiệu lực thì bảng giá cũ tự động không được dùng để trả lời câu hỏi hôm nay — nhưng vẫn tra cứu
+            lại được khi cần xem quá khứ.
           </p>
 
           <button
@@ -218,9 +216,7 @@ function KhoTaiLieu() {
 
       <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.02]">
         <div className="border-b border-white/[0.08] p-5">
-          <h3 className="text-sm font-semibold text-zinc-200">
-            Đang có trong kho ({docs.length})
-          </h3>
+          <h3 className="text-sm font-semibold text-zinc-200">Đang có trong kho ({docs.length})</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -245,9 +241,11 @@ function KhoTaiLieu() {
                   <td className="px-5 py-3 font-medium">{d.source}</td>
                   <td className="px-5 py-3 text-zinc-400">{d.chunks}</td>
                   <td className="px-5 py-3 text-zinc-400">
-                    {d.effective_from || d.effective_to
-                      ? `${d.effective_from ?? "…"} → ${d.effective_to ?? "nay"}`
-                      : <span className="text-zinc-600">không ghi</span>}
+                    {d.effective_from || d.effective_to ? (
+                      `${d.effective_from ?? "…"} → ${d.effective_to ?? "nay"}`
+                    ) : (
+                      <span className="text-zinc-600">không ghi</span>
+                    )}
                   </td>
                   <td className="px-5 py-3 text-right">
                     <button
@@ -309,8 +307,8 @@ function DocHoaDon() {
       <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
         <h3 className="text-sm font-bold">Đọc hoá đơn từ ảnh</h3>
         <p className="mt-1 text-sm text-zinc-400">
-          Chụp bằng điện thoại cũng được. Máy đọc xong sẽ <span className="text-zinc-300">tính
-          lại toàn bộ số tiền</span> và đối chiếu với con số in trên tờ giấy.
+          Chụp bằng điện thoại cũng được. Máy đọc xong sẽ{" "}
+          <span className="text-zinc-300">tính lại toàn bộ số tiền</span> và đối chiếu với con số in trên tờ giấy.
         </p>
         <p className="mt-2 text-xs text-zinc-500">Ảnh chỉ đi qua để đọc, không lưu lại.</p>
 
@@ -344,9 +342,7 @@ function DocHoaDon() {
       )}
 
       {kq && !kq.success && (
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-sm text-red-300">
-          {kq.error}
-        </div>
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-sm text-red-300">{kq.error}</div>
       )}
 
       {kq?.success && inv && v && (
@@ -355,16 +351,10 @@ function DocHoaDon() {
               và phải trông khác nhau. */}
           <div
             className={`rounded-2xl border p-5 ${
-              kq.needs_manual_review
-                ? "border-amber-500/25 bg-amber-500/10"
-                : "border-emerald-500/20 bg-emerald-500/10"
+              kq.needs_manual_review ? "border-amber-500/25 bg-amber-500/10" : "border-emerald-500/20 bg-emerald-500/10"
             }`}
           >
-            <p
-              className={`text-sm font-bold ${
-                kq.needs_manual_review ? "text-amber-400" : "text-emerald-400"
-              }`}
-            >
+            <p className={`text-sm font-bold ${kq.needs_manual_review ? "text-amber-400" : "text-emerald-400"}`}>
               {kq.needs_manual_review ? "Cần người xem lại" : "Số liệu khớp — dùng được"}
             </p>
             {v.issues.length > 0 && (
@@ -375,14 +365,10 @@ function DocHoaDon() {
               </ul>
             )}
             {v.missing_required.length > 0 && (
-              <p className="mt-2 text-sm text-amber-200/80">
-                Thiếu trường bắt buộc: {v.missing_required.join(", ")}
-              </p>
+              <p className="mt-2 text-sm text-amber-200/80">Thiếu trường bắt buộc: {v.missing_required.join(", ")}</p>
             )}
             {v.checks_performed.length > 0 && (
-              <p className="mt-2 text-xs text-zinc-500">
-                Đã kiểm: {v.checks_performed.join(" · ")}
-              </p>
+              <p className="mt-2 text-xs text-zinc-500">Đã kiểm: {v.checks_performed.join(" · ")}</p>
             )}
           </div>
 
@@ -390,28 +376,26 @@ function DocHoaDon() {
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
               <h3 className="mb-4 text-sm font-semibold text-zinc-200">Đọc được</h3>
               <dl className="flex flex-col gap-2 text-sm">
-                {([
-                  ["Nhà xe", inv.carrier_name],
-                  ["Số hoá đơn", inv.invoice_no],
-                  ["Ngày", inv.invoice_date],
-                  ["Tuyến", inv.origin && inv.destination ? `${inv.origin} → ${inv.destination}` : null],
-                  ["Loại xe", inv.vehicle_type],
-                  ["Biển số", inv.plate_number],
-                ] as const).map(([k, val]) => (
+                {(
+                  [
+                    ["Nhà xe", inv.carrier_name],
+                    ["Số hoá đơn", inv.invoice_no],
+                    ["Ngày", inv.invoice_date],
+                    ["Tuyến", inv.origin && inv.destination ? `${inv.origin} → ${inv.destination}` : null],
+                    ["Loại xe", inv.vehicle_type],
+                    ["Biển số", inv.plate_number],
+                  ] as const
+                ).map(([k, val]) => (
                   <div key={k} className="flex justify-between gap-4">
                     <dt className="text-zinc-500">{k}</dt>
-                    <dd className={val ? "text-right" : "text-right text-amber-500/80"}>
-                      {val || "chưa đọc được"}
-                    </dd>
+                    <dd className={val ? "text-right" : "text-right text-amber-500/80"}>{val || "chưa đọc được"}</dd>
                   </div>
                 ))}
               </dl>
             </div>
 
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
-              <h3 className="mb-4 text-sm font-semibold text-zinc-200">
-                Số trên hoá đơn vs tính lại
-              </h3>
+              <h3 className="mb-4 text-sm font-semibold text-zinc-200">Số trên hoá đơn vs tính lại</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
@@ -422,15 +406,19 @@ function DocHoaDon() {
                     </tr>
                   </thead>
                   <tbody>
-                    {([
-                      ["Cộng tiền hàng", v.stated.subtotal, v.computed.subtotal],
-                      ["Tiền thuế", v.stated.vat_amount, v.computed.vat_amount],
-                      ["Tổng cộng", v.stated.total, v.computed.total],
-                    ] as const).map(([k, a, b]) => (
+                    {(
+                      [
+                        ["Cộng tiền hàng", v.stated.subtotal, v.computed.subtotal],
+                        ["Tiền thuế", v.stated.vat_amount, v.computed.vat_amount],
+                        ["Tổng cộng", v.stated.total, v.computed.total],
+                      ] as const
+                    ).map(([k, a, b]) => (
                       <tr key={k} className="border-b border-white/[0.05] last:border-0">
                         <td className="py-2 pr-3 text-zinc-400">{k}</td>
                         <td className="py-2 pr-3">{vnd(a)}</td>
-                        <td className={`py-2 ${a !== null && b !== null && Math.abs(a - b) > 1000 ? "text-amber-400" : "text-emerald-400"}`}>
+                        <td
+                          className={`py-2 ${a !== null && b !== null && Math.abs(a - b) > 1000 ? "text-amber-400" : "text-emerald-400"}`}
+                        >
                           {vnd(b)}
                         </td>
                       </tr>

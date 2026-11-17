@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/server/session";
-import {
-  applyCostImport,
-  previewCostImport,
-  type UnitCostRow,
-} from "@/server/store/inventoryCostImport";
+import { applyCostImport, previewCostImport, type UnitCostRow } from "@/server/store/inventoryCostImport";
 
 /**
  * Nạp giá vốn từ bảng Tổng hợp N-X-T vào cột `products.cost`.
@@ -52,10 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Thiếu mảng 'unit_costs'" }, { status: 400 });
   }
   if (rows.length === 0) {
-    return NextResponse.json(
-      { error: "Không có dòng giá vốn nào dùng được trong dữ liệu gửi lên" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Không có dòng giá vốn nào dùng được trong dữ liệu gửi lên" }, { status: 400 });
   }
 
   const dryRun = body.dryRun !== false;

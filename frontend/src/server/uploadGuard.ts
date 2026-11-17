@@ -22,10 +22,7 @@ export async function layFileTaiLen(
   try {
     form = await request.formData();
   } catch {
-    return NextResponse.json(
-      { error: `Cần gửi dạng multipart/form-data kèm trường '${truong}'` },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: `Cần gửi dạng multipart/form-data kèm trường '${truong}'` }, { status: 400 });
   }
 
   const file = form.get(truong);
@@ -34,10 +31,7 @@ export async function layFileTaiLen(
   }
   if (file.size > MAX_UPLOAD_BYTES) {
     const mb = (file.size / 1024 / 1024).toFixed(1);
-    return NextResponse.json(
-      { error: `File quá lớn (${mb}MB, tối đa 5MB)` },
-      { status: 413 },
-    );
+    return NextResponse.json({ error: `File quá lớn (${mb}MB, tối đa 5MB)` }, { status: 413 });
   }
   return { file, form };
 }

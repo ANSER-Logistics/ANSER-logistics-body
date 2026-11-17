@@ -53,8 +53,13 @@ function themNeuKhac(ra: ThayDoi[], truong: string, cu: unknown, moi: unknown) {
 
 export async function lapKeHoach(kq: KetQuaDoc): Promise<KeHoach> {
   const kh: KeHoach = {
-    loai: kq.loai, themMoi: [], capNhat: [], khongDoi: [],
-    loi: [], boQua: [], canhBao: [...kq.canhBao],
+    loai: kq.loai,
+    themMoi: [],
+    capNhat: [],
+    khongDoi: [],
+    loi: [],
+    boQua: [],
+    canhBao: [...kq.canhBao],
   };
 
   for (const d of kq.dong) {
@@ -71,24 +76,44 @@ export async function lapKeHoach(kq: KetQuaDoc): Promise<KeHoach> {
   // thể lệch nhau về việc "thế nào là trùng".
   const map = new Map<string, Record<string, unknown>>();
   if (kq.loai === "hang_hoa") {
-    const rows = await db.select({
-      id: products.id, code: products.code, name: products.name,
-      unit: products.unit, stock: products.stock, cost: products.cost,
-      categoryId: products.categoryId, isReducedVat: products.isReducedVat,
-    }).from(products);
+    const rows = await db
+      .select({
+        id: products.id,
+        code: products.code,
+        name: products.name,
+        unit: products.unit,
+        stock: products.stock,
+        cost: products.cost,
+        categoryId: products.categoryId,
+        isReducedVat: products.isReducedVat,
+      })
+      .from(products);
     rows.forEach((r) => map.set(r.code.toLowerCase(), r));
   } else {
     const bang = kq.loai === "khach_hang" ? customers : suppliers;
-    const rows = await db.select({
-      id: bang.id, code: bang.code, name: bang.name, address: bang.address,
-      taxCode: bang.taxCode, phone: bang.phone, openingDebt: bang.openingDebt,
-    }).from(bang).where(isNotNull(bang.code));
-    rows.forEach((r) => { if (r.code) map.set(r.code.toLowerCase(), r); });
+    const rows = await db
+      .select({
+        id: bang.id,
+        code: bang.code,
+        name: bang.name,
+        address: bang.address,
+        taxCode: bang.taxCode,
+        phone: bang.phone,
+        openingDebt: bang.openingDebt,
+      })
+      .from(bang)
+      .where(isNotNull(bang.code));
+    rows.forEach((r) => {
+      if (r.code) map.set(r.code.toLowerCase(), r);
+    });
   }
 
   for (const d of nhap) {
     const ht = map.get(d.code.toLowerCase());
-    if (!ht) { kh.themMoi.push({ dong: d }); continue; }
+    if (!ht) {
+      kh.themMoi.push({ dong: d });
+      continue;
+    }
 
     const td: ThayDoi[] = [];
     themNeuKhac(td, "Tên", ht.name, d.name);
@@ -129,14 +154,17 @@ type GiaoDich = Parameters<Parameters<typeof db.transaction>[0]>[0];
  * một bản xuất tổng hợp — ràng buộc `inv_tx_source_di_cung_nhau` cho phép cả hai
  * cùng NULL. Lý do nằm ở `note`.
  */
-async function ghiSoKho(tx: GiaoDich, a: {
-  productId: string;
-  warehouseId: string;
-  delta: number;
-  unitCost: number | null;
-  employeeId?: string;
-  note: string;
-}) {
+async function ghiSoKho(
+  tx: GiaoDich,
+  a: {
+    productId: string;
+    warehouseId: string;
+    delta: number;
+    unitCost: number | null;
+    employeeId?: string;
+    note: string;
+  },
+) {
   // `quantity` là numeric(14,3): làm tròn về 3 chữ số trước khi so với 0, không
   // thì sai số dấu phẩy động (598.8 − 598.79999…) sinh ra một dòng rác ~1e-13.
   const quantity = Math.round(a.delta * 1000) / 1000;
@@ -152,17 +180,15 @@ async function ghiSoKho(tx: GiaoDich, a: {
   });
 }
 
-export async function apDung(
-  kq: KetQuaDoc, warehouseId?: string, employeeId?: string,
-): Promise<KetQuaGhi> {
+export async function apDung(kq: KetQuaDoc, warehouseId?: string, employeeId?: string): Promise<KetQuaGhi> {
   const kh = await lapKeHoach(kq);
   const ra: KetQuaGhi = { them: 0, sua: 0, boQua: kh.boQua.length + kh.khongDoi.length, loi: [] };
 
   if (kq.loai === "hang_hoa" && !warehouseId) {
     throw new Error(
       "Chưa chọn kho. Bản xuất `Danh sách hàng hoá, dịch vụ` của MISA không có " +
-      "cột kho nào, mà `products.warehouse_id` là bắt buộc — nên kho phải do " +
-      "người chọn, không đoán được.",
+        "cột kho nào, mà `products.warehouse_id` là bắt buộc — nên kho phải do " +
+        "người chọn, không đoán được.",
     );
   }
 
@@ -171,9 +197,7 @@ export async function apDung(
   // xuất thật: 3 nhóm cho 161 mặt hàng) nên vòng này gần như không tốn gì.
   const idNhom = new Map<string, string>();
   if (kq.loai === "hang_hoa") {
-    for (const ten of new Set(
-      [...kh.themMoi, ...kh.capNhat].map((m) => m.dong.category).filter(Boolean) as string[],
-    )) {
+    for (const ten of new Set([...kh.themMoi, ...kh.capNhat].map((m) => m.dong.category).filter(Boolean) as string[])) {
       idNhom.set(ten, (await getOrCreateCategoryByName(ten)).id);
     }
   }
@@ -185,15 +209,25 @@ export async function apDung(
       for (const m of kh.themMoi) {
         const d = m.dong;
         const stock = d.stock ?? 0;
-        const [moi] = await tx.insert(products).values({
-          code: d.code, name: d.name, warehouseId: warehouseId!,
-          categoryId: d.category ? idNhom.get(d.category) ?? null : null,
-          unit: d.unit || "Cái", stock,
-          cost: d.cost ?? null, isReducedVat: d.isReducedVat ?? null,
-        }).returning({ id: products.id });
+        const [moi] = await tx
+          .insert(products)
+          .values({
+            code: d.code,
+            name: d.name,
+            warehouseId: warehouseId!,
+            categoryId: d.category ? (idNhom.get(d.category) ?? null) : null,
+            unit: d.unit || "Cái",
+            stock,
+            cost: d.cost ?? null,
+            isReducedVat: d.isReducedVat ?? null,
+          })
+          .returning({ id: products.id });
         await ghiSoKho(tx, {
-          productId: moi.id, warehouseId: warehouseId!, delta: stock,
-          unitCost: d.cost ?? null, employeeId,
+          productId: moi.id,
+          warehouseId: warehouseId!,
+          delta: stock,
+          unitCost: d.cost ?? null,
+          employeeId,
           note: `Nhập Excel MISA: tồn đầu ${stock}`,
         });
         ra.them++;
@@ -204,17 +238,29 @@ export async function apDung(
         // Đọc lại tồn TRONG giao dịch và khoá dòng: con số ở bước xem trước có
         // thể đã cũ (một hoá đơn bán vừa trừ kho giữa lúc xem và lúc xác nhận),
         // và chênh lệch ghi vào sổ kho phải tính trên tồn thật ngay lúc ghi.
-        const [ht] = await tx.select({ stock: products.stock, warehouseId: products.warehouseId })
-          .from(products).where(eq(products.id, m.idHienTai!)).for("update");
-        await tx.update(products).set({
-          name: d.name, unit: d.unit || "Cái", stock,
-          cost: d.cost ?? null, isReducedVat: d.isReducedVat ?? null,
-          ...(d.category ? { categoryId: idNhom.get(d.category) ?? null } : {}),
-          updatedAt: new Date(),
-        }).where(eq(products.id, m.idHienTai!));
+        const [ht] = await tx
+          .select({ stock: products.stock, warehouseId: products.warehouseId })
+          .from(products)
+          .where(eq(products.id, m.idHienTai!))
+          .for("update");
+        await tx
+          .update(products)
+          .set({
+            name: d.name,
+            unit: d.unit || "Cái",
+            stock,
+            cost: d.cost ?? null,
+            isReducedVat: d.isReducedVat ?? null,
+            ...(d.category ? { categoryId: idNhom.get(d.category) ?? null } : {}),
+            updatedAt: new Date(),
+          })
+          .where(eq(products.id, m.idHienTai!));
         await ghiSoKho(tx, {
-          productId: m.idHienTai!, warehouseId: ht.warehouseId, delta: stock - ht.stock,
-          unitCost: d.cost ?? null, employeeId,
+          productId: m.idHienTai!,
+          warehouseId: ht.warehouseId,
+          delta: stock - ht.stock,
+          unitCost: d.cost ?? null,
+          employeeId,
           note: `Nhập Excel MISA: điều chỉnh tồn ${ht.stock} → ${stock}`,
         });
         ra.sua++;
@@ -224,18 +270,27 @@ export async function apDung(
       for (const m of kh.themMoi) {
         const d = m.dong;
         await tx.insert(bang).values({
-          code: d.code, name: d.name, address: d.address ?? null,
-          taxCode: d.taxCode ?? null, phone: d.phone ?? null,
+          code: d.code,
+          name: d.name,
+          address: d.address ?? null,
+          taxCode: d.taxCode ?? null,
+          phone: d.phone ?? null,
           openingDebt: d.openingDebt ?? null,
         });
         ra.them++;
       }
       for (const m of kh.capNhat) {
         const d = m.dong;
-        await tx.update(bang).set({
-          name: d.name, address: d.address ?? null, taxCode: d.taxCode ?? null,
-          phone: d.phone ?? null, openingDebt: d.openingDebt ?? null,
-        }).where(and(eq(bang.id, m.idHienTai!)));
+        await tx
+          .update(bang)
+          .set({
+            name: d.name,
+            address: d.address ?? null,
+            taxCode: d.taxCode ?? null,
+            phone: d.phone ?? null,
+            openingDebt: d.openingDebt ?? null,
+          })
+          .where(and(eq(bang.id, m.idHienTai!)));
         ra.sua++;
       }
     }

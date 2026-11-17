@@ -2,6 +2,11 @@ import BrainChat from "@/components/dashboard/BrainChat";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Topbar from "@/components/dashboard/Topbar";
 
+// Trang tổng quan và Báo cáo đọc database trực tiếp trong server component. Không có
+// dòng này, `next build` prerender chúng MỘT LẦN lúc build — production hiển thị số liệu
+// đông cứng tại thời điểm build, và build hỏng khi không kết nối được database.
+export const dynamic = "force-dynamic";
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-[#030305] text-white">

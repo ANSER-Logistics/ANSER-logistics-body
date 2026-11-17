@@ -1,0 +1,11 @@
+# Commit chỉ đổi định dạng — `git blame` bỏ qua chúng (GitHub tự đọc file này).
+# Ở máy: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: format all JS/TS files with Prettier
+f627af19d867325b123283a36126330f557d6919
+
+# build(git): renormalize brain.ts to LF (chỉ line ending)
+da9d889a260351b65e7bb91c77639b01924a9f9d
+
+# style: format the files Brain PR #3 held out of Prettier
+0fcaa94a38cc5c9c631301539285a670784c0013

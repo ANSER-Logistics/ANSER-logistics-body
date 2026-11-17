@@ -78,9 +78,7 @@ export default function TrangThaiAI() {
         {chu}
       </p>
 
-      {tt.detail && !tt.ok ? (
-        <p className="text-[11px] leading-snug text-zinc-500">{tt.detail}</p>
-      ) : null}
+      {tt.detail && !tt.ok ? <p className="text-[11px] leading-snug text-zinc-500">{tt.detail}</p> : null}
 
       {/* Không kiểm token là chuyện BẢO MẬT, nên nó không nằm chung với dòng
           trạng thái ở trên — nó phải cắt ngang tầm mắt. */}
@@ -94,9 +92,7 @@ export default function TrangThaiAI() {
       {/* `undefined` = Brain cũ chưa trả trường này. Nói thẳng là không biết,
           vì im lặng ở đây trông y hệt "đã kiểm rồi". */}
       {tt.ok && tt.auth_enabled === undefined ? (
-        <p className="text-[11px] leading-snug text-zinc-500">
-          Chưa rõ Brain có kiểm token không (bản Brain cũ).
-        </p>
+        <p className="text-[11px] leading-snug text-zinc-500">Chưa rõ Brain có kiểm token không (bản Brain cũ).</p>
       ) : null}
     </div>
   );

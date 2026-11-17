@@ -8,9 +8,7 @@ const GRANULARITIES = ["month", "quarter", "half", "year"] as const;
 type Granularity = (typeof GRANULARITIES)[number];
 
 function parseGranularity(value: string | null): Granularity {
-  return (GRANULARITIES as readonly string[]).includes(value ?? "")
-    ? (value as Granularity)
-    : "quarter";
+  return (GRANULARITIES as readonly string[]).includes(value ?? "") ? (value as Granularity) : "quarter";
 }
 
 /**
@@ -35,10 +33,13 @@ export async function GET(request: Request) {
   });
 
   if (lines.length === 0) {
-    return NextResponse.json({
-      error: "Chưa có dòng bán nào trong khoảng thời gian này",
-      months,
-    }, { status: 409 });
+    return NextResponse.json(
+      {
+        error: "Chưa có dòng bán nào trong khoảng thời gian này",
+        months,
+      },
+      { status: 409 },
+    );
   }
 
   try {

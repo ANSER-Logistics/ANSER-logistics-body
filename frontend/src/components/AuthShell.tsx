@@ -50,9 +50,7 @@ export default function AuthShell({
             </span>
             <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{brandTitle}</h1>
           </div>
-          <p className="mb-9 max-w-md text-[15px] leading-relaxed text-zinc-400">
-            {brandSubtitle}
-          </p>
+          <p className="mb-9 max-w-md text-[15px] leading-relaxed text-zinc-400">{brandSubtitle}</p>
 
           <div className="hidden flex-col gap-4 sm:flex">
             {features.map((f) => (

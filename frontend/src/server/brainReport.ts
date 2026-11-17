@@ -51,9 +51,7 @@ export async function collectSaleLines(opts: {
     .from(salesInvoiceItems)
     .innerJoin(salesInvoices, eq(salesInvoiceItems.invoiceId, salesInvoices.id))
     .innerJoin(products, eq(salesInvoiceItems.productId, products.id))
-    .where(
-      and(gte(salesInvoices.createdAt, since), inArray(products.warehouseId, opts.warehouseIds)),
-    );
+    .where(and(gte(salesInvoices.createdAt, since), inArray(products.warehouseId, opts.warehouseIds)));
 
   let withCost = 0;
   const lines: BrainSaleLine[] = rows.map((row) => {

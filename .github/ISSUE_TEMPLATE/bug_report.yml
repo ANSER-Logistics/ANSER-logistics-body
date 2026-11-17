@@ -1,0 +1,42 @@
+name: Báo lỗi
+description: Có thứ đang chạy sai
+labels: ["bug"]
+body:
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Đáng lẽ xảy ra gì, thực tế xảy ra gì
+      description: Số liệu cụ thể càng tốt. Ví dụ "tồn kho SP-012 tăng 5 sau khi bán 5" hơn là "kho bị lệch".
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Cách tái hiện
+      description: Trang nào, bấm gì, nhập gì. Nếu liên quan file Excel MISA, ghi tên báo cáo và dòng bị lỗi (đừng đính kèm dữ liệu thật của khách).
+      placeholder: |
+        1. Vào /dashboard/sales
+        2. …
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Khu vực
+      options:
+        - Bán hàng / hoá đơn
+        - Kho / tồn kho
+        - Sản phẩm / giá vốn
+        - Nhập Excel (MISA)
+        - AI (Brain)
+        - Tự động hoá (n8n)
+        - Đăng nhập / phân quyền
+        - Báo cáo
+        - Khác
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Môi trường và log
+      description: Máy dev hay production, nhánh Neon nào, thông báo lỗi trong console hoặc terminal. Không dán `DATABASE_URL`, token hay mật khẩu.

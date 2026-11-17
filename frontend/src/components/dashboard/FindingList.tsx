@@ -40,11 +40,7 @@ function MotPhatHien({ f }: { f: BrainFinding }) {
 
   return (
     <li className="rounded-xl border border-white/[0.08] bg-black/20">
-      <button
-        type="button"
-        onClick={() => setMo((v) => !v)}
-        className="flex w-full items-start gap-3 p-4 text-left"
-      >
+      <button type="button" onClick={() => setMo((v) => !v)} className="flex w-full items-start gap-3 p-4 text-left">
         <span
           className={`mt-0.5 shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-semibold ${
             MUC_DO[f.severity] ?? MUC_DO["thấp"]
@@ -55,9 +51,7 @@ function MotPhatHien({ f }: { f: BrainFinding }) {
 
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-zinc-100">{f.title}</span>
-          {f.product ? (
-            <span className="mt-0.5 block truncate text-xs text-zinc-500">{f.product}</span>
-          ) : null}
+          {f.product ? <span className="mt-0.5 block truncate text-xs text-zinc-500">{f.product}</span> : null}
         </span>
 
         <span className="shrink-0 text-right">
@@ -85,9 +79,7 @@ function MotPhatHien({ f }: { f: BrainFinding }) {
               ))}
             </dl>
           ) : null}
-          <p className="rounded-lg bg-white/[0.03] p-3 text-xs leading-relaxed text-zinc-400">
-            {f.suggestion}
-          </p>
+          <p className="rounded-lg bg-white/[0.03] p-3 text-xs leading-relaxed text-zinc-400">{f.suggestion}</p>
         </div>
       ) : null}
     </li>
@@ -177,9 +169,7 @@ export function KhungTaiFile({
 export function TuChoiKiem({ lyDo }: { lyDo: string }) {
   return (
     <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.07] p-4">
-      <p className="text-sm font-semibold text-amber-300">
-        Chưa kiểm được — khác với &ldquo;không có lỗi&rdquo;
-      </p>
+      <p className="text-sm font-semibold text-amber-300">Chưa kiểm được — khác với &ldquo;không có lỗi&rdquo;</p>
       <p className="mt-1.5 text-xs leading-relaxed text-amber-200/70">{lyDo}</p>
     </div>
   );

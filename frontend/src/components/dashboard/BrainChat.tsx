@@ -74,10 +74,7 @@ export default function BrainChat() {
         { role: "brain", text: data.reply ?? "", confidence: data.confidence, sources: data.sources },
       ]);
     } catch (e) {
-      setMessages((m) => [
-        ...m,
-        { role: "error", text: e instanceof Error ? e.message : String(e) },
-      ]);
+      setMessages((m) => [...m, { role: "error", text: e instanceof Error ? e.message : String(e) }]);
     } finally {
       setBusy(false);
     }
@@ -148,9 +145,7 @@ export default function BrainChat() {
               <div key={i} className="rounded-xl border border-red-500/25 bg-red-500/10 px-3.5 py-2.5">
                 <p className="text-xs font-bold text-red-400">Không trả lời được</p>
                 <p className="mt-1 text-sm whitespace-pre-wrap text-red-300/90">{m.text}</p>
-                {m.retryAfter && (
-                  <p className="mt-1 text-xs text-red-300/70">Thử lại sau {m.retryAfter} giây.</p>
-                )}
+                {m.retryAfter && <p className="mt-1 text-xs text-red-300/70">Thử lại sau {m.retryAfter} giây.</p>}
               </div>
             );
           }
@@ -161,7 +156,8 @@ export default function BrainChat() {
               </p>
               {(m.confidence !== null && m.confidence !== undefined) || m.sources?.length ? (
                 <p className="pl-1 text-xs text-zinc-500">
-                  {m.confidence !== null && m.confidence !== undefined &&
+                  {m.confidence !== null &&
+                    m.confidence !== undefined &&
                     `độ tin cậy ${Math.round(m.confidence * 100)}%`}
                   {m.sources?.length ? ` · nguồn: ${m.sources.join(", ")}` : ""}
                 </p>
