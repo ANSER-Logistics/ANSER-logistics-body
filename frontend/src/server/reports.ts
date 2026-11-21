@@ -4,17 +4,23 @@ import { categories, inventoryTransactions, products, salesInvoiceItems, salesIn
 import { evaluateAlerts } from "@/server/store/automation";
 import { listCategories } from "@/server/store/categories";
 import { listProducts } from "@/server/store/products";
-import { listInvoices } from "@/server/store/sales";
+import { invoiceInWarehouses, listInvoices } from "@/server/store/sales";
 import { listWarehouses } from "@/server/store/warehouses";
+import { DAY_MS, vnDisplayDate, vnStartOfDay, vnWeekday } from "@/server/vnTime";
 
 const WEEKDAY_LABELS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
+// Lọc theo kho LÚC BÁN (`invoiceInWarehouses`). Trước đây lọc qua
+// `products.warehouseId` (hiện hành): xoá sản phẩm (productId → null) làm mất luôn
+// doanh thu cũ khỏi báo cáo, và chuyển kho sản phẩm kéo theo doanh thu cũ sang kho
+// mới — cả hai đều sai vì join vào trạng thái HIỆN TẠI của sản phẩm.
 function scopedInvoiceIdsQuery(warehouseIds: string[]) {
   return db
-    .selectDistinct({ id: salesInvoiceItems.invoiceId })
-    .from(salesInvoiceItems)
-    .innerJoin(products, eq(salesInvoiceItems.productId, products.id))
-    .where(inArray(products.warehouseId, warehouseIds));
+    .selectDistinct({ id: salesInvoices.id })
+    .from(salesInvoices)
+    .leftJoin(salesInvoiceItems, eq(salesInvoiceItems.invoiceId, salesInvoices.id))
+    .leftJoin(products, eq(salesInvoiceItems.productId, products.id))
+    .where(invoiceInWarehouses(warehouseIds));
 }
 
 async function computeRevenueMetrics(warehouseIds: string[], sevenDaysAgo: Date) {
@@ -44,9 +50,7 @@ export async function getReportSummary() {
   const totalProducts = allProducts.length;
   const totalStockValue = allProducts.reduce((sum, p) => sum + p.stock * p.price, 0);
 
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-  sevenDaysAgo.setHours(0, 0, 0, 0);
+  const sevenDaysAgo = vnStartOfDay(new Date(Date.now() - 6 * DAY_MS));
 
   const recentTx = await db
     .select({
@@ -60,15 +64,12 @@ export async function getReportSummary() {
 
   const dailyFlow: { label: string; a: number; b: number }[] = [];
   for (let i = 6; i >= 0; i--) {
-    const day = new Date();
-    day.setDate(day.getDate() - i);
-    day.setHours(0, 0, 0, 0);
-    const nextDay = new Date(day);
-    nextDay.setDate(day.getDate() + 1);
+    const day = vnStartOfDay(new Date(Date.now() - i * DAY_MS));
+    const nextDay = new Date(day.getTime() + DAY_MS);
 
     const dayTx = recentTx.filter((t) => t.createdAt >= day && t.createdAt < nextDay);
     dailyFlow.push({
-      label: WEEKDAY_LABELS[day.getDay()],
+      label: WEEKDAY_LABELS[vnWeekday(day)],
       a: dayTx.filter((t) => t.type === "import").reduce((s, t) => s + t.quantity, 0),
       b: dayTx.filter((t) => t.type === "export").reduce((s, t) => s + t.quantity, 0),
     });
@@ -118,28 +119,31 @@ export async function getReportSummary() {
 
   const dailyRevenue: { label: string; a: number }[] = [];
   for (let i = 6; i >= 0; i--) {
-    const day = new Date();
-    day.setDate(day.getDate() - i);
-    day.setHours(0, 0, 0, 0);
-    const nextDay = new Date(day);
-    nextDay.setDate(day.getDate() + 1);
+    const day = vnStartOfDay(new Date(Date.now() - i * DAY_MS));
+    const nextDay = new Date(day.getTime() + DAY_MS);
 
     const dayInvoices = recentInvoiceTotals.filter((inv) => inv.createdAt >= day && inv.createdAt < nextDay);
     dailyRevenue.push({
-      label: WEEKDAY_LABELS[day.getDay()],
+      label: WEEKDAY_LABELS[vnWeekday(day)],
       a: dayInvoices.reduce((s, inv) => s + inv.total, 0),
     });
   }
 
+  // LEFT JOIN products/categories (không INNER JOIN): một dòng hoá đơn của sản phẩm
+  // đã bị xoá (productId → null) vẫn phải được tính vào doanh thu, chỉ là không rõ
+  // thuộc danh mục nào — INNER JOIN trước đây loại thẳng dòng đó khỏi mọi tổng hợp.
+  // Nhóm "Không rõ danh mục" (category = null) gồm CẢ sản phẩm đã xoá LẪN sản phẩm
+  // còn nhưng chưa gán danh mục — khác 0 không có nghĩa là đã có sản phẩm bị xoá.
   const revenueByCategoryRaw = await db
     .select({
       category: categories.name,
       revenue: sql<number>`coalesce(sum(${salesInvoiceItems.lineTotal}), 0)::integer`,
     })
     .from(salesInvoiceItems)
-    .innerJoin(products, eq(salesInvoiceItems.productId, products.id))
+    .innerJoin(salesInvoices, eq(salesInvoiceItems.invoiceId, salesInvoices.id))
+    .leftJoin(products, eq(salesInvoiceItems.productId, products.id))
     .leftJoin(categories, eq(products.categoryId, categories.id))
-    .where(inArray(products.warehouseId, warehouseIds))
+    .where(invoiceInWarehouses(warehouseIds))
     .groupBy(categories.name);
 
   const maxCategoryRevenue = Math.max(1, ...revenueByCategoryRaw.map((r) => r.revenue));
@@ -147,6 +151,14 @@ export async function getReportSummary() {
     const revenue = revenueByCategoryRaw.find((r) => r.category === cat.name)?.revenue ?? 0;
     return { label: cat.name, pct: Math.round((revenue / maxCategoryRevenue) * 100), revenue };
   });
+  const uncategorizedRevenue = revenueByCategoryRaw.find((r) => r.category === null)?.revenue ?? 0;
+  if (uncategorizedRevenue > 0) {
+    revenueByCategory.push({
+      label: "Không rõ danh mục",
+      pct: Math.round((uncategorizedRevenue / maxCategoryRevenue) * 100),
+      revenue: uncategorizedRevenue,
+    });
+  }
 
   const recentInvoiceRows = await listInvoices({ limit: 5, warehouseIds });
   const recentInvoices = recentInvoiceRows.map((inv) => ({
@@ -202,14 +214,14 @@ export async function getSalesReportForPeriod(period: SalesReportPeriod) {
   let periodLabel: string;
 
   if (period === "day") {
-    since.setHours(0, 0, 0, 0);
-    periodLabel = `Hôm nay (${since.toLocaleDateString("vi-VN")})`;
+    since.setTime(vnStartOfDay(since).getTime());
+    periodLabel = `Hôm nay (${vnDisplayDate(since)})`;
   } else if (period === "week") {
-    since.setDate(since.getDate() - 7);
-    periodLabel = `7 ngày qua (từ ${since.toLocaleDateString("vi-VN")})`;
+    since.setTime(since.getTime() - 7 * DAY_MS);
+    periodLabel = `7 ngày qua (từ ${vnDisplayDate(since)})`;
   } else {
-    since.setDate(since.getDate() - 30);
-    periodLabel = `30 ngày qua (từ ${since.toLocaleDateString("vi-VN")})`;
+    since.setTime(since.getTime() - 30 * DAY_MS);
+    periodLabel = `30 ngày qua (từ ${vnDisplayDate(since)})`;
   }
 
   const invoices = await db
