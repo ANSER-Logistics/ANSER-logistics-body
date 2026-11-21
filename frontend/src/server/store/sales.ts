@@ -1,4 +1,4 @@
-import { desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { employees, inventoryTransactions, products, salesInvoiceItems, salesInvoices } from "@/server/db/schema";
 import { InsufficientStockError } from "@/server/store/inventory";
@@ -9,6 +9,27 @@ export type SalesInvoiceItem = typeof salesInvoiceItems.$inferSelect;
 export class CrossWarehouseError extends Error {}
 export class NoItemError extends Error {}
 export class ProductNotFoundError extends Error {}
+
+/**
+ * Điều kiện "hoá đơn thuộc một trong các kho này", theo kho LÚC BÁN.
+ *
+ * Câu truy vấn dùng nó phải join `salesInvoices` và LEFT JOIN `products` (qua
+ * `salesInvoiceItems.productId`) — không INNER JOIN, nếu không dòng bán của sản
+ * phẩm đã xoá (productId → null) sẽ bị loại.
+ *
+ * 1. `salesInvoices.warehouseId` — chụp lại lúc tạo hoá đơn, không đổi khi sản
+ *    phẩm bị xoá hay chuyển kho. Đây là nguồn đúng.
+ * 2. Hoá đơn tạo TRƯỚC migration 0012 (B6) có `warehouse_id = NULL` — migration
+ *    chỉ thêm cột, không điền lại. Với chúng, lùi về kho HIỆN TẠI của sản phẩm:
+ *    không hoàn hảo (sản phẩm đã xoá thì không còn biết kho), nhưng còn hơn bỏ
+ *    hẳn doanh thu cũ khỏi mọi kho.
+ */
+export function invoiceInWarehouses(warehouseIds: string[]) {
+  return or(
+    inArray(salesInvoices.warehouseId, warehouseIds),
+    and(isNull(salesInvoices.warehouseId), inArray(products.warehouseId, warehouseIds)),
+  );
+}
 
 export async function listInvoices(filter?: { limit?: number; warehouseIds?: string[] }) {
   const limit = filter?.limit ?? 50;
