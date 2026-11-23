@@ -1,24 +1,34 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { jsonError, withErrorHandler } from "@/server/http";
 import { requireAdmin } from "@/server/session";
 import { deleteEmployee, updateEmployee } from "@/server/store/employees";
 import { listWarehouses } from "@/server/store/warehouses";
+import { nullableDate, nullableEmail, nullablePhone, nullableText, parseJsonBody, requiredText } from "@/server/validation";
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+const patchEmployeeSchema = z.object({
+  name: requiredText("Tên nhân viên không được để trống.").optional(),
+  position: nullableText("Chức vụ"),
+  phone: nullablePhone(),
+  email: nullableEmail(),
+  hireDate: nullableDate("Ngày vào làm không hợp lệ."),
+  warehouseId: nullableText("Kho"),
+  note: nullableText("Ghi chú"),
+});
+
+export const PATCH = withErrorHandler(async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const admin = await requireAdmin();
   if (!admin) {
-    return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
+    return jsonError("Không có quyền truy cập.", 403);
   }
 
   const { id } = await params;
-  const body = await request.json().catch(() => ({}));
-
-  if (body.name !== undefined && !String(body.name).trim()) {
-    return NextResponse.json({ message: "Tên nhân viên không được để trống." }, { status: 400 });
-  }
+  const { data: body, response: invalid } = await parseJsonBody(request, patchEmployeeSchema);
+  if (invalid) return invalid;
   if (body.warehouseId) {
     const validWarehouses = await listWarehouses();
     if (!validWarehouses.some((w) => w.id === body.warehouseId)) {
-      return NextResponse.json({ message: "Kho không hợp lệ." }, { status: 400 });
+      return jsonError("Kho không hợp lệ.", 400);
     }
   }
 
@@ -41,17 +51,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const employee = await updateEmployee(id, patch);
   if (!employee) {
-    return NextResponse.json({ message: "Không tìm thấy nhân viên." }, { status: 404 });
+    return jsonError("Không tìm thấy nhân viên.", 404);
   }
   return NextResponse.json({ employee });
-}
+});
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = withErrorHandler(async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
   const admin = await requireAdmin();
   if (!admin) {
-    return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
+    return jsonError("Không có quyền truy cập.", 403);
   }
   const { id } = await params;
   await deleteEmployee(id);
   return new NextResponse(null, { status: 204 });
-}
+});

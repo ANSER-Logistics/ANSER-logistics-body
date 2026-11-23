@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { jsonError, withErrorHandler } from "@/server/http";
 
-import { docExcel } from "@/server/import/doc-excel";
+import { docExcel, InvalidExcelFileError } from "@/server/import/doc-excel";
 import { apDung, lapKeHoach } from "@/server/import/ap-dung";
 import { requireAdminUser } from "@/server/session";
 
@@ -21,7 +22,7 @@ const TRAN_BYTE = 5 * 1024 * 1024;
  * Đọc lại file ở máy chủ tốn thêm vài chục mili-giây trên file 25KB, đổi lấy
  * việc máy chủ không bao giờ ghi thứ nó chưa tự đọc.
  */
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async (request: Request) => {
   // Ghi hàng trăm dòng sản phẩm/danh mục một lượt — cùng mức nhạy cảm với
   // POST/PATCH /api/products, nên đòi admin giống route đó (Việc 2 — Siết xác thực).
   const { user, response } = await requireAdminUser();
@@ -31,24 +32,18 @@ export async function POST(request: Request) {
   try {
     form = await request.formData();
   } catch {
-    return NextResponse.json({ message: "Body phải là multipart/form-data." }, { status: 400 });
+    return jsonError("Body phải là multipart/form-data.", 400);
   }
 
   const file = form.get("file");
   if (!(file instanceof File)) {
-    return NextResponse.json({ message: "Thiếu file." }, { status: 400 });
+    return jsonError("Thiếu file.", 400);
   }
   if (file.size > TRAN_BYTE) {
-    return NextResponse.json(
-      { message: `File ${(file.size / 1024 / 1024).toFixed(1)}MB, vượt trần 5MB.` },
-      { status: 413 },
-    );
+    return jsonError(`File ${(file.size / 1024 / 1024).toFixed(1)}MB, vượt trần 5MB.`, 413);
   }
   if (!/\.xlsx$/i.test(file.name)) {
-    return NextResponse.json(
-      { message: "Chỉ nhận .xlsx. File .xls đời cũ phải mở bằng Excel rồi lưu lại dạng .xlsx." },
-      { status: 400 },
-    );
+    return jsonError("Chỉ nhận .xlsx. File .xls đời cũ phải mở bằng Excel rồi lưu lại dạng .xlsx.", 400);
   }
 
   const xacNhan = String(form.get("xacNhan") ?? "") === "1";
@@ -58,12 +53,8 @@ export async function POST(request: Request) {
   try {
     kq = await docExcel(await file.arrayBuffer());
   } catch (e) {
-    // Lỗi đọc file là lỗi NGƯỜI DÙNG SỬA ĐƯỢC (sai file, sai định dạng), nên
-    // 400 kèm nguyên câu giải thích của bộ đọc chứ không phải 500 trống trơn.
-    return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Không đọc được file." },
-      { status: 400 },
-    );
+    if (e instanceof InvalidExcelFileError) return jsonError(e.message, 400);
+    throw e;
   }
 
   if (!xacNhan) {
@@ -94,13 +85,14 @@ export async function POST(request: Request) {
     });
   }
 
-  try {
-    const ra = await apDung(kq, warehouseId, user.employeeId ?? undefined);
-    return NextResponse.json({ ...ra, loai: kq.loai });
-  } catch (e) {
-    return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Ghi thất bại." },
-      { status: 400 },
+  if (kq.loai === "hang_hoa" && !warehouseId) {
+    return jsonError(
+      "Chưa chọn kho. Bản xuất `Danh sách hàng hoá, dịch vụ` của MISA không có cột kho nào, " +
+        "mà `products.warehouse_id` là bắt buộc — nên kho phải do người chọn, không đoán được.",
+      400,
     );
   }
-}
+
+  const ra = await apDung(kq, warehouseId, user.employeeId ?? undefined);
+  return NextResponse.json({ ...ra, loai: kq.loai });
+});

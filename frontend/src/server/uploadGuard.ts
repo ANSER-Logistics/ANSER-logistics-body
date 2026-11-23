@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import type { NextResponse } from "next/server";
+import { jsonError } from "@/server/http";
 
 /**
  * Lấy file từ multipart request và chặn sớm theo kích thước.
@@ -22,22 +23,16 @@ export async function layFileTaiLen(
   try {
     form = await request.formData();
   } catch {
-    return NextResponse.json(
-      { error: `Cần gửi dạng multipart/form-data kèm trường '${truong}'` },
-      { status: 400 },
-    );
+    return jsonError(`Cần gửi dạng multipart/form-data kèm trường '${truong}'`, 400);
   }
 
   const file = form.get(truong);
   if (!(file instanceof File) || file.size === 0) {
-    return NextResponse.json({ error: "Chưa chọn file" }, { status: 400 });
+    return jsonError("Chưa chọn file", 400);
   }
   if (file.size > MAX_UPLOAD_BYTES) {
     const mb = (file.size / 1024 / 1024).toFixed(1);
-    return NextResponse.json(
-      { error: `File quá lớn (${mb}MB, tối đa 5MB)` },
-      { status: 413 },
-    );
+    return jsonError(`File quá lớn (${mb}MB, tối đa 5MB)`, 413);
   }
   return { file, form };
 }

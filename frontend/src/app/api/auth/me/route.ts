@@ -1,49 +1,54 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { jsonError, withErrorHandler } from "@/server/http";
 import { updateUser, toPublicUser } from "@/server/store/users";
-import { getSessionUser } from "@/server/session";
+import { requireSessionUser } from "@/server/session";
+import { nullablePhone, parseJsonBody, requiredText } from "@/server/validation";
 
-export async function GET() {
-  const user = await getSessionUser();
-  if (!user) {
-    return NextResponse.json({ message: "Chưa đăng nhập." }, { status: 401 });
-  }
-  return NextResponse.json({ user: toPublicUser(user) });
-}
-
-export async function PATCH(request: Request) {
-  const user = await getSessionUser();
-  if (!user) {
-    return NextResponse.json({ message: "Chưa đăng nhập." }, { status: 401 });
-  }
-
-  const body = await request.json().catch(() => ({}));
-
-  if (body.currentPassword || body.newPassword) {
+const patchMeSchema = z
+  .object({
+    currentPassword: z.string({ error: "Mật khẩu hiện tại không hợp lệ." }).optional(),
+    newPassword: z.string({ error: "Mật khẩu mới không hợp lệ." }).optional(),
+    firstName: requiredText("Tên không được để trống.").optional(),
+    lastName: requiredText("Họ không được để trống.").optional(),
+    phone: nullablePhone(),
+  })
+  .superRefine((body, ctx) => {
+    if (!body.currentPassword && !body.newPassword) return;
     if (!body.currentPassword || !body.newPassword) {
-      return NextResponse.json({ message: "Thiếu mật khẩu hiện tại hoặc mật khẩu mới." }, { status: 400 });
+      ctx.addIssue({ code: "custom", message: "Thiếu mật khẩu hiện tại hoặc mật khẩu mới." });
+    } else if (body.newPassword.length < 6) {
+      ctx.addIssue({ code: "custom", message: "Mật khẩu mới phải có ít nhất 6 ký tự." });
     }
-    if (String(body.newPassword).length < 6) {
-      return NextResponse.json({ message: "Mật khẩu mới phải có ít nhất 6 ký tự." }, { status: 400 });
-    }
+  });
+
+export const GET = withErrorHandler(async () => {
+  const { user, response } = await requireSessionUser();
+  if (response) return response;
+  return NextResponse.json({ user: toPublicUser(user) });
+});
+
+export const PATCH = withErrorHandler(async (request: Request) => {
+  const { user, response } = await requireSessionUser();
+  if (response) return response;
+
+  const { data: body, response: invalid } = await parseJsonBody(request, patchMeSchema);
+  if (invalid) return invalid;
+
+  if (body.currentPassword && body.newPassword) {
     if (!(await bcrypt.compare(body.currentPassword, user.passwordHash))) {
-      return NextResponse.json({ message: "Mật khẩu hiện tại không đúng." }, { status: 400 });
+      return jsonError("Mật khẩu hiện tại không đúng.", 400);
     }
     await updateUser(user.id, { passwordHash: bcrypt.hashSync(body.newPassword, 10) });
   }
 
   const profilePatch: Partial<{ firstName: string; lastName: string; phone: string | null }> = {};
-  if (body.firstName !== undefined && !String(body.firstName).trim()) {
-    return NextResponse.json({ message: "Tên không được để trống." }, { status: 400 });
-  }
-  if (body.lastName !== undefined && !String(body.lastName).trim()) {
-    return NextResponse.json({ message: "Họ không được để trống." }, { status: 400 });
-  }
   if (body.firstName !== undefined) profilePatch.firstName = body.firstName;
   if (body.lastName !== undefined) profilePatch.lastName = body.lastName;
-  if (body.phone !== undefined) profilePatch.phone = body.phone || null;
+  if (body.phone !== undefined) profilePatch.phone = body.phone;
 
   const updated = Object.keys(profilePatch).length > 0 ? await updateUser(user.id, profilePatch) : user;
 
   return NextResponse.json({ user: toPublicUser(updated!) });
-}
+});

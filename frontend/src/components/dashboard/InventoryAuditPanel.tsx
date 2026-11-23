@@ -87,7 +87,7 @@ export default function InventoryAuditPanel() {
       const res = await fetch("/api/ai/inventory-audit", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.detail ?? data.error ?? `Lỗi ${res.status}`);
+        setError(data.message ?? data.detail ?? data.error ?? `Lỗi ${res.status}`);
         return;
       }
       setResult(data as BrainInventoryImport);
@@ -109,7 +109,7 @@ export default function InventoryAuditPanel() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setCostError(data.detail ?? data.error ?? `Lỗi ${res.status}`);
+        setCostError(data.message ?? data.detail ?? data.error ?? `Lỗi ${res.status}`);
         return null;
       }
       return data;

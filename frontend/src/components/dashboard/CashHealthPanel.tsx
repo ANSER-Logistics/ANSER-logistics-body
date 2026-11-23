@@ -41,7 +41,7 @@ export default function CashHealthPanel() {
       const res = await fetch("/api/ai/partner-audit", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setLoi(data.detail ?? data.error ?? `Lỗi ${res.status}`);
+        setLoi(data.message ?? data.detail ?? data.error ?? `Lỗi ${res.status}`);
         return;
       }
       const kq = data as BrainPartnerImport;
@@ -67,7 +67,7 @@ export default function CashHealthPanel() {
       const res = await fetch("/api/ai/inventory-audit", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setLoi(data.detail ?? data.error ?? `Lỗi ${res.status}`);
+        setLoi(data.message ?? data.detail ?? data.error ?? `Lỗi ${res.status}`);
         return;
       }
       setKho(data as BrainInventoryImport);

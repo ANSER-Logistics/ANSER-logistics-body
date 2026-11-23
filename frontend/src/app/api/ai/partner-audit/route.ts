@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { brainErrorToHttp, importPartnerFile } from "@/server/brain";
-import { getSessionUser } from "@/server/session";
+import { withErrorHandler } from "@/server/http";
+import { importPartnerFile } from "@/server/brain";
+import { brainErrorResponse } from "@/server/brainHttp";
+import { requireSessionUser } from "@/server/session";
 import { layFileTaiLen, truongText } from "@/server/uploadGuard";
 
 /**
@@ -13,9 +15,9 @@ import { layFileTaiLen, truongText } from "@/server/uploadGuard";
  * File KHÔNG lưu lại ở đâu — danh sách công nợ lộ ra toàn bộ khách hàng và số
  * tiền từng người đang nợ, đây là dữ liệu nhạy cảm ngang sổ kho.
  */
-export async function POST(request: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+export const POST = withErrorHandler(async (request: Request) => {
+  const { response } = await requireSessionUser();
+  if (response) return response;
 
   const kq = await layFileTaiLen(request);
   if (kq instanceof NextResponse) return kq;
@@ -28,7 +30,6 @@ export async function POST(request: Request) {
       }),
     );
   } catch (error) {
-    const { status, body, headers } = brainErrorToHttp(error);
-    return NextResponse.json(body, { status, headers });
+    return brainErrorResponse(error);
   }
-}
+});
