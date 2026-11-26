@@ -85,26 +85,33 @@ export type N8nWorkflowDetail = {
   settings?: unknown;
 };
 
+function workflowPath(id: string): string {
+  if (typeof id !== "string" || !id || /[^A-Za-z0-9_-]/.test(id)) {
+    throw new Error("Workflow ID không hợp lệ.");
+  }
+  return `/workflows/${id}`;
+}
+
 export async function getN8nWorkflow(workflowId: string): Promise<N8nWorkflowDetail> {
-  const data = await n8nApiFetch(`/workflows/${encodeURIComponent(workflowId)}`);
+  const data = await n8nApiFetch(workflowPath(workflowId));
   return { name: data.name, nodes: data.nodes, connections: data.connections, settings: data.settings };
 }
 
 export async function updateN8nWorkflow(workflowId: string, input: N8nWorkflowDetail): Promise<void> {
-  await n8nApiFetch(`/workflows/${encodeURIComponent(workflowId)}`, {
+  await n8nApiFetch(workflowPath(workflowId), {
     method: "PUT",
     body: JSON.stringify({ ...input, settings: input.settings ?? {} }),
   });
 }
 
 export async function activateN8nWorkflow(workflowId: string) {
-  return n8nApiFetch(`/workflows/${encodeURIComponent(workflowId)}/activate`, { method: "POST" }) as Promise<{
+  return n8nApiFetch(`${workflowPath(workflowId)}/activate`, { method: "POST" }) as Promise<{
     active: boolean;
   }>;
 }
 
 export async function deactivateN8nWorkflow(workflowId: string) {
-  return n8nApiFetch(`/workflows/${encodeURIComponent(workflowId)}/deactivate`, { method: "POST" }) as Promise<{
+  return n8nApiFetch(`${workflowPath(workflowId)}/deactivate`, { method: "POST" }) as Promise<{
     active: boolean;
   }>;
 }

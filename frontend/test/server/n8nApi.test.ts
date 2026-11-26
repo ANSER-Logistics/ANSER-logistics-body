@@ -229,20 +229,20 @@ describe("getN8nWorkflow / updateN8nWorkflow", () => {
     expect(sent().body.settings).toEqual({ timezone: "Asia/Ho_Chi_Minh" });
   });
 
-  // n8nWorkflowId do người dùng dán vào (PATCH /api/automation/rules/[id]) được ghép
-  // vào path. Không mã hoá thì "../credentials" bị chuẩn hoá thành /api/v1/credentials —
-  // gọi nhầm endpoint bằng API key của server.
-  it.each([
-    ["getN8nWorkflow", (id: string) => getN8nWorkflow(id), "", "GET"],
-    ["updateN8nWorkflow", (id: string) => updateN8nWorkflow(id, { name: "x", nodes: [], connections: {} }), "", "PUT"],
-    ["activateN8nWorkflow", (id: string) => activateN8nWorkflow(id), "/activate", "POST"],
-    ["deactivateN8nWorkflow", (id: string) => deactivateN8nWorkflow(id), "/deactivate", "POST"],
-  ])("%s mã hoá workflowId khi ghép vào path", async (_name, call, suffix, method) => {
+  it.each([".", "..", "", "nhom/abc", "a?b", "a%2Fb", "wf\n"])("từ chối ID %j trước khi gọi n8n", async (id) => {
+    await expect(getN8nWorkflow(id)).rejects.toThrow("Workflow ID không hợp lệ");
+    await expect(updateN8nWorkflow(id, { name: "x", nodes: [], connections: {} })).rejects.toThrow(
+      "Workflow ID không hợp lệ",
+    );
+    await expect(activateN8nWorkflow(id)).rejects.toThrow("Workflow ID không hợp lệ");
+    await expect(deactivateN8nWorkflow(id)).rejects.toThrow("Workflow ID không hợp lệ");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each(["7", "wf-123", "WF_9"])("giữ nguyên Workflow ID %s trên đường dẫn", async (id) => {
     fetchMock.mockResolvedValue(jsonResponse({ name: "x", nodes: [], connections: {} }));
-
-    await call("../credentials");
-
-    expect(sent()).toMatchObject({ url: `${BASE}/api/v1/workflows/..%2Fcredentials${suffix}`, method });
+    await getN8nWorkflow(id);
+    expect(sent().url).toBe(`${BASE}/api/v1/workflows/${id}`);
   });
 });
 
