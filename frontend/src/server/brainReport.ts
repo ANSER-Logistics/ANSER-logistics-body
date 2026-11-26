@@ -24,10 +24,17 @@ function toIsoDate(value: Date): string {
   return new Date(value.getTime() + VN_OFFSET_MS).toISOString().slice(0, 10);
 }
 
-/** 00:00 giờ VN của ngày (theo giờ VN) cách hôm nay `months` tháng. */
+/**
+ * 00:00 giờ VN của ngày (theo giờ VN) cách hôm nay `months` tháng. Tháng đích
+ * không có ngày đó thì lấy ngày cuối tháng (31/03 lùi 1 tháng → 28/02).
+ */
 function startOfVnDayMonthsAgo(now: Date, months: number): Date {
   const vn = new Date(now.getTime() + VN_OFFSET_MS);
-  return new Date(Date.UTC(vn.getUTCFullYear(), vn.getUTCMonth() - months, vn.getUTCDate()) - VN_OFFSET_MS);
+  const year = vn.getUTCFullYear();
+  const month = vn.getUTCMonth() - months;
+  // Ngày 0 của tháng kế tiếp = ngày cuối của tháng đích.
+  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(year, month, Math.min(vn.getUTCDate(), lastDay)) - VN_OFFSET_MS);
 }
 
 /**

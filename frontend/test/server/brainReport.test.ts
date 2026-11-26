@@ -143,6 +143,34 @@ describe("collectSaleLines", () => {
     expect(lines.map((l) => l.product)).toEqual(["01:00 ngày đầu"]);
   });
 
+  // Tháng đích không có ngày hôm nay (31/02, 29/02 năm thường) thì mốc là ngày
+  // cuối tháng đó, không được tràn sang đầu tháng sau.
+  it.each([
+    {
+      ten: "31/03/2026 lùi 1 tháng bắt đầu từ 28/02/2026",
+      now: "2026-03-31T05:00:00Z",
+      months: 1,
+      // 00:00 28/02/2026 giờ VN = 17:00Z 27/02.
+      mocDau: "2026-02-27T17:00:00Z",
+    },
+    {
+      ten: "29/02/2028 lùi 12 tháng bắt đầu từ 28/02/2027",
+      now: "2028-02-29T05:00:00Z",
+      months: 12,
+      mocDau: "2027-02-27T17:00:00Z",
+    },
+  ])("$ten", async ({ now, months, mocDau }) => {
+    vi.setSystemTime(new Date(now));
+    const kho = await taoKho("Kho Hà Nội");
+    const sp = await taoSanPham(kho.id, "VT001", "Dầu nhớt", 5_000);
+    await ban(kho.id, mocDau, [dong(sp.id, "00:00 ngày đầu")]);
+    await ban(kho.id, new Date(Date.parse(mocDau) - 60_000).toISOString(), [dong(sp.id, "23:59 hôm trước")]);
+
+    const { lines } = await collectSaleLines({ warehouseIds: [kho.id], months });
+
+    expect(lines.map((l) => l.product)).toEqual(["00:00 ngày đầu"]);
+  });
+
   it("`months` thu hẹp cửa sổ thời gian", async () => {
     const kho = await taoKho("Kho Hà Nội");
     const sp = await taoSanPham(kho.id, "VT001", "Dầu nhớt", 5_000);
