@@ -18,3 +18,10 @@
 *.ico binary
 *.woff binary
 *.woff2 binary
+
+# brain.ts is stored with CRLF and Brain PR #3 is editing it, so renormalising it now would
+# rewrite every line under that PR (BLOCKERS.md K1). `-text` makes git compare its bytes as-is,
+# so it no longer shows as "modified" on every checkout.
+# When PR #3 merges: delete this line, run `git add --renormalize frontend/src/server/brain.ts`,
+# commit that alone.
+frontend/src/server/brain.ts -text

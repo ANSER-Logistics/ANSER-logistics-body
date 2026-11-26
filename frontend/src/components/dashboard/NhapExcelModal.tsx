@@ -107,28 +107,24 @@ export default function NhapExcelModal({
         </div>
 
         <div className="flex-1 overflow-y-auto pr-1">
-          {loi && (
-            <p className="mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{loi}</p>
-          )}
+          {loi && <p className="mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{loi}</p>}
 
           {xong ? (
             <div className="rounded-xl bg-emerald-500/10 p-5 text-sm text-emerald-300">
               <p className="font-bold">Đã nhập xong.</p>
               <p className="mt-2">
-                Thêm mới <b>{xong.them}</b> · cập nhật <b>{xong.sua}</b> · bỏ qua{" "}
-                <b>{xong.boQua}</b>.
+                Thêm mới <b>{xong.them}</b> · cập nhật <b>{xong.sua}</b> · bỏ qua <b>{xong.boQua}</b>.
               </p>
             </div>
           ) : !xem ? (
             <>
               <p className="mb-4 text-sm leading-relaxed text-zinc-400">
-                Nhận bản xuất <b>.xlsx</b> của MISA: <i>Danh sách hàng hoá, dịch vụ</i>,{" "}
-                <i>Danh sách khách hàng</i>, <i>Danh sách nhà cung cấp</i>. Giữ nguyên các
-                cột gốc, đừng xoá dòng tiêu đề.
+                Nhận bản xuất <b>.xlsx</b> của MISA: <i>Danh sách hàng hoá, dịch vụ</i>, <i>Danh sách khách hàng</i>,{" "}
+                <i>Danh sách nhà cung cấp</i>. Giữ nguyên các cột gốc, đừng xoá dòng tiêu đề.
               </p>
               <p className="mb-4 rounded-lg bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-300">
-                Bảng <i>Tổng hợp tồn kho</i> có tiêu đề hai tầng nên đi đường khác — dùng
-                mục Kiểm kho, không phải nút này.
+                Bảng <i>Tổng hợp tồn kho</i> có tiêu đề hai tầng nên đi đường khác — dùng mục Kiểm kho, không phải nút
+                này.
               </p>
               <input
                 type="file"
@@ -161,9 +157,7 @@ export default function NhapExcelModal({
                     Bỏ qua {xem.tomTat.boQua}
                   </span>
                   {xem.tomTat.loi > 0 && (
-                    <span className="rounded-lg bg-red-500/15 px-2.5 py-1 text-red-400">
-                      Lỗi {xem.tomTat.loi}
-                    </span>
+                    <span className="rounded-lg bg-red-500/15 px-2.5 py-1 text-red-400">Lỗi {xem.tomTat.loi}</span>
                   )}
                 </div>
               </div>
@@ -179,18 +173,16 @@ export default function NhapExcelModal({
                     className="w-full rounded-xl border border-white/[0.08] bg-black/30 px-3 py-2.5 text-sm outline-none focus:border-sky-500"
                   >
                     {khoList.map((k) => (
-                      <option key={k.id} value={k.id}>{k.name}</option>
+                      <option key={k.id} value={k.id}>
+                        {k.name}
+                      </option>
                     ))}
                   </select>
                 </div>
               )}
 
               {xem.tomTat.loi > 0 && (
-                <Bang
-                  tieuDe={`${xem.tomTat.loi} dòng KHÔNG nhập được`}
-                  mau="text-red-400"
-                  catBot={xem.catBot.loi}
-                >
+                <Bang tieuDe={`${xem.tomTat.loi} dòng KHÔNG nhập được`} mau="text-red-400" catBot={xem.catBot.loi}>
                   {xem.loi.map((d) => (
                     <tr key={d.dongExcel} className="border-t border-white/[0.05]">
                       <td className="py-2 pr-3 text-zinc-500">dòng {d.dongExcel}</td>
@@ -239,9 +231,7 @@ export default function NhapExcelModal({
                       <td className="py-2 pr-3 text-zinc-500">dòng {d.dongExcel}</td>
                       <td className="py-2 pr-3">{d.code}</td>
                       <td className="py-2 pr-3">{d.name}</td>
-                      <td className="py-2 text-xs text-amber-400">
-                        {d.canhBao.length ? d.canhBao.join(", ") : ""}
-                      </td>
+                      <td className="py-2 text-xs text-amber-400">{d.canhBao.length ? d.canhBao.join(", ") : ""}</td>
                     </tr>
                   ))}
                 </Bang>
@@ -268,13 +258,11 @@ export default function NhapExcelModal({
           )}
           {!xong && xem && (
             <button
-              disabled={dangChay || (xem.tomTat.themMoi + xem.tomTat.capNhat === 0)}
+              disabled={dangChay || xem.tomTat.themMoi + xem.tomTat.capNhat === 0}
               onClick={() => gui(true)}
               className="rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black disabled:opacity-40"
             >
-              {dangChay
-                ? "Đang ghi…"
-                : `Xác nhận ghi ${xem.tomTat.themMoi + xem.tomTat.capNhat} dòng`}
+              {dangChay ? "Đang ghi…" : `Xác nhận ghi ${xem.tomTat.themMoi + xem.tomTat.capNhat} dòng`}
             </button>
           )}
         </div>
@@ -284,9 +272,15 @@ export default function NhapExcelModal({
 }
 
 function Bang({
-  tieuDe, mau, catBot, children,
+  tieuDe,
+  mau,
+  catBot,
+  children,
 }: {
-  tieuDe: string; mau: string; catBot: number; children: React.ReactNode;
+  tieuDe: string;
+  mau: string;
+  catBot: number;
+  children: React.ReactNode;
 }) {
   return (
     <div className="mb-5">

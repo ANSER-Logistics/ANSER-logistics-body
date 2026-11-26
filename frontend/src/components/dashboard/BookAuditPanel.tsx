@@ -99,9 +99,7 @@ export default function BookAuditPanel() {
             type="button"
             onClick={() => setTab(id)}
             className={`rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
-              tab === id
-                ? "bg-white/[0.10] text-white"
-                : "text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-300"
+              tab === id ? "bg-white/[0.10] text-white" : "text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-300"
             }`}
           >
             {nhan}
@@ -110,22 +108,17 @@ export default function BookAuditPanel() {
       </div>
 
       {loi ? (
-        <p className="rounded-xl border border-red-500/25 bg-red-500/[0.07] p-4 text-sm text-red-300">
-          {loi}
-        </p>
+        <p className="rounded-xl border border-red-500/25 bg-red-500/[0.07] p-4 text-sm text-red-300">{loi}</p>
       ) : null}
 
       {/* ------------------------------------------------------------------ */}
       {tab === "ky" ? (
         <div className="space-y-5">
           <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
-            <p className="text-sm font-semibold text-zinc-200">
-              Hai bản xuất của CÙNG một kỳ
-            </p>
+            <p className="text-sm font-semibold text-zinc-200">Hai bản xuất của CÙNG một kỳ</p>
             <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-              Cùng ngày bắt đầu, khác ngày kết thúc. Ví dụ bản xuất tháng trước và
-              bản xuất hôm nay, cùng bắt đầu từ 01/01. Thứ tự quan trọng — bản cũ
-              vào ô bên trái.
+              Cùng ngày bắt đầu, khác ngày kết thúc. Ví dụ bản xuất tháng trước và bản xuất hôm nay, cùng bắt đầu từ
+              01/01. Thứ tự quan trọng — bản cũ vào ô bên trái.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {(
@@ -142,9 +135,7 @@ export default function BookAuditPanel() {
                     onChange={(e) => set(e.target.files?.[0] ?? null)}
                     className="mt-1.5 block w-full text-xs text-zinc-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/[0.08] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-zinc-200 hover:file:bg-white/[0.12]"
                   />
-                  {f ? (
-                    <span className="mt-1 block truncate text-[11px] text-zinc-600">{f.name}</span>
-                  ) : null}
+                  {f ? <span className="mt-1 block truncate text-[11px] text-zinc-600">{f.name}</span> : null}
                 </label>
               ))}
             </div>
@@ -158,9 +149,7 @@ export default function BookAuditPanel() {
             </button>
           </div>
 
-          {diff?.warnings?.length ? (
-            <TuChoiKiem lyDo={diff.warnings.join(" ")} />
-          ) : null}
+          {diff?.warnings?.length ? <TuChoiKiem lyDo={diff.warnings.join(" ")} /> : null}
 
           {diff && diff.summary.so_sánh_được ? (
             <>
@@ -176,10 +165,7 @@ export default function BookAuditPanel() {
                   gia_tri={diff.summary.có_sửa_hồi_tố ? "CÓ" : "Không"}
                   tone={diff.summary.có_sửa_hồi_tố ? "text-red-400" : "text-emerald-400"}
                 />
-                <O
-                  nhan="Tiền liên quan"
-                  gia_tri={`${vnd(diff.summary.tổng_tiền_ảnh_hưởng ?? 0)}đ`}
-                />
+                <O nhan="Tiền liên quan" gia_tri={`${vnd(diff.summary.tổng_tiền_ảnh_hưởng ?? 0)}đ`} />
               </div>
 
               {diff.findings.length ? (
@@ -189,15 +175,13 @@ export default function BookAuditPanel() {
                   </h2>
                   <FindingList findings={diff.findings} />
                   <p className="mt-3 rounded-xl bg-white/[0.03] p-3 text-xs leading-relaxed text-zinc-500">
-                    Đây là chênh lệch giữa hai lần xuất, không phải kết luận ai làm gì.
-                    Cách chặn tận gốc là khoá sổ theo tháng: chốt xong thì không sửa
-                    được chứng từ của kỳ đã báo cáo nữa.
+                    Đây là chênh lệch giữa hai lần xuất, không phải kết luận ai làm gì. Cách chặn tận gốc là khoá sổ
+                    theo tháng: chốt xong thì không sửa được chứng từ của kỳ đã báo cáo nữa.
                   </p>
                 </section>
               ) : (
                 <p className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4 text-sm text-emerald-300">
-                  Hai bản khớp nhau hoàn toàn ở phần chung — không có chứng từ nào bị
-                  sửa sau khi đã báo cáo.
+                  Hai bản khớp nhau hoàn toàn ở phần chung — không có chứng từ nào bị sửa sau khi đã báo cáo.
                 </p>
               )}
             </>
@@ -231,11 +215,7 @@ export default function BookAuditPanel() {
                   gia_tri={String(s.chưa_gắn_cờ)}
                   tone={s.chưa_gắn_cờ ? "text-amber-300" : "text-emerald-300"}
                 />
-                <O
-                  nhan="Tra ra diện 8%"
-                  gia_tri={String(s["tra_ra_8%"])}
-                  tone="text-emerald-300"
-                />
+                <O nhan="Tra ra diện 8%" gia_tri={String(s["tra_ra_8%"])} tone="text-emerald-300" />
                 <O
                   nhan="Cần kế toán xác nhận"
                   gia_tri={String(s.không_tra_được + s["tra_ra_10%"])}

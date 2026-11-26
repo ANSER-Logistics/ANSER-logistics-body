@@ -22,12 +22,7 @@ import {
 //  3. Khớp theo mã, KHÔNG khớp mờ (xem `inventoryCostMatch.ts`).
 
 export { matchCosts } from "@/server/store/inventoryCostMatch";
-export type {
-  CostImportPreview,
-  CostMatch,
-  MatchableProduct,
-  UnitCostRow,
-} from "@/server/store/inventoryCostMatch";
+export type { CostImportPreview, CostMatch, MatchableProduct, UnitCostRow } from "@/server/store/inventoryCostMatch";
 
 /**
  * Đối chiếu bảng giá vốn từ file với danh mục hàng trong ANSER.
@@ -66,10 +61,7 @@ export async function applyCostImport(
   // không ai biết bảng giá đang ở trạng thái nào.
   await db.transaction(async (tx) => {
     for (const m of target) {
-      await tx
-        .update(products)
-        .set({ cost: m.newCost, updatedAt: new Date() })
-        .where(eq(products.id, m.productId));
+      await tx.update(products).set({ cost: m.newCost, updatedAt: new Date() }).where(eq(products.id, m.productId));
     }
   });
 

@@ -22,9 +22,7 @@ export async function POST(request: Request) {
   if (kq instanceof NextResponse) return kq;
 
   try {
-    return NextResponse.json(
-      await importProductFile(kq.file, { sheet: truongText(kq.form, "sheet") }),
-    );
+    return NextResponse.json(await importProductFile(kq.file, { sheet: truongText(kq.form, "sheet") }));
   } catch (error) {
     const { status, body, headers } = brainErrorToHttp(error);
     return NextResponse.json(body, { status, headers });

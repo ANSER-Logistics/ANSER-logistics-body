@@ -5,6 +5,13 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    rules: {
+      // `const { passwordHash, ...rest } = user` là cách bỏ một trường khỏi object
+      // (xem `toPublicUser()`): biến bị tách ra cố ý không dùng.
+      "@typescript-eslint/no-unused-vars": ["warn", { ignoreRestSiblings: true }],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
@@ -12,6 +19,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Báo cáo HTML của `pnpm test:coverage`.
+    "coverage/**",
   ]),
 ]);
 

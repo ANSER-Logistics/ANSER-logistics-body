@@ -81,10 +81,16 @@ function chuoi(v: unknown): string {
   // chuỗi trông như dữ liệu, lọt qua mọi phép kiểm rỗng.
   if (typeof v === "object") {
     const o = v as { result?: unknown; richText?: Array<{ text?: string }>; text?: string };
-    if (Array.isArray(o.richText)) return o.richText.map((r) => r.text ?? "").join("").trim();
-    if (o.text !== undefined) return String(o.text).trim();
-    if (o.result !== undefined) return String(o.result).trim();
-    return "";
+    if (Array.isArray(o.richText))
+      return o.richText
+        .map((r) => r.text ?? "")
+        .join("")
+        .trim();
+    if (o.text !== undefined) return chuoi(o.text);
+    // Đệ quy: kết quả của ô công thức có thể lại là một object — `{error: "#N/A"}`
+    // — và String() nó ra "[object Object]", một "mã hàng" lọt qua kiểm tra thiếu mã.
+    if (o.result !== undefined) return chuoi(o.result);
+    return ""; // ô lỗi `{error: "#N/A"}` và mọi object lạ khác: trống
   }
   return String(v).trim();
 }
@@ -102,20 +108,26 @@ export function docSo(v: unknown): number | null {
   if (typeof v === "number") return Number.isFinite(v) ? v : null;
   let s = chuoi(v).replace(/\s/g, "");
   if (!s) return null;
-  const am = /^\(.*\)$/.test(s);           // kế toán ghi số âm bằng ngoặc
+  const am = /^\(.*\)$/.test(s); // kế toán ghi số âm bằng ngoặc
   if (am) s = s.slice(1, -1);
   s = s.replace(/[₫đvnd]/gi, "");
+  // Ô chỉ có ký hiệu tiền ("đ", "VND", "₫") hay chỉ "()" là CHƯA BIẾT, không phải
+  // 0 — `Number("")` ra 0 nên phải chặn ở đây.
+  if (!s) return null;
   const cham = s.lastIndexOf(".");
   const phay = s.lastIndexOf(",");
+  // Nhóm nghìn không bao giờ đứng sau số 0 đầu: "0,125" / "0.125" là 0,125 (dầu
+  // bán theo lít, số lẻ là chuyện thường) chứ không phải 125.
+  const dauLaKhong = (dau: "." | ",") => /^[-+]?0?$/.test(s.slice(0, s.indexOf(dau)));
   if (cham >= 0 && phay >= 0) {
     // Cái nào đứng SAU là dấu thập phân.
     s = phay > cham ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
   } else if (phay >= 0) {
     // Chỉ có phẩy: là thập phân khi đứng cách đuôi != 3 chữ số, ngược lại là
     // phân cách nghìn. "1,5" -> 1.5 ; "1,234" -> 1234.
-    s = s.length - phay - 1 === 3 ? s.replace(/,/g, "") : s.replace(",", ".");
+    s = s.length - phay - 1 === 3 && !dauLaKhong(",") ? s.replace(/,/g, "") : s.replace(",", ".");
   } else if (cham >= 0) {
-    s = s.length - cham - 1 === 3 ? s.replace(/\./g, "") : s;
+    s = s.length - cham - 1 === 3 && !dauLaKhong(".") ? s.replace(/\./g, "") : s;
   }
   const n = Number(s);
   if (!Number.isFinite(n)) return null;
@@ -146,7 +158,7 @@ export function docCoKhong(v: unknown): { gt: boolean | null; la: boolean } {
   if (!s || CHUA_BIET.has(s)) return { gt: null, la: false };
   if (CO.has(s)) return { gt: true, la: false };
   if (KHONG.has(s)) return { gt: false, la: false };
-  return { gt: null, la: true };      // đọc không nổi -> đáng cảnh báo
+  return { gt: null, la: true }; // đọc không nổi -> đáng cảnh báo
 }
 
 // --------------------------------------------------------------------------
@@ -200,14 +212,17 @@ function doanLoai(hang: unknown[]): LoaiFile | null {
   const nhan = hang.map(chuan);
   if (nhan.includes("ma khach hang") || nhan.includes("ten khach hang")) return "khach_hang";
   if (nhan.includes("ma nha cung cap") || nhan.includes("ten nha cung cap")) return "nha_cung_cap";
-  if (nhan.some((n) => n.startsWith("giam 2%")) || nhan.includes("don vi tinh chinh")
-      || nhan.includes("so luong ton")) return "hang_hoa";
+  if (nhan.some((n) => n.startsWith("giam 2%")) || nhan.includes("don vi tinh chinh") || nhan.includes("so luong ton"))
+    return "hang_hoa";
   return null;
 }
 
 // --------------------------------------------------------------------------
 // Đọc
 // --------------------------------------------------------------------------
+
+/** Nhãn dòng tổng cộng (đã qua `chuan`), có thể kèm phần đuôi sau ":" hoặc "(". */
+const LA_DONG_TONG = /^(tong|tong cong|tong so|cong)\s*([:(].*)?$/;
 
 export async function docExcel(buf: ArrayBuffer | Buffer): Promise<KetQuaDoc> {
   const wb = new ExcelJS.Workbook();
@@ -227,14 +242,14 @@ export async function docExcel(buf: ArrayBuffer | Buffer): Promise<KetQuaDoc> {
   if (!td) {
     throw new Error(
       "Không tìm thấy dòng tiêu đề. File phải là bản xuất MISA của Danh sách " +
-      "hàng hoá/khách hàng/nhà cung cấp, giữ nguyên các cột gốc.",
+        "hàng hoá/khách hàng/nhà cung cấp, giữ nguyên các cột gốc.",
     );
   }
   const loai = doanLoai(rows[td.i]);
   if (!loai) {
     throw new Error(
       "Đọc được tiêu đề nhưng không nhận ra đây là danh sách gì. Cần có một " +
-      "trong: 'Mã khách hàng', 'Mã nhà cung cấp', hoặc 'Đơn vị tính chính'.",
+        "trong: 'Mã khách hàng', 'Mã nhà cung cấp', hoặc 'Đơn vị tính chính'.",
     );
   }
 
@@ -261,7 +276,11 @@ export async function docExcel(buf: ArrayBuffer | Buffer): Promise<KetQuaDoc> {
     // Bản đầu tính nó là "thiếu mã" và đẩy vào danh sách lỗi — một lỗi giả,
     // xuất hiện ở CẢ BA file (đo 23/08/2026), tức mỗi lần nhập người dùng đều
     // thấy ít nhất một lỗi không phải lỗi.
-    const laTong = !code && (!name || chuan(name).startsWith("tong"));
+    //
+    // Nhận theo NHÃN dòng tổng ("Tổng", "Tổng cộng", "Cộng", "Tổng cộng: …"), KHÔNG
+    // theo tiền tố "tong": "Tổng công ty Xăng dầu" thiếu mã là khách hàng thật bị
+    // thiếu mã — phải báo lỗi để người sửa, không được lặng lẽ bỏ qua.
+    const laTong = !code && (!name || LA_DONG_TONG.test(chuan(name)));
     if (laTong) {
       d.boQua = "dòng tổng cộng / không có mã";
       dong.push(d);
@@ -271,11 +290,17 @@ export async function docExcel(buf: ArrayBuffer | Buffer): Promise<KetQuaDoc> {
     if (!name) d.loi.push("thiếu tên");
 
     if (loai === "hang_hoa") {
-      d.unit = chuoi(o(r, "unit")) || "Cái";
+      // Thiếu cả cột đơn vị tính: để `undefined` — mặt hàng MỚI vẫn nhận "Cái" lúc
+      // ghi, còn mặt hàng đang có giữ nguyên đơn vị (không bị đổi "Lít" thành "Cái").
+      d.unit = cot.unit === undefined ? undefined : chuoi(o(r, "unit")) || "Cái";
       d.category = chuoi(o(r, "category")) || undefined;
+      // Cột KHÔNG CÓ trong file -> `undefined` = "không có thông tin, giữ nguyên"
+      // (bất biến 7). Khác với ô trống trong một cột có mặt. Sinh `stock: 0` cho
+      // file thiếu cột tồn là ra lệnh đưa tồn mọi mặt hàng về 0.
+      const coCot = (t: string) => cot[t] !== undefined;
       const sl = docSo(o(r, "stock"));
       const gt = docSo(o(r, "giaTriTon"));
-      d.stock = sl ?? 0;
+      d.stock = coCot("stock") ? (sl ?? 0) : undefined;
       d.giaTriTon = gt ?? undefined;
       // Tồn âm là LỖI SỔ SÁCH có thật (xuất quá tồn, nhập sau ghi trước) — bản
       // xuất thật có 2/161 dòng như vậy. Nhưng chặn nhập thì hai mặt hàng đó
@@ -285,15 +310,24 @@ export async function docExcel(buf: ArrayBuffer | Buffer): Promise<KetQuaDoc> {
       // Giá vốn đơn vị = giá trị tồn / số lượng tồn. Tồn 0 thì KHÔNG suy ra
       // được gì — để `null` (CHƯA BIẾT), không phải 0. Đặt 0 ở đây là khai
       // rằng mặt hàng không tốn đồng nào, và báo cáo lãi lỗ sẽ coi nó lãi 100%.
-      d.cost = sl && sl > 0 && gt !== null ? Math.round(gt / sl) : null;
-      const cvat = docCoKhong(o(r, "isReducedVat"));
-      d.isReducedVat = cvat.gt;
-      if (cvat.la) d.canhBao.push("không đọc được cờ giảm 2% VAT — để trống");
+      //
+      // Giá trị tồn ÂM với tồn dương cũng không suy ra được giá vốn: chia ra một
+      // giá vốn âm, và báo cáo lãi lỗ sẽ coi bán mặt hàng đó là lãi hơn 100%.
+      if (!coCot("stock") || !coCot("giaTriTon")) d.cost = undefined;
+      else if (sl !== null && sl > 0 && gt !== null && gt < 0) {
+        d.cost = null;
+        d.canhBao.push("giá trị tồn âm — không suy ra được giá vốn, để trống");
+      } else d.cost = sl && sl > 0 && gt !== null ? Math.round(gt / sl) : null;
+      if (coCot("isReducedVat")) {
+        const cvat = docCoKhong(o(r, "isReducedVat"));
+        d.isReducedVat = cvat.gt;
+        if (cvat.la) d.canhBao.push("không đọc được cờ giảm 2% VAT — để trống");
+      }
     } else {
       d.address = chuoi(o(r, "address")) || undefined;
       d.taxCode = chuoi(o(r, "taxCode")) || undefined;
       d.phone = chuoi(o(r, "phone")) || undefined;
-      d.openingDebt = docSo(o(r, "openingDebt"));
+      d.openingDebt = cot.openingDebt === undefined ? undefined : docSo(o(r, "openingDebt"));
     }
     dong.push(d);
   }

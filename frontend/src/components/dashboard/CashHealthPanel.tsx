@@ -97,28 +97,19 @@ export default function CashHealthPanel() {
   }, [kho]);
 
   const tonKho = useMemo(
-    () =>
-      kho?.import.ok
-        ? kho.import.lines.reduce((s, l) => s + (l.closing_value ?? 0), 0)
-        : null,
+    () => (kho?.import.ok ? kho.import.lines.reduce((s, l) => s + (l.closing_value ?? 0), 0) : null),
     [kho],
   );
 
   const phaiThu = khach?.audit?.summary.tổng_phải_thu ?? null;
   const phaiTra = ncc?.audit?.summary.tổng_phải_trả ?? null;
 
-  const ket =
-    phaiThu !== null && tonKho !== null
-      ? phaiThu + tonKho - (phaiTra ?? 0)
-      : null;
+  const ket = phaiThu !== null && tonKho !== null ? phaiThu + tonKho - (phaiTra ?? 0) : null;
 
   const ngay = (v: number | null) =>
     v !== null && giaVonNgay ? `${(v / giaVonNgay).toFixed(0)} ngày giá vốn` : undefined;
 
-  const phatHien = [
-    ...(khach?.audit?.findings ?? []),
-    ...(ncc?.audit?.findings ?? []),
-  ];
+  const phatHien = [...(khach?.audit?.findings ?? []), ...(ncc?.audit?.findings ?? [])];
   const chuaCoGi = !khach && !ncc && !kho;
 
   return (
@@ -144,9 +135,7 @@ export default function CashHealthPanel() {
       </div>
 
       {loi ? (
-        <p className="rounded-xl border border-red-500/25 bg-red-500/[0.07] p-4 text-sm text-red-300">
-          {loi}
-        </p>
+        <p className="rounded-xl border border-red-500/25 bg-red-500/[0.07] p-4 text-sm text-red-300">{loi}</p>
       ) : null}
 
       {khach && !khach.import.ok && khach.audit_skipped_reason ? (
@@ -189,8 +178,8 @@ export default function CashHealthPanel() {
             />
           </div>
           <p className="mt-4 text-xs leading-relaxed text-zinc-500">
-            Vốn kẹt = khách nợ mình + hàng trong kho − mình nợ nhà cung cấp. Đây là
-            phần tiền đã bỏ ra mà chưa quay về tài khoản.
+            Vốn kẹt = khách nợ mình + hàng trong kho − mình nợ nhà cung cấp. Đây là phần tiền đã bỏ ra mà chưa quay về
+            tài khoản.
             {giaVonNgay
               ? " Số ngày quy theo giá vốn bán ra mỗi ngày của chính kỳ trong bảng tồn kho."
               : " Nạp thêm bảng tồn kho để quy ra số ngày."}
@@ -215,9 +204,7 @@ export default function CashHealthPanel() {
 
       {phatHien.length ? (
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-zinc-200">
-            {phatHien.length} điểm cần xem — nặng trước
-          </h2>
+          <h2 className="mb-3 text-sm font-semibold text-zinc-200">{phatHien.length} điểm cần xem — nặng trước</h2>
           <FindingList findings={phatHien} />
         </section>
       ) : khach?.import.ok ? (
