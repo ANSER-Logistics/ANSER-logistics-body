@@ -125,9 +125,11 @@ describe("users store", () => {
     expect((await findUserById(user.id))?.role).toBe("staff");
   });
 
-  it.todo(
-    "BUG: updateUser(id, { role: undefined }) ném 'No values to set' — PATCH /api/users/[id] không gửi role đi vào đây → 500 thay vì 400 hoặc trả tài khoản hiện tại",
-  );
+  it("updateUser không có trường nào để đổi thì trả tài khoản hiện tại, không ném lỗi", async () => {
+    const user = await makeUser("a@anser.dev");
+    expect(await updateUser(user.id, { role: undefined })).toMatchObject({ id: user.id, role: "staff" });
+    expect(await updateUser(MISSING_ID, {})).toBeUndefined();
+  });
 
   it("countAdmins chỉ đếm admin", async () => {
     expect(await countAdmins()).toBe(0);

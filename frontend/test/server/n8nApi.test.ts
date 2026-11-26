@@ -229,10 +229,21 @@ describe("getN8nWorkflow / updateN8nWorkflow", () => {
     expect(sent().body.settings).toEqual({ timezone: "Asia/Ho_Chi_Minh" });
   });
 
-  // n8nWorkflowId do người dùng dán vào (PATCH /api/automation/rules/[id]) được ghép
-  // thẳng vào path; listN8nExecutions thì có encodeURIComponent. Id "../credentials"
-  // khiến URL chuẩn hoá thành /api/v1/credentials — gọi nhầm endpoint bằng API key server.
-  it.todo("BUG: get/update/activate/deactivate không encodeURIComponent workflowId khi ghép vào path");
+  it.each([".", "..", "", "nhom/abc", "a?b", "a%2Fb", "wf\n"])("từ chối ID %j trước khi gọi n8n", async (id) => {
+    await expect(getN8nWorkflow(id)).rejects.toThrow("Workflow ID không hợp lệ");
+    await expect(updateN8nWorkflow(id, { name: "x", nodes: [], connections: {} })).rejects.toThrow(
+      "Workflow ID không hợp lệ",
+    );
+    await expect(activateN8nWorkflow(id)).rejects.toThrow("Workflow ID không hợp lệ");
+    await expect(deactivateN8nWorkflow(id)).rejects.toThrow("Workflow ID không hợp lệ");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each(["7", "wf-123", "WF_9"])("giữ nguyên Workflow ID %s trên đường dẫn", async (id) => {
+    fetchMock.mockResolvedValue(jsonResponse({ name: "x", nodes: [], connections: {} }));
+    await getN8nWorkflow(id);
+    expect(sent().url).toBe(`${BASE}/api/v1/workflows/${id}`);
+  });
 });
 
 describe("activate / deactivate", () => {

@@ -69,33 +69,42 @@ export function matchCosts(rows: UnitCostRow[], all: MatchableProduct[]): CostIm
   for (const p of all) nameCounts.set(norm(p.name), (nameCounts.get(norm(p.name)) ?? 0) + 1);
   const byName = new Map(all.filter((p) => nameCounts.get(norm(p.name)) === 1).map((p) => [norm(p.name), p]));
 
+  // Hai lượt, để kết quả không phụ thuộc thứ tự dòng trong file: mọi dòng khớp MÃ
+  // chiếm mặt hàng trước, rồi các dòng còn lại mới được khớp TÊN vào mặt hàng còn trống.
+  // Trong cùng một mức, dòng đứng trước thắng.
+  const claimed = new Map<string, number>(); // productId -> chỉ số dòng đã chiếm
+  const matchedBy = new Map<number, { product: MatchableProduct; by: "code" | "name" }>();
+  const hitByCode = new Set<number>(); // dòng có mã trúng mặt hàng, dù có chiếm được hay không
+
+  rows.forEach((row, i) => {
+    const code = norm(row.code);
+    const product = code ? byCode.get(code) : undefined;
+    if (!product) return;
+    hitByCode.add(i);
+    if (claimed.has(product.id)) return;
+    claimed.set(product.id, i);
+    matchedBy.set(i, { product, by: "code" });
+  });
+
+  rows.forEach((row, i) => {
+    if (hitByCode.has(i)) return;
+    const name = norm(row.name);
+    const product = name ? byName.get(name) : undefined;
+    if (!product || claimed.has(product.id)) return;
+    claimed.set(product.id, i);
+    matchedBy.set(i, { product, by: "name" });
+  });
+
   const matches: CostMatch[] = [];
   const unmatchedFromFile: CostImportPreview["unmatchedFromFile"] = [];
-  const seen = new Set<string>();
 
-  for (const row of rows) {
-    const code = norm(row.code);
-    const name = norm(row.name);
-    let product = code ? byCode.get(code) : undefined;
-    let matchedBy: "code" | "name" = "code";
-
-    if (!product && name) {
-      product = byName.get(name);
-      matchedBy = "name";
-    }
-
-    if (!product) {
+  rows.forEach((row, i) => {
+    const hit = matchedBy.get(i);
+    if (!hit) {
       unmatchedFromFile.push({ code: row.code, name: row.name, unit_cost: row.unit_cost });
-      continue;
+      return;
     }
-    // Cùng một mặt hàng trúng hai dòng file (khớp mã ở dòng này, khớp tên ở
-    // dòng khác): giữ lần khớp đầu, đừng để lần khớp yếu hơn đè lên.
-    if (seen.has(product.id)) {
-      unmatchedFromFile.push({ code: row.code, name: row.name, unit_cost: row.unit_cost });
-      continue;
-    }
-    seen.add(product.id);
-
+    const { product, by } = hit;
     matches.push({
       productId: product.id,
       code: product.code,
@@ -103,13 +112,13 @@ export function matchCosts(rows: UnitCostRow[], all: MatchableProduct[]): CostIm
       currentCost: product.cost ?? null,
       newCost: row.unit_cost,
       source: row.source,
-      matchedBy,
+      matchedBy: by,
       wouldOverwrite: product.cost !== null && product.cost !== undefined,
     });
-  }
+  });
 
   const stillMissing = all
-    .filter((p) => (p.cost === null || p.cost === undefined) && !seen.has(p.id))
+    .filter((p) => (p.cost === null || p.cost === undefined) && !claimed.has(p.id))
     .map((p) => ({ code: p.code, name: p.name }));
 
   return {

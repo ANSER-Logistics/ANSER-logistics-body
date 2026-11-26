@@ -88,9 +88,31 @@ describe("matchCosts", () => {
     expect(preview.unmatchedFromFile.map((r) => r.unit_cost)).toEqual([999, 555]);
   });
 
-  it.todo(
-    "BUG: dòng khớp TÊN đứng trước chiếm mất mặt hàng, dòng khớp đúng MÃ đứng sau bị đẩy vào 'không khớp' (inventoryCostMatch.ts:95)",
-  );
+  it("khớp đúng MÃ thắng khớp TÊN, bất kể dòng nào đứng trước trong file", () => {
+    const byName = row("XX", "Hàng A", 111);
+    const byCode = row("KM01", "tên khác trong file", 222);
+
+    for (const rows of [
+      [byName, byCode],
+      [byCode, byName],
+    ]) {
+      const preview = matchCosts(rows, [prod("a", "KM01", "Hàng A")]);
+      expect(preview.matches.map((m) => [m.productId, m.newCost, m.matchedBy])).toEqual([["a", 222, "code"]]);
+      expect(preview.unmatchedFromFile).toEqual([{ code: "XX", name: "Hàng A", unit_cost: 111 }]);
+    }
+  });
+
+  it("kết quả khớp giữ đúng thứ tự dòng trong file", () => {
+    const preview = matchCosts(
+      [row("XX", "Hàng B", 1), row("KM01", "", 2), row("KM03", "", 3)],
+      [prod("a", "KM01", "Hàng A"), prod("b", "KM02", "Hàng B"), prod("c", "KM03", "Hàng C")],
+    );
+    expect(preview.matches.map((m) => [m.productId, m.matchedBy])).toEqual([
+      ["b", "name"],
+      ["a", "code"],
+      ["c", "code"],
+    ]);
+  });
 
   it("đã có giá vốn (kể cả 0) thì đánh dấu sẽ ghi đè; null thì là điền mới", () => {
     const { matches } = matchCosts(

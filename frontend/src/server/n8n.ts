@@ -5,12 +5,14 @@ export async function triggerN8nWebhook(path: string, payload: unknown) {
   if (!base) return;
 
   try {
-    await fetch(`${base}/${path}`, {
+    const res = await fetch(`${base}/${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(3000),
     });
+    // fetch không throw khi n8n trả 404/500 (vd workflow chưa bật) — không log thì không ai biết.
+    if (!res.ok) console.error(`[n8n] Webhook "${path}" trả HTTP ${res.status}`);
   } catch (error) {
     console.error(`[n8n] Không gọi được webhook "${path}":`, error);
   }
